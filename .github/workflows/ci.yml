@@ -1,0 +1,91 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+      - "release/v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Python dependencies
+        run: python3 -m pip install --upgrade pyyaml
+
+      - name: Run Python unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f .maw/template-source.yaml ]; then
+            python3 -m unittest discover -s tests -v
+          else
+            python3 -m unittest tests/test_public_seed_workdir.py -v
+          fi
+
+      - name: Check shell syntax
+        run: bash -n ops/scripts/*.sh
+
+      - name: Check JSON manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for manifest in \
+            prompts/codex/task-packs/_template/manifest.json \
+            prompts/codex/task-packs/maw-ai-primary-upgrade-codex-tasks/manifest.json
+          do
+            if [ -f "$manifest" ]; then
+              python3 -m json.tool "$manifest" >/dev/null
+              echo "OK: $manifest"
+            else
+              echo "SKIP: $manifest does not exist in this checkout"
+            fi
+          done
+
+      - name: Parse YAML configuration
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import yaml
+
+          paths = sorted(Path(".maw").glob("*.yaml")) + [Path("release/rules.yaml")]
+          for path in paths:
+              if not path.exists():
+                  print(f"SKIP: {path}")
+                  continue
+              with path.open(encoding="utf-8") as handle:
+                  yaml.safe_load(handle)
+              print(f"OK: {path}")
+          PY
+
+      - name: Run template checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f .maw/template-source.yaml ]; then
+            bash ops/scripts/check-seed-distribution-readiness.sh --strict --format json
+            bash ops/scripts/check-seed-open-source-readiness.sh --strict --format json
+            bash ops/scripts/check-template-module-docs.sh
+            bash ops/scripts/check-local-boundary.sh
+            bash ops/scripts/check-module-candidates.sh
+            bash ops/scripts/check-ai-memory-consistency.sh
+            bash ops/scripts/check-ai-framework-consistency.sh
+            bash ops/scripts/check-code-deliverable.sh
+            bash ops/scripts/export-code-only.sh --mode customer --zip --dry-run
+          else
+            python3 ops/scripts/check-public-seed-workdir.py --format json --strict
+          fi

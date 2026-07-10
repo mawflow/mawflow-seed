@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "package": "<slug>-codex-tasks",
+  "title": "<任务标题>",
+  "i18n": {
+    "human": {
+      "zh-CN": {
+        "title": "<任务标题>"
+      }
+    },
+    "ai": {
+      "en-US": {
+        "title": "<task title for AI>"
+      }
+    }
+  },
+  "status": "draft",
+  "language": "zh-CN",
+  "documentation_language": "zh-CN",
+  "audience": "human_and_codex",
+  "created_from": "<需求、方案或资料路径>",
+  "execution_mode": "same_session_auto_run",
+  "closeout_profile": "zh_cn_human_first",
+  "delivery_mode": "code_only",
+  "module_keys": [],
+  "app_keys": [],
+  "risk_level": "medium",
+  "session_state": "docs/implementation/<topic>/<slug>-codex-tasks/SESSION_STATE.md",
+  "recommended_repo_path": "prompts/codex/task-packs/<slug>-codex-tasks/",
+  "entry_prompt": "EXECUTE_PROMPT.md",
+  "files": [
+    "README.md",
+    "EXECUTE_PROMPT.md",
+    "PLAN.md",
+    "manifest.json",
+    "prompts/00-session-runbook.md",
+    "prompts/01-task-template.md"
+  ]
+}

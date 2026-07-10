@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "pack_id": "mawflow.framework.fastapi",
+  "pack_type": "framework_pack",
+  "version": "0.1.0",
+  "status": "candidate",
+  "visibility": "public",
+  "ai_context_entry": "ai-context.md",
+  "human_takeover_entry": "README.md",
+  "tags": ["python", "fastapi", "backend"],
+  "provided_contracts": [
+    "Read target project framework facts before applying framework guidance.",
+    "Keep this example advisory until a project explicitly adopts it."
+  ]
+}
+

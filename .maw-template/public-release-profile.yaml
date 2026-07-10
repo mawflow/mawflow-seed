@@ -1,0 +1,50 @@
+schema_version: 1
+profile_key: mawflow_seed_public_v1
+profile_kind: seed_public_release_contract
+status: enabled
+
+purpose: >
+  Declare that this Seed release source supports the MultiAgentWorker public_seed
+  sanitized export contract. This file is a release-source contract only; it does
+  not configure a writable public remote, credentials, or publication authority.
+
+release_source_role: seed_development_release_source
+publish_authority: multiagentworker_public_seed
+public_repository_canonical_url: "https://github.com/mawflow/mawflow-seed"
+
+required_publish_mode: export_sanitized_tree
+required_payload_mode: allowlist_then_denylist
+public_payload_manifest: PUBLIC_PAYLOAD_MANIFEST.json
+artifact_smoke_command:
+  - python3
+  - ops/scripts/check-public-seed-workdir.py
+  - --format
+  - json
+  - --strict
+supported_publish_modes:
+  - export_sanitized_tree
+
+source_requirements:
+  required_branch_pattern: "release/{version}"
+  required_tag_pattern: "v*"
+  require_tag_points_at_head: true
+  require_clean_worktree: true
+  require_source_remote_contains_head: true
+
+required_gates:
+  - check-seed-distribution-readiness
+  - check-seed-open-source-readiness
+  - check-seed-public-payload
+  - check-local-boundary
+  - check-code-deliverable
+
+forbidden_release_actions:
+  - direct_push_from_seed_checkout
+  - same_git_history_without_review
+  - publish_target_credentials_in_seed_repository
+  - public_target_remote_as_seed_source
+
+notes:
+  - "The MultiAgentWorker main repository owns target selection, writable remote configuration, credentials, admission reports, and publication records."
+  - "The public target receives a sanitized payload snapshot, not this development checkout's private Git history."
+  - "The materialized payload must validate itself from its own manifest without access to private source-only files."

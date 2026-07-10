@@ -1,0 +1,62 @@
+project:
+  # 项目短标识；用于目录、远程服务器工作目录、部署记录和自动化任务命名。
+  key: replace_me
+  # 项目显示名称；用于 README、报告、交付文档和通知。
+  name: Replace Me
+  # 仓库模式：internal_only 表示只使用我方仓库；external_mapped 表示 code 下每个组件可独立映射客户仓库。
+  repository_mode: internal_only # internal_only | external_mapped
+  # 默认主干分支；脚本和 AI 任务在未指定分支时使用它。
+  default_branch: main
+  # 项目默认时区；影响定时任务、发布时间和报告日期。
+  timezone: Asia/Shanghai
+  # 项目负责人或团队；用于交接、审批和风险升级。
+  owner: ""
+  # 项目简介；建议用一两句话说明业务目标和主要端。
+  description: ""
+
+workflow:
+  # 是否要求 AI 编码前完成初始化清单；生产项目建议保持 true。
+  require_ai_coding_initialization: true
+  # 是否要求发布前进行人工或 Reviewer 复核。
+  require_release_review: true
+  # 是否要求同步客户仓库或导出交付包前执行脱敏检查。
+  require_desensitize_before_external_delivery: true
+
+configuration_profiles:
+  # 默认配置档；日常开发和远程测试服务器优先使用 dev。
+  default_profile: dev
+  # 可提交共享配置档只允许保存占位、示例或稳定引用；公开 Seed 不得保存真实凭证。
+  # 受信任私有派生项目可按自身策略继续使用 dev/pro 覆盖真实环境差异。
+  committed_profiles:
+    - dev
+    - pro
+  # 本地覆盖档；`.maw/*.local.yaml` 不提交，且永远最后加载。
+  local_profile: local
+
+ssh_key_policy:
+  # SSH key 默认存放目录；位于仓库根目录，已被 `.gitignore` 忽略。
+  default_project_directory: ".ssh"
+  # SSH key 路径解析方式；相对路径按项目根目录解析，绝对路径原样使用。
+  path_resolution: project_root_relative_or_absolute
+  # 是否允许使用团队约定的公共目录；例如 `~/.maw/ssh` 或 `/opt/maw/ssh`。
+  allow_common_directory: true
+  # 是否允许提交 SSH key 文件；必须为 false，公钥和私钥都不放入 git。
+  commit_key_files: false
+  # SSH key 存放说明文档。
+  guide: .ssh/README.md
+
+collaboration_boundary:
+  # 业务代码和业务运行配置的权威来源；框架 env、config、路由、构建配置都应放在 code 内。
+  business_source_of_truth: code/
+  # code 外目录的主要职责；服务人机协作、AI 调试、文档治理、发布和交付。
+  non_code_purpose: ai_human_collaboration
+  # `.maw` 是否可保存 AI 调试所需的显式索引和凭证引用。
+  maw_can_store_ai_debug_index: true
+
+documentation_path_policy:
+  # 输入资料整理、提示词、报告、交付说明和最终输出中，凡指向本项目目录或文件的路径，一律使用项目根相对路径。
+  project_directory_paths: project_root_relative
+  # 多台设备协作时不得把某台机器的项目绝对路径写入可提交文档或可复用提示词。
+  forbid_project_absolute_paths_in_documents: true
+  # 远程服务器 workdir、公共 SSH key 目录、URL 和项目外部系统路径不属于项目目录路径，可保持其原始形式。
+  allow_absolute_external_system_paths: true

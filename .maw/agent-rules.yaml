@@ -1,0 +1,61 @@
+schema_version: 1
+rules_key: mawflow_seed_agent_rules
+source: .maw/agent-entry.yaml
+status: active
+generation_policy:
+  canonical_source: .maw/agent-entry.yaml
+  generated_or_aligned_targets:
+    - AGENTS.md
+    - AI_START_HERE.md
+    - CLAUDE.md
+    - GEMINI.md
+    - .cursor/rules/mawflow.md
+  drift_policy: "When tool-specific files disagree, preserve project-specific facts and update the adapter from .maw/agent-entry.yaml."
+
+rules:
+  - id: load_project_facts_first
+    severity: required
+    summary: "读取项目事实后再执行任务。"
+    applies_to:
+      - codex
+      - claude
+      - gemini
+      - cursor
+      - generic_ai
+  - id: preserve_target_project_facts
+    severity: required
+    summary: "模板默认值不能覆盖目标项目 README、code、app_key、发布配置、仓库映射、secrets 或模块档案。"
+    applies_to:
+      - codex
+      - claude
+      - gemini
+      - cursor
+      - generic_ai
+  - id: protect_local_and_secret_paths
+    severity: required
+    summary: "不得提交本机资料、真实密钥、token、私钥、生产连接串、未脱敏日志或用户上传文件。"
+    applies_to:
+      - codex
+      - claude
+      - gemini
+      - cursor
+      - generic_ai
+  - id: prompts_manual_only
+    severity: required
+    summary: "prompts/** 是人工选择的一次性任务提示词库，不因关键词或扫描结果自动读取。"
+    applies_to:
+      - codex
+      - claude
+      - gemini
+      - cursor
+      - generic_ai
+  - id: validate_and_closeout
+    severity: required
+    summary: "任务结束时说明变更、验证、未验证、风险、发布影响和下一步。"
+    applies_to:
+      - codex
+      - claude
+      - gemini
+      - cursor
+      - generic_ai
+

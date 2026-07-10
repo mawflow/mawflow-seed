@@ -1,0 +1,36 @@
+component:
+  key: client
+  app_key: client
+  type: frontend
+  local_path: code/client
+  ai_runtime_ref: app_runtime.apps.client
+  mirror_repository_ref: component_mirrors.components.client
+commands:
+  install: npm install
+  test: npm test
+  build: npm run build
+  start: npm run dev
+env:
+  example_file: .env.example
+  local_file: .env
+  business_config_owner: code
+  ai_debug_ref: .maw/app-runtime.yaml
+boundaries:
+  allowed_paths: [code/client/**]
+  collaboration_paths: [.maw/app-runtime*.yaml, docs/ai-coding/component-guides/client.md]
+  forbidden_paths: [code/server/**, code/admin/**, .maw/*.local.yaml, .ssh/**]
+release:
+  default_environment: test
+  environment_options: [test, staging, production]
+  commands:
+    default: "#发布：发布 client"
+    test: "#发布：发布 client 到 test"
+    test_zh: "#发布测试：发布 client"
+    staging: "#发布：发布 client 到 staging"
+    staging_zh: "#发布上线：发布 client"
+    production: "#发布：发布 client 到 production"
+    production_zh: "#发布生产：发布 client"
+    production_typo_zh: "#发布生成：发布 client"
+    custom: "#发布：发布 client 到 <env>"
+  default_test_release: client_to_internal_test
+  external_repo_release: client_to_external_repo

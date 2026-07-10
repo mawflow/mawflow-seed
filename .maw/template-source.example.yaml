@@ -1,0 +1,24 @@
+schema_version: 1
+template_source:
+  # Public Seed projects should use the public distribution repository.
+  source_channel: public_seed
+  local_path: ""
+  git_url: "https://github.com/mawflow/mawflow-seed.git"
+  version: "main"
+
+  public_source:
+    role: public_seed_distribution_repository
+    repository_key: mawflow-seed
+    canonical_public_repository_url: "https://github.com/mawflow/mawflow-seed"
+    default_git_url: "https://github.com/mawflow/mawflow-seed.git"
+
+  read_preference:
+    - local_path_when_provided
+    - git_url_and_version
+    - current_repository
+
+  local_override: ".local/.maw/template-source.yaml"
+
+  notes:
+    - "This file is a public example. Real local paths and private template sources belong in .local/.maw/template-source.yaml."
+    - "Public Seed users do not need access to the private Seed development repository."

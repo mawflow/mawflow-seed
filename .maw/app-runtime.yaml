@@ -1,0 +1,87 @@
+# AI 调试运行索引：按 code 下的 app_key 分组，帮助 Codex/其它 AI 快速启动、连接和验证应用。
+# 注意：业务配置权威来源仍在 code/<app_key>/ 内部工程文件中；本文件只做 AI 协作索引和调试便利镜像。
+app_runtime:
+  # 默认规则；所有 app 未覆盖时采用这里的约定。
+  defaults:
+    # 业务配置权威来源；框架 env、config、路由、构建配置都应优先在 code 内维护。
+    business_config_source: code
+    # AI 调试信息来源；`.maw` 只记录调试入口、连接线索和 secret 引用。
+    ai_debug_source: maw
+    # 冲突处理规则；code 内配置与 `.maw` 索引冲突时，以 code 为准并同步修正 `.maw`。
+    conflict_policy: code_wins_and_update_maw
+    # 默认 profile；未指定时读取 `.maw/project.yaml` 的配置档。
+    default_profile: dev
+    # 任务收口时优先回报本地开发/测试入口；真实启动命令仍以 code/<app_key> 内部工程文件为准。
+    closeout_local_entry_required_when_configured: true
+    local_environment_install_hint: "#安装开发环境"
+
+  # 按 app_key 组织的应用调试配置；默认只启用 server/client。
+  # 新增独立后台前端、设备端或其它独立发布应用时添加对应 apps.<app_key>。
+  apps:
+    # server app：通常负责 API、数据库、缓存、文件上传和后台任务。
+    server:
+      # app_key；必须与 `.maw/components.yaml` 和 code 目录一致。
+      app_key: server
+      # 是否启用该 app 的 AI 调试索引。
+      enabled: true
+      # 组件引用；对应 `.maw/components.yaml` 中的 key。
+      component_ref: server
+      # 代码目录；业务配置权威来源位于此目录内。
+      code_path: code/server
+      # 业务配置文件；AI 改业务运行配置时优先修改这些 code 内文件。
+      business_config_files:
+        - code/server/.env.example
+        - code/server/.maw.component.yaml
+      # AI 调试启动命令引用；以 code/server/.maw.component.yaml 的 commands 为准。
+      command_ref: code/server/.maw.component.yaml
+      # 组件镜像仓库配置引用；只用于从当前项目仓库单向同步到目标仓库，不作为代码来源。
+      mirror_repository_ref: component_mirrors.components.server
+      # 本地调试 URL；为空时由项目初始化时填写。
+      local_url: "http://127.0.0.1:8000"
+      # 本地收口入口；默认复用 local_url，项目可按事实改为健康检查、Swagger、管理页或 CLI 验证命令。
+      local_test_entry: "http://127.0.0.1:8000/health"
+      # 远程测试 URL；通常与 `.maw/environments.dev.yaml` 的健康检查或入口地址一致。
+      test_url: ""
+      # 健康检查路径；用于 AI 部署后快速验证服务可用性。
+      healthcheck_path: "/health"
+      # API 基础路径；前端联调和接口测试会用到。
+      api_base_path: "/api"
+      # 数据库调试配置引用；真实连接信息放在 `.maw/secrets.yaml` 的同名路径。
+      database_ref: secrets.app_debug.apps.server.database.dev
+      # 缓存调试配置引用；没有缓存服务时留空。
+      cache_ref: ""
+      # 测试账号引用；没有账号体系时留空。
+      test_account_ref: secrets.app_debug.apps.server.test_accounts.default
+      # AI 调试备注；记录初始化后必须注意的启动前置条件。
+      notes: "Server debug config mirrors code/server runtime needs for AI use."
+
+    # client app：通常是用户侧前端或移动端。
+    client:
+      # app_key；必须与 `.maw/components.yaml` 和 code 目录一致。
+      app_key: client
+      # 是否启用该 app 的 AI 调试索引。
+      enabled: true
+      # 组件引用；对应 `.maw/components.yaml` 中的 key。
+      component_ref: client
+      # 代码目录；业务配置权威来源位于此目录内。
+      code_path: code/client
+      # 业务配置文件；AI 改业务运行配置时优先修改这些 code 内文件。
+      business_config_files:
+        - code/client/.env.example
+        - code/client/.maw.component.yaml
+      # AI 调试启动命令引用；以 code/client/.maw.component.yaml 的 commands 为准。
+      command_ref: code/client/.maw.component.yaml
+      # 组件镜像仓库配置引用；只用于从当前项目仓库单向同步到目标仓库，不作为代码来源。
+      mirror_repository_ref: component_mirrors.components.client
+      # 本地调试 URL；前端 dev server 默认入口。
+      local_url: "http://127.0.0.1:5173"
+      # 本地收口入口；默认复用前端 dev server，项目可按真实首页或关键页面调整。
+      local_test_entry: "http://127.0.0.1:5173"
+      # 远程测试 URL；测试环境前端入口。
+      test_url: ""
+      # 前端调用的 API 基础地址引用；真实值按 app_key 放在 secrets。
+      api_base_url_ref: secrets.app_debug.apps.client.api_base_url.dev
+      # 测试账号引用；没有账号体系时留空。
+      test_account_ref: secrets.app_debug.apps.client.test_accounts.default
+      # AI 调试备注；记录初始化后必须注意的启动前置条件。
+      notes: "Client business config stays under code/client; .maw only helps AI find endpoints."

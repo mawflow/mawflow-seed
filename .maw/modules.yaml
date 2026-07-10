@@ -1,0 +1,134 @@
+# 功能模块机器可读索引。
+# 用途：帮助 AI、Planner、Reviewer 和发布脚本从 module_key、页面路径、接口路径或数据表名定位模块边界。
+# 同步到已有项目时，本文件只作为初始建议；已有项目应按真实业务模块调整，不覆盖已有模块档案。
+#
+# 模块类型建议：
+# - group: 一级业务域或中间能力组，只指向 docs/modules/<group>/README.md，负责菜单和共享边界。
+# - leaf: 最小可交付功能模块，必须有 module.md 与 changelog.md，开发/审查/发布任务优先定位到 leaf。
+# - component: server/client 等端工程或运行应用，用于 app_key 和发布索引，通常不应作为唯一业务 leaf。
+# - cross-cutting: 权限、通知、配置、发布等横切能力；能独立验收时才作为 leaf，否则写入 group 共享边界。
+#
+# 可选字段：
+# - ai_doc: 指向 docs/modules/<...>/<leaf>/ai-context.md，只在模块复杂、AI 经常误读或需要短小执行提示时填写。
+#   不要给所有模块批量生成 AI 副本；module.md 仍是唯一模块事实源，ai_doc 只保存读取路线和常见误判。
+# - route_api_index: 一级模块 group 可指向 docs/modules/<group>/route-api-index.md，用于从 URL/API/命令快速定位二级模块。
+# - detail_docs: leaf 可登记页面审计页、后端审计页和追踪矩阵；这些是审计维度，不是新的正式模块。
+# - doc_status: confirmed / inferred / pending_confirm / stale / deprecated；表示模块文档与当前事实的对齐状态。
+# - confidence: high / medium / low；表示 AI 或人工对当前模块边界判断的置信度。
+# - last_verified_commit: 最近一次和代码、路由、API、测试或发布事实对齐的 commit。
+# - last_verified_at: 最近一次复核日期。
+# - last_verified_by: human / ai / reviewer。
+# - last_audit_id: 最近一次 docs/modules/_audits/ 审计报告 ID。
+# - audit_docs: 关联的模块地图审计报告路径列表。
+# - lifecycle: active / stale / deprecated；过期或废弃时必须写 stale_reason、superseded_by 或 deprecated_by。
+#
+# 自动生成 modules 时必须先生成模块树和拆分判定表，再创建 leaf。不要把“服务端”“管理后台”
+# “用户中心”“订单管理”等大块直接生成单个 module.md。
+# 模块地图按渐进式补全：先有一级/二级模块与 owner 关系，再补 URL/API 索引，再按需补页面/后端审计页。
+module_map_governance:
+  protocol: docs/ai-instructions/instructions/module-map.md
+  audit_root: docs/modules/_audits
+  audit_template: docs/modules/_audits/_template.md
+  lifecycle_values:
+    - active
+    - stale
+    - deprecated
+  doc_status_values:
+    - confirmed
+    - inferred
+    - pending_confirm
+    - stale
+    - deprecated
+  confidence_values:
+    - high
+    - medium
+    - low
+  score_fields:
+    - route_index_coverage
+    - api_owner_coverage
+    - detail_doc_coverage
+    - traceability_coverage
+    - confirmed_ratio
+    - pending_confirm_count
+    - stale_docs_count
+    - deprecated_docs_count
+    - orphan_docs_count
+    - missing_changelog_count
+    - ai_boundary_coverage
+  progressive_completion:
+    - map-skeleton
+    - route-api-index
+    - audit-detail
+    - traceability
+modules:
+  - key: server
+    name: 服务端
+    type: component
+    status: planned
+    doc: docs/modules/server/module.md
+    changelog: docs/modules/server/changelog.md
+    parent_key: ""
+    component_refs:
+      - server
+    app_keys:
+      - server
+    frontend_paths: []
+    backend_paths:
+      - code/server
+    api_paths: []
+    table_names: []
+    config_paths:
+      - code/server/.maw.component.yaml
+      - .maw/app-runtime.yaml
+      - .maw/components.yaml
+      - .maw/environments.yaml
+      - .maw/releases.yaml
+      - .maw/repositories.yaml
+      - .maw/customer-repository-rules.yaml
+    release_paths:
+      - release/server
+      - artifacts/release-state
+    test_paths:
+      - code/server/tests
+      - tests/smoke
+    source_required: true
+    default_owner_role: developer
+    external_refs:
+      pm_story_ids: []
+      pm_task_ids: []
+
+  - key: client
+    name: 用户端前端
+    type: component
+    status: planned
+    doc: docs/modules/client/module.md
+    changelog: docs/modules/client/changelog.md
+    parent_key: ""
+    component_refs:
+      - client
+    app_keys:
+      - client
+    frontend_paths:
+      - code/client
+    backend_paths: []
+    api_paths: []
+    table_names: []
+    config_paths:
+      - code/client/.maw.component.yaml
+      - .maw/app-runtime.yaml
+      - .maw/components.yaml
+      - .maw/environments.yaml
+      - .maw/releases.yaml
+      - .maw/repositories.yaml
+      - .maw/customer-repository-rules.yaml
+    release_paths:
+      - release/client
+      - artifacts/release-state
+    test_paths:
+      - code/client/tests
+      - tests/e2e
+    source_required: true
+    default_owner_role: developer
+    external_refs:
+      pm_story_ids: []
+      pm_task_ids: []

@@ -1,0 +1,63 @@
+components:
+  # 默认模板只启用前后端两类：server=后端/API，client=前端/用户侧应用。
+  # 如果项目确实存在独立后台前端、独立构建或独立发布目标，应按项目实际新增组件。
+  # 这里登记的是 component/app_key，不代表业务模块 leaf；业务模块继续在 docs/modules/ 中按 group/leaf 拆分。
+  # 组件唯一标识；必须与 code/server、release/server 等目录名保持一致。
+  - key: server
+    # app_key 是 code 下的应用标识；必须与 `code/server` 和 `.maw/app-runtime.yaml` 中的 key 一致。
+    app_key: server
+    # 组件显示名称；用于任务拆分、报告和发布记录。
+    name: 服务端
+    # 组件类型；backend/frontend/mobile/job/custom 等均可按项目扩展。
+    type: backend
+    # 组件源码目录；AI 改代码前必须限制在对应路径内。
+    path: code/server
+    # 客户用途宿主机可见的 code/ 镜像出口；同步给客户时不得保留嵌套 .git 或内部任务上下文。
+    customer_code_mirror:
+      visible_path: code/server
+      forbid_nested_git_metadata: true
+      purpose_type: customer
+    # 业务配置权威位置；真实框架配置、env 示例、构建配置都优先在 code 内维护。
+    business_config_root: code/server
+    # AI 调试索引位置；只存调试入口、连接信息和 secret 引用，不替代业务配置。
+    ai_runtime_ref: app_runtime.apps.server
+    # external_mapped 模式下的客户仓库映射位置；仅人工显式同步时使用。
+    external_repository_ref: external_mapped.components.server
+    # 组件镜像仓库配置位置；只允许从当前项目仓库单向同步到目标镜像仓库。
+    mirror_repository_ref: component_mirrors.components.server
+    # 组件发布配置位置；记录默认环境、环境选项和发布快捷指令。
+    release_ref: releases.components.server
+    # 是否启用：true 表示必须维护，false 表示不用，optional 表示按项目需要启用。
+    enabled: true
+    # 组件级 AI 工程说明；记录启动、测试、构建和可改边界。
+    guide: docs/ai-coding/component-guides/server.md
+
+  # 组件唯一标识；必须与 code/client、release/client 等目录名保持一致。
+  - key: client
+    # app_key 是 code 下的应用标识；必须与 `code/client` 和 `.maw/app-runtime.yaml` 中的 key 一致。
+    app_key: client
+    # 组件显示名称；用于任务拆分、报告和发布记录。
+    name: 客户端
+    # 组件类型；frontend 表示面向用户的前端或移动端工程。
+    type: frontend
+    # 组件源码目录；AI 改代码前必须限制在对应路径内。
+    path: code/client
+    # 客户用途宿主机可见的 code/ 镜像出口；同步给客户时不得保留嵌套 .git 或内部任务上下文。
+    customer_code_mirror:
+      visible_path: code/client
+      forbid_nested_git_metadata: true
+      purpose_type: customer
+    # 业务配置权威位置；真实框架配置、env 示例、构建配置都优先在 code 内维护。
+    business_config_root: code/client
+    # AI 调试索引位置；只存调试入口、连接信息和 secret 引用，不替代业务配置。
+    ai_runtime_ref: app_runtime.apps.client
+    # external_mapped 模式下的客户仓库映射位置；仅人工显式同步时使用。
+    external_repository_ref: external_mapped.components.client
+    # 组件镜像仓库配置位置；只允许从当前项目仓库单向同步到目标镜像仓库。
+    mirror_repository_ref: component_mirrors.components.client
+    # 组件发布配置位置；记录默认环境、环境选项和发布快捷指令。
+    release_ref: releases.components.client
+    # 是否启用：true 表示必须维护，false 表示不用，optional 表示按项目需要启用。
+    enabled: true
+    # 组件级 AI 工程说明；记录启动、测试、构建和可改边界。
+    guide: docs/ai-coding/component-guides/client.md

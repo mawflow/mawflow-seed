@@ -1,0 +1,332 @@
+policies:
+  # 密钥策略：默认信任私有 git 和受控 AI/开发节点，但区分外部交付边界。
+  secrets:
+    # 新模板推荐使用稳定凭证引用或宿主机本地 SecretStore；可信私有仓库明文模式长期兼容。
+    preferred_secret_storage: reference_or_host_local
+    # 可信宿主机、可信私有仓库和受控团队协作环境中，`.maw/secrets*.yaml` 明文模式是兼容路径。
+    trusted_host_plaintext_compatible: true
+    # 是否允许提交 mawsec/mawlocal/mawproxy 这类稳定引用。
+    allow_committed_secret_refs: true
+    # 是否允许在受信任私有仓库中提交 `.maw/secrets*.yaml` 真实值；作为历史项目和可信团队协作兼容路径保留。
+    allow_committed_trusted_secrets: true
+    # 可信私有项目配置中允许保存 FTP/FTPS 部署 URL 明文，用于只开放 FTP 的虚拟主机或客户服务器；
+    # 公开仓库、发布包、日志、诊断包、客户同步和外部交付仍必须脱敏。
+    allow_trusted_plaintext_ftp_deploy_url: true
+    # 严格模式默认关闭；只有公开仓库、发布包、日志、诊断包、未脱敏输出、外部交付或显式严格模式才阻断明文。
+    strict_secret_mode:
+      default_enabled: false
+      trusted_private_plaintext_severity: warning
+      block_when:
+        - public_repository
+        - external_delivery
+        - customer_repository_sync
+        - release_package
+        - diagnostic_package
+        - log_output
+        - unredacted_prompt_or_report
+        - explicit_strict_mode
+      allowed_reference_prefixes:
+        - "mawsec://"
+        - "mawlocal://"
+        - "mawproxy://"
+    # 第三阶段：公共凭证可由治理后台以密文 envelope 下发给授权宿主机 recipient。
+    managed_secret_envelopes:
+      enabled: true
+      default_payload_storage: encrypted_envelope_only
+      plaintext_payload_in_git: forbidden
+      algorithm_policy:
+        preferred:
+          - age_x25519
+          - sealed_box
+          - kms_wrapped_aead
+        minimum: aead_or_public_key_envelope
+      metadata_fields:
+        - envelope_id
+        - credential_type
+        - credential_key
+        - version
+        - fingerprint
+        - algorithm
+        - recipient_ids
+        - created_at
+        - rotated_at
+        - expires_at
+      payload_fields_policy: describe_fields_only_do_not_commit_values
+    # 第三阶段：只有授权 recipient 可在宿主机本地解开 envelope。
+    authorized_recipients:
+      enabled: true
+      identity_types:
+        - host_service_key
+        - host_public_key_fingerprint
+        - project_environment
+        - service_account
+      grant_scope_fields:
+        - org_key
+        - project_key
+        - environment
+        - credential_type
+        - credential_key
+        - allowed_proxy_modes
+      local_grant_policy: public_grants_read_only_local_custom_editable
+    # 第三阶段：AI 和外部流程默认使用短 TTL handle 或代理 ref，不长期暴露解密值。
+    short_ttl_handles:
+      enabled: true
+      default_ttl_seconds: 300
+      max_ttl_seconds: 1800
+      bind_to:
+        - host_service_key
+        - project_key
+        - task_key
+        - credential_type
+        - proxy_mode
+      storage: host_memory_or_owner_only_store
+      log_policy: handle_id_scope_audit_id_only
+    helper_proxy_required_for_git:
+      enabled: true
+      preferred_modes:
+        - git-askpass
+        - git-ssh
+        - ssh-agent
+      helper_names:
+        git_askpass: maw-git-askpass
+        git_ssh: maw-host-git-ssh
+        session_resolver: resolve-session
+      forbid_secret_in:
+        - git_remote_url
+        - command_line_args
+        - committed_env_file
+        - logs
+        - diagnostic_package
+    # 第四阶段：从 local dry-run 推进到 test pilot、staging 和 production general use 的模板 readiness 口径。
+    phase4_readiness:
+      enabled: true
+      current_template_status: template_protocol_ready
+      target_statuses:
+        - ready_for_test_host_pilot
+        - ready_for_staging
+        - ready_for_production_general_use
+      execution_order:
+        - seed_template_task_pack
+        - derived_project_template_upgrade
+        - main_repo_platform_task_pack
+      seed_repo_non_goals:
+        - orchestrator_runtime
+        - host_manager_runtime
+        - workbench_or_admin_ui
+        - production_secret_migration
+    # 第四阶段：真实 SecretStore/KMS/keychain 后端由派生项目或主仓选择实现，模板只声明策略。
+    secret_store_backends:
+      default_strategy: host_local_owner_only_store_with_optional_kms_wrapping
+      supported:
+        - host_owner_only_file
+        - os_keychain
+        - windows_dpapi
+        - macos_keychain
+        - linux_secret_service
+        - kms_wrapped_aead
+      production_requires:
+        - owner_only_permissions
+        - encrypted_at_rest
+        - recipient_bound_decrypt
+        - audit_event_on_resolve
+        - fail_closed_on_backend_error
+    rotation_policy:
+      enabled: true
+      version_field: version
+      fingerprint_field: fingerprint
+      default_rotation_window_days: 90
+      allow_overlap_window_for_rollout: true
+      requires:
+        - new_version_before_revoke_old
+        - rollback_version_retention
+        - audit_event_for_prepare_activate_revoke
+        - strict_scan_before_release
+    revocation_policy:
+      enabled: true
+      revoke_targets:
+        - secret_grant
+        - recipient_envelope
+        - short_ttl_handle
+        - local_secret_cache
+        - helper_session
+      handle_revocation_behavior: expire_immediately_and_fail_closed
+      cache_cleanup_required: true
+    alerting_policy:
+      enabled: true
+      alert_on:
+        - revoke_failed
+        - expired_secret_used
+        - helper_scope_mismatch
+        - strict_scan_plaintext_hit
+        - envelope_decrypt_failed
+        - rotation_window_expired
+      payload_policy: metadata_only_no_secret_values
+    strict_scan_surfaces:
+      block_plaintext_and_helper_returned_values_in:
+        - public_repository
+        - release_package
+        - diagnostic_package
+        - log_output
+        - customer_repository_sync
+        - external_delivery
+        - unredacted_prompt_or_report
+        - explicit_strict_mode
+    # 允许提交的共享密钥配置；用于人机协作开发和生产发布。
+    allowed_trusted_files:
+      - ".maw/secret-bindings.yaml"
+      - ".maw/secrets.yaml"
+      - ".maw/secrets.dev.yaml"
+      - ".maw/secrets.pro.yaml"
+    # 必须保持本地的覆盖配置；用于个人路径、临时账号和机器差异。
+    local_only_patterns:
+      - ".maw/*.local.yaml"
+      - ".maw/*.local.yml"
+      - ".maw/*.local.d/**"
+      - ".ssh/**"
+    # 仍然禁止提交的裸凭证文件；优先把值写入受控 YAML，而不是散落在文件树。
+    forbidden_patterns:
+      - ".env"
+      - ".env.*"
+      - "*.pem"
+      - "*.key"
+      - "*.p12"
+      - "*.pfx"
+      - ".ssh/**"
+
+  # 生成物策略：这些目录通常体积大、不可复现或属于运行态。
+  generated_artifacts:
+    # 禁止进入 git、交付覆盖层或外部同步的生成物。
+    forbidden_patterns:
+      - "node_modules/**"
+      - "vendor/**"
+      - "target/**"
+      - "dist/**"
+      - "build/**"
+      - "runtime/**"
+      - "logs/**"
+      - "public/uploads/**"
+
+  # 外部交付策略：即使内部仓库可信，对客户仓库和交付包仍按最小暴露处理。
+  external_delivery:
+    # 是否强制脱敏；同步客户仓库和导出交付包必须为 true。
+    require_desensitize: true
+    # 是否移除内部分析、私有提示词、内部账号和调试记录。
+    remove_internal_notes: true
+    # 外部交付前必须复核的目录。
+    review_paths:
+      - docs/
+      - release/
+      - ops/
+      - .maw/
+    # 外部交付时只允许保留稳定引用或脱敏占位；真实值、local overlay 和 helper 返回值必须移除。
+    allow_secret_refs_after_desensitize: true
+
+  # 文档路径策略：便于多台设备协作同一个项目。
+  path_references:
+    # 可提交文档、提示词、报告、交付说明和 AI 最终输出中，指向本项目目录或文件时必须写项目根相对路径。
+    project_paths_in_documents: project_root_relative
+    # 用户输入或原始记录中出现本机项目绝对路径时，整理为可提交资料前应改写成项目根相对路径。
+    normalize_input_project_paths_before_committing: true
+    # 远程服务器工作目录、公共 SSH key 目录、URL、第三方系统路径不是项目目录路径，可保留绝对形式。
+    external_system_path_exceptions:
+      - remote_server_workdir
+      - common_ssh_key_directory
+      - url
+      - third_party_system_path
+
+  # AI Git 工作流：模板项目默认要求 AI 改完即提交并推送，便于多人和多 AI 协作追踪。
+  ai_git_workflow:
+    # AI 完成代码、配置、文档或脚本改动后，是否必须提交当前分支。
+    require_commit_after_changes: true
+    # AI 完成提交后，是否必须推送当前分支。
+    require_push_after_commit: true
+    # 项目仓库 push 成功后，如果 .maw/repositories.yaml 的 repository_mirrors 已启用，是否默认继续同步仓库级镜像。
+    auto_sync_repository_mirror_after_push: true
+    # 仓库级镜像配置引用；具体目标、是否启用和是否自动同步均以该配置为准。
+    repository_mirror_config_ref: repository_mirrors
+    # AI 完成一段任务、任务包子任务或其它可独立验证的里程碑后，是否必须主动提交并推送。
+    require_push_after_task_segment: true
+    # AI 最终回复用户前，若本轮产生实际改动，是否必须已经提交并推送或说明阻塞原因。
+    require_push_before_final_response: true
+    # 推送顺序：先提交并推送本次任务实际改动，再判断剩余脏改动。
+    task_changes_commit_first: true
+    # 本次任务提交推送后，若仍有非 code 业务代码的无关变动，可用独立中文 commit message 做补充提交并推送。
+    allow_supplemental_non_code_commit_after_task_push: true
+    # 补充提交不得纳入 code 组件业务代码、组件运行配置或组件内文件变动。
+    supplemental_commit_exclude_patterns:
+      - "code/**"
+    # 补充提交仍必须遵守禁提交范围。
+    supplemental_commit_forbidden_patterns:
+      - ".maw/*.local.yaml"
+      - ".maw/*.local.yml"
+      - ".maw/*.local.d/**"
+      - ".local/**"
+      - ".ssh/**"
+      - "logs/**"
+      - "runtime/**"
+      - "dist/**"
+      - "build/**"
+      - "node_modules/**"
+    # 任务段定义：一次用户任务、任务包子任务，或一个已经完成验证、可独立追踪的里程碑。
+    task_segment_definition: "user task, task-pack subtask, or independently verifiable milestone with code/config/docs/script changes"
+    # commit message 和提交内容说明使用的语言。
+    commit_language: zh-CN
+    # 提交内容说明应覆盖的要点。
+    commit_summary_requirements:
+      - "变更范围"
+      - "验证结果"
+      - "遗留风险或未完成事项"
+    # commit message 规范：吸收通用 Conventional Commits 口径，并保留中文可读性。
+    commit_message_convention:
+      format: "<type>(<scope>): <subject>"
+      scope_optional: true
+      scope_required_when:
+        - "只影响单个业务模块、端组件、脚本或文档域"
+      type_required: true
+      allowed_types:
+        feat: "新增功能、模块，或对现有功能做重大优化"
+        fix: "修复 bug，不新增功能"
+        docs: "仅修改文档、注释或接口说明，不修改代码逻辑"
+        style: "代码格式调整，不修改逻辑"
+        refactor: "代码重构，无新功能、无 bug 修复"
+        perf: "性能优化"
+        test: "新增或修改测试用例"
+        chore: "构建流程、工具配置或依赖调整，不影响业务代码"
+        revert: "回滚历史提交，必须说明回滚原因"
+      subject_language: zh-CN
+      subject_rules:
+        - "type 使用小写英文"
+        - "scope 使用稳定模块名、app_key、脚本域或 docs/chore/test 等可读范围"
+        - "subject 用中文说明做了什么"
+        - "subject 简洁明确，结尾不加标点"
+        - "避免 update、fix、修改代码、调整内容 等模糊描述"
+      body_required_when:
+        - "复杂提交"
+        - "跨模块提交"
+        - "敏感配置、数据库配置或核心逻辑变更"
+        - "revert 提交"
+      body_requirements:
+        - "说明为什么做"
+        - "说明关键实现或取舍"
+        - "说明验证结果"
+        - "说明风险、回滚或通知要求"
+      commit_granularity:
+        - "一个提交只做一件可独立理解和验证的事"
+        - "避免把多个模块、多个功能或无关格式化混在同一提交"
+        - "功能节点完成后及时提交，避免长期堆积未提交变更"
+      pre_commit_requirements:
+        - "本地编译或语法检查通过"
+        - "核心功能或相关检查通过"
+        - "不得提交明显无法运行或含明显 bug 的代码"
+      sensitive_change_policy:
+        - "涉及数据库配置、核心逻辑或高风险发布边界时，提交前在任务说明或收口中提示同模块开发人员关注"
+    # 只有这些情况允许跳过自动提交或推送；最终说明必须写清原因。
+    allowed_skip_reasons:
+      - "用户明确禁止 git 写入或要求只做草稿"
+      - "本轮没有实际文件变更"
+      - "存在无法安全暂存的无关脏改动"
+      - "认证、网络、分支保护或远端拒绝导致无法 push"
+    blocked_push_report_requirements:
+      - "失败原因"
+      - "当前 commit hash 或未提交状态"
+      - "需要人工处理的下一步"

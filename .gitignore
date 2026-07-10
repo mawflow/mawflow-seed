@@ -1,0 +1,102 @@
+# OS / editor
+.DS_Store
+**/.DS_Store
+__MACOSX/
+**/__MACOSX/
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs / temp
+artifacts/repository-mirror-sync-runs/
+*.log
+*.pid
+*.tmp
+*.temp
+*.bak
+*.orig
+cache/
+tmp/
+runtime/
+dist/
+build/
+coverage/
+node_modules/
+**/node_modules/
+**/.cache/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+**/.pytest_cache/
+**/dist/
+**/build/
+**/coverage/
+
+# Local-only overrides and runtime config
+.env
+.env.*
+!.env.example
+!.env.sample
+*.local
+*.local.*
+.local/**
+!.local/
+!.local/README.md
+!.local/**/
+!.local/**/README.md
+!.local/*.example.yaml
+!.local/**/*.example.yaml
+!.local/docs/
+!.local/docs/requirements/
+!.local/docs/requirements/raw/
+!.local/docs/requirements/raw/README.md
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Repository-local SSH keys. Keep the directory docs, never commit key material.
+/.ssh/*
+!/.ssh/README.md
+!/.ssh/.gitkeep
+
+# MAW config profiles:
+# - .maw/*.dev.yaml and .maw/*.pro.yaml may be committed when they contain only examples or refs.
+# - .maw/*.local.yaml is machine-local and must stay out of git.
+# - real .maw/secrets*.yaml values must not be published; keep public examples explicit.
+.maw/*.local.yaml
+.maw/*.local.yml
+.maw/*.local.d/
+!.maw/*.local.example.yaml
+!.maw/*.local.example.yml
+.maw/secrets*.yaml
+!.maw/secrets.example.yaml
+!.maw/secrets.local.example.yaml
+
+# Dependency and package-manager outputs
+vendor/
+**/vendor/
+composer.lock
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+*.egg-info/
+.eggs/
+
+# Generic app runtime outputs
+**/runtime/
+**/logs/
+**/log/
+**/tmp/
+**/temp/
+**/uploads/
+**/public/uploads/
+**/.coverage
+**/htmlcov/
+**/.tox/
+**/.venv/
+**/venv/
+**/env/

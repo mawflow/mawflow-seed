@@ -1,0 +1,132 @@
+schema_version: 1
+entry_key: mawflow_seed_agent_entry
+status: active
+purpose: >
+  Shared AI workdir entry protocol for Codex, Claude Code, Gemini CLI, Cursor
+  Agent, and other local AI coding tools. Tool-specific files such as
+  AGENTS.md, CLAUDE.md, GEMINI.md, and .cursor/rules/mawflow.md should be
+  generated from or aligned with this protocol instead of drifting separately.
+
+product_positioning:
+  short_name: Mawflow Seed
+  category: open_source_ai_project_navigation_system
+  human_summary: "MAWflow Seed 是安装在 AI 编程工作目录里的开源 AI 项目导航系统和工作目录辅助层。"
+  i18n:
+    ai:
+      en-US: "MAWflow Seed is an open source AI project navigation system and workdir assistant for local AI coding tools."
+
+startup:
+  recommended_order:
+    - AGENTS.md
+    - AI_START_HERE.md
+    - .maw/agent-entry.yaml
+    - .maw/project.yaml
+    - .maw/components.yaml
+    - .maw/modules.yaml
+    - .maw/app-runtime.yaml
+    - docs/README.md
+  task_scoped_followups:
+    - docs/ai-instructions/README.md
+    - docs/modules/README.md
+    - docs/capabilities/README.md
+    - docs/project-signals/README.md
+  read_policy:
+    docs_are_on_demand: true
+    prompts_are_manual_only: true
+    archive_is_not_default_context: true
+
+facts:
+  project: .maw/project.yaml
+  components: .maw/components.yaml
+  modules: .maw/modules.yaml
+  runtime: .maw/app-runtime.yaml
+  policies: .maw/policies.yaml
+  interaction: .maw/interaction.yaml
+
+protected_paths:
+  never_commit:
+    - .local/**
+    - .maw/*.local.yaml
+    - .maw/*.local.yml
+    - .ssh/**
+    - runtime/**
+    - workspaces/**
+    - artifacts/**
+  read_only_by_default:
+    - prompts/**
+    - docs/archive/**
+    - ops/**/payload/**
+  secrets:
+    forbidden_in_public_outputs:
+      - real tokens
+      - passwords
+      - SSH private keys
+      - production connection strings
+      - unredacted customer data
+      - provider API keys
+
+execution_contract:
+  before_editing:
+    - identify repository role
+    - identify module_key or module_candidate
+    - identify owned paths and blocked paths
+    - choose validation commands
+  during_work:
+    - keep edits scoped
+    - preserve project facts over template defaults
+    - prefer existing project patterns
+    - update related docs when boundaries change
+  closeout:
+    required_human_fields:
+      - changes
+      - validation
+      - unverified
+      - risks
+      - release_impact
+      - next_step
+    stable_metadata:
+      - module_key
+      - module_dossier_updated
+      - hit_code_components
+      - release_update_status
+      - local_environment_status
+      - memory_update
+      - local_update
+
+tool_adapters:
+  codex:
+    file: AGENTS.md
+    status: supported
+  generic_ai:
+    file: AI_START_HERE.md
+    status: supported
+  claude:
+    file: CLAUDE.md
+    status: planned_generated_adapter
+  gemini:
+    file: GEMINI.md
+    status: planned_generated_adapter
+  cursor:
+    file: .cursor/rules/mawflow.md
+    status: planned_generated_adapter
+
+validation:
+  doctor_checks:
+    - AGENTS.md exists
+    - AI_START_HERE.md exists
+    - .maw/agent-entry.yaml exists
+    - .maw/project.yaml exists
+    - .maw/components.yaml exists
+    - .maw/modules.yaml exists
+    - .maw/app-runtime.yaml exists
+    - .maw/policies.yaml exists
+    - docs/README.md exists
+    - ops validation entry exists
+  boot_summary_fields:
+    - project name
+    - repository role
+    - components
+    - module index
+    - protected paths
+    - validation commands
+    - closeout contract
