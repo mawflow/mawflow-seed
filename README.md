@@ -1,115 +1,109 @@
 # MAWflow Seed
 
-MAWflow Seed is the open-source AI project navigation system for AI Coding workspaces.
+MAWflow Seed 是安装在 AI 编程工作目录中的开源 AI Coding 项目导航系统。
 
-It helps a regular code repository describe its project structure, module boundaries, execution rules, validation entry points, and delivery evidence, so tools such as Codex, Claude Code, Cursor, Gemini CLI, and other local agents can work with clearer project context.
+它帮助普通代码仓库清晰描述项目结构、模块边界、执行规则、验证入口和交付证据，让 Codex、Claude Code、Cursor、Gemini CLI 等本地 AI 编程工具能够在明确的项目上下文和约束下参与真实软件研发。
 
-Repository metadata and older release notes may use `Mawflow Seed`; this README uses the public product spelling `MAWflow Seed`.
+仓库元数据和历史版本说明中可能使用 `Mawflow Seed`，本文统一使用公开产品名称 `MAWflow Seed`。
 
-中文简介：
+## MAWflow Seed 是什么
 
-MAWflow Seed 是安装在 AI 编程工作目录里的开源 AI 项目导航系统。它帮助普通代码仓库说清项目结构、模块关系、执行边界和验证入口，让 AI 编程工具能够在明确上下文和规则下参与真实软件项目。
+MAWflow Seed 不只是一个项目模板，也不只是一个演示仓库。
 
-## What is MAWflow Seed?
+它是面向 AI 编程项目的仓库级导航层，用于帮助 AI 工具在修改文件前回答这些问题：
 
-MAWflow Seed is not just a template and not just a demo repository.
+- 这是什么项目？
+- 项目包含哪些主要模块？
+- AI 应该从哪里开始读取？
+- 哪些路径允许修改，哪些路径受到保护？
+- 哪些命令和检查可以证明任务已经完成？
+- 哪些结果需要记录，供评审、验收和后续交接使用？
 
-It is a repository-level navigation layer for AI Coding projects. Seed is designed to help an AI coding tool answer these questions before changing files:
+Seed 提供轻量的项目结构和协作协议，让 AI 研发工作更容易理解、执行、验证和评审。
 
-- What is this project?
-- What are the main modules?
-- Where should the agent start reading?
-- What paths are allowed or protected?
-- Which commands or checks prove the task is complete?
-- What should be recorded for review, acceptance, and future handoff?
+## 为什么需要 Seed
 
-Seed provides a lightweight project structure and collaboration protocol so that AI work is easier to understand, execute, verify, and review.
+AI 编程工具可以生成代码，但真实软件项目需要的不只是代码生成。
 
-## Why Seed?
+一个可持续维护的项目通常还需要：
 
-AI coding tools can generate code, but real software projects require more than code generation.
+- 明确的项目目标；
+- 清晰的模块边界；
+- 可追溯的技术上下文；
+- 可执行的任务约束；
+- 可复现的验证命令；
+- 必要的安全边界；
+- 人工评审与确认；
+- 可审计的交付证据。
 
-A project usually needs:
+如果缺少清晰的项目导航层，每次 AI 会话都需要重新发现仓库结构、猜测模块归属，并从分散的文件或聊天记录中推断验证规则。
 
-- project goals;
-- module boundaries;
-- technical context;
-- task constraints;
-- validation commands;
-- security boundaries;
-- human review;
-- delivery evidence.
+Seed 帮助 AI 编程从一次性对话走向可管理、可验证、可持续的项目工作流。
 
-Without a clear project navigation layer, each AI session has to rediscover the repository, guess module ownership, and infer validation rules from scattered files or chat history.
+## Seed 能解决什么问题
 
-Seed helps move AI Coding from one-off conversations into a manageable project workflow.
-
-## What Seed helps with
-
-| Need | Seed helps by |
+| 项目需求 | Seed 提供的帮助 |
 | --- | --- |
-| Make the project understandable to AI | Describing project identity, structure, modules, and runtime hints. |
-| Reduce context confusion | Providing agent entry files and module navigation. |
-| Control execution scope | Defining allowed paths, protected paths, and task boundaries. |
-| Make tasks executable | Using Prompt Spec and Task Pack style task descriptions. |
-| Make results verifiable | Recording checks, validation results, and review notes. |
-| Keep project knowledge reusable | Preserving project facts, decisions, and experience in repository files. |
-| Prepare for public sharing | Separating public examples from private data, local-only files, and credential material. |
+| 让 AI 理解项目 | 描述项目身份、目录结构、模块关系和运行提示 |
+| 减少上下文混乱 | 提供统一的 AI 入口文件和模块导航 |
+| 控制执行范围 | 定义允许路径、保护路径和任务边界 |
+| 让任务可以执行 | 使用提示词规范和任务包描述具体工作 |
+| 让结果可以验证 | 记录检查命令、验证结果和评审结论 |
+| 让项目知识可以复用 | 在仓库内保留项目事实、决策和经验 |
+| 为开源发布做准备 | 区分公开示例、私有数据、本机文件和凭证材料 |
 
-## How Seed fits into MAWflow
+## Seed 在 MAWflow 中的位置
 
-MAWflow is an AI project execution system.
+MAWflow 是一套 AI 项目执行系统。
 
-Seed is the open-source starting point in the MAWflow product path:
+Seed 是 MAWflow 产品路径中的开源起点：
 
 ```text
 Project Clinic
-Project goal clarification
+项目目标澄清
 
 Prompt Hub
-Structured requirement expression
+结构化需求表达
 
 Seed
-AI project navigation system
+AI 项目导航系统
 
 Host Base
-Local technical runtime base
+本地技术运行基础
 
 Project Space
-Business project execution base
+业务项目执行空间
 
 Studio / Enterprise
-Team project workspace: cloud collaboration / private deployment
+团队项目工作空间：云端协作 / 私有部署
 ```
 
 ### Seed
 
-Seed establishes project navigation inside the repository.
-
-It helps AI tools understand project structure, module relationships, execution boundaries, and validation entry points.
+Seed 在代码仓库内建立项目导航，帮助 AI 工具理解项目结构、模块关系、执行边界和验证入口。
 
 ### Host Base
 
-Host Base provides the local technical runtime for MAWflow, including CLI, local runtime, login activation, plugins, and local capability connection.
+Host Base 提供 MAWflow 的本地技术运行环境，包括命令行工具、本地运行时、登录激活、插件和本地能力连接。
 
 ### Project Space
 
-Project Space organizes project goals, requirements, work items, AI execution records, human confirmation, acceptance results, and delivery evidence.
+Project Space 用于组织项目目标、需求、工作项、AI 执行记录、人工确认、验收结果和交付证据。
 
 ### Studio / Enterprise
 
-Studio and Enterprise are two delivery forms of the MAWflow team project workspace.
+Studio 和 Enterprise 是 MAWflow 团队项目工作空间的两种交付形态。
 
-- Studio is the cloud collaboration workspace for one-person companies, small teams, and delivery teams.
-- Enterprise is the private deployment and governance-enhanced form of Studio for enterprise customers.
+- Studio 面向一人公司、小型团队和交付团队，提供云端协作工作空间。
+- Enterprise 是 Studio 的私有部署和治理增强形态，面向企业客户。
 
-Enterprise is not a separate product path unrelated to Studio. It reuses the same Project Space execution model and enhances deployment, permissions, audit, model governance, credential governance, release approval, and system integration.
+Enterprise 不是一条与 Studio 无关的独立产品路径。它复用相同的 Project Space 执行模型，并增强部署、权限、审计、模型治理、凭证治理、发布审批和系统集成能力。
 
-## Current status
+## 当前状态
 
-This repository is the public open-source starting point for MAWflow Seed.
+本仓库是 MAWflow Seed 的公开开源入口。
 
-The current release line includes:
+当前版本包含以下核心结构：
 
 ```text
 AI_START_HERE.md
@@ -123,34 +117,34 @@ code/client/
 LICENSE
 ```
 
-These files provide:
+这些文件用于提供：
 
-- AI workdir entry rules;
-- project identity and module maps;
-- task and prompt specifications;
-- validation and readiness checks;
-- delivery evidence examples;
-- public sharing and redaction boundaries.
+- AI 工作目录入口规则；
+- 项目身份和模块地图；
+- 任务与提示词规范；
+- 验证和就绪检查；
+- 交付证据示例；
+- 公开发布和脱敏边界。
 
-Always check the repository contents and release notes before assuming a specific file, command, or product capability is available.
+在使用某项文件、命令或产品能力前，请以当前仓库内容、`TEMPLATE_VERSION` 和 `CHANGELOG.md` 为准。
 
-## Quick start
+## 快速开始
 
-Clone the public Seed repository:
+克隆公开 Seed 仓库：
 
 ```bash
 git clone https://github.com/mawflow/mawflow-seed.git my-project
 cd my-project
 ```
 
-If you already use MAWflow CLI, the recommended project creation path is:
+如果已经安装 MAWflow CLI，推荐使用项目初始化命令：
 
 ```bash
 mawflow project init my-project
 cd my-project
 ```
 
-Then update the generated project facts:
+然后更新生成项目中的真实项目信息：
 
 ```text
 README.md
@@ -161,20 +155,20 @@ AI_START_HERE.md
 .maw/app-runtime.yaml
 ```
 
-For an existing repository, do not overwrite your codebase with Seed files. Adopt Seed incrementally:
+如果要在已有仓库中引入 Seed，不要使用 Seed 文件整包覆盖现有代码，应采用增量方式接入：
 
-1. Create or switch to a safe Git branch.
-2. Add `.maw/` project facts.
-3. Add AI entry files such as `AI_START_HERE.md`.
-4. Add module and runtime information.
-5. Add validation and review notes.
-6. Keep private data, local-only files, and credential material out of Git.
+1. 创建或切换到安全的 Git 分支。
+2. 增加 `.maw/` 项目事实配置。
+3. 增加 `AI_START_HERE.md` 等 AI 入口文件。
+4. 补充模块和运行时信息。
+5. 增加验证记录和评审说明。
+6. 确保私有数据、本机文件和凭证材料不进入 Git。
 
-When Seed becomes your own project workspace, rewrite the project README around your real product or service. `TEMPLATE_OVERVIEW.md` explains the Seed repository internals for maintainers.
+当 Seed 被用于创建真实项目后，应根据实际产品或服务重写项目 `README.md`。维护者可以通过 `TEMPLATE_OVERVIEW.md` 了解 Seed 仓库自身的内部结构。
 
-For step-by-step setup, see `GETTING_STARTED.md`.
+完整安装步骤请阅读 `GETTING_STARTED.md`，常用项目命令和维护入口请阅读 `PROJECT_COMMANDS.md`，从外部 AI 向 Codex 交接任务请阅读 `CHATGPT_TO_CODEX.md`。
 
-## Repository structure
+## 仓库结构
 
 ```text
 .
@@ -202,90 +196,63 @@ For step-by-step setup, see `GETTING_STARTED.md`.
     └── scripts/
 ```
 
-Actual files may differ by release version. Follow the current repository contents, `TEMPLATE_VERSION`, and `CHANGELOG.md`.
+不同版本的实际文件可能存在差异，请以当前仓库内容、`TEMPLATE_VERSION` 和 `CHANGELOG.md` 为准。
 
-## What Seed is not
+## Seed 不是什么
 
-MAWflow Seed is not:
+MAWflow Seed 不是：
 
-- a full cloud platform;
-- a project management SaaS;
-- an AI account pool;
-- a credential management service;
-- a private deployment package;
-- a replacement for human review;
-- a tool that lets AI bypass approval and deploy to production.
+- 完整的云平台；
+- 项目管理软件即服务；
+- AI 账号池；
+- 凭证管理服务；
+- 私有部署安装包；
+- 人工评审的替代品；
+- 允许 AI 绕过审批并直接部署生产环境的工具。
 
-Seed does not provide Enterprise governance, centralized permissions, model billing, private deployment, or cloud Project Space by itself.
+Seed 本身不提供 Enterprise 治理、集中权限、模型计费、私有部署或云端 Project Space。
 
-For local runtime, project workspace, team collaboration, or private deployment, continue with MAWflow Host Base, Lite, Studio, or Enterprise.
+如果需要本地运行环境、项目工作空间、团队协作或私有部署，可以继续使用 MAWflow Host Base、Lite、Studio 或 Enterprise。
 
-## Upgrade path
+## 升级路径
 
-You can start with Seed and move forward when the project needs more structure:
+可以从 Seed 开始，并在项目需要更多结构和能力时继续升级：
 
-| Need | Next step |
+| 项目需求 | 下一步 |
 | --- | --- |
-| Local runtime, login activation, plugins | Host Base |
-| Existing local project enhancement | Lite |
-| Team project collaboration and delivery evidence | Studio |
-| Enterprise private deployment and governance | Enterprise |
-| AI usage planning and model boundaries | AI Access / AI Credits |
-| Independent review and delivery audit | Audit Center |
+| 本地运行环境、登录激活和插件 | Host Base |
+| 增强已有本地项目 | Lite |
+| 团队项目协作和交付证据 | Studio |
+| 企业私有部署和治理 | Enterprise |
+| AI 使用规划和模型边界 | AI Access / AI Credits |
+| 独立评审和交付审计 | Audit Center |
 
-## Public and private boundaries
+## 公开与私有边界
 
-Do not commit:
+不要提交以下内容：
 
 ```text
 .local/
 .maw/*.local.yaml
-real credentials
-access keys
-login credentials
-private key files
-production connection details
-customer private data
-raw logs with sensitive data
+真实凭证
+访问密钥
+登录凭证
+私钥文件
+生产连接信息
+客户私有数据
+包含敏感信息的原始日志
 ```
 
-Seed is designed to make AI collaboration clearer, not to expose private project data.
+Seed 的目标是让 AI 协作更清晰，而不是暴露项目的私有数据。
 
-## Learn more
+## 许可证
 
-- MAWflow official site: <https://ai.mawflow.com>
-- Seed manual: <https://ai.mawflow.com/seed/>
-- Quick start: <https://ai.mawflow.com/docs/quickstart>
-- Product features: <https://ai.mawflow.com/docs/product-features>
-- Trust Center: <https://ai.mawflow.com/docs/trust-center>
+MAWflow Seed 使用 MIT License，具体内容见 `LICENSE`。
 
-## Useful entry points
+## 了解更多
 
-- `docs/public-seed/README.md`
-- `docs/public-seed/quickstart.md`
-- `docs/public-seed/prompt-spec.md`
-- `docs/public-seed/pack-types.md`
-- `docs/public-seed/desensitization.md`
-- `docs/public-seed/open-source-release.md`
-- `GETTING_STARTED.md`
-- `PROJECT_COMMANDS.md`
-- `CHATGPT_TO_CODEX.md`
-- `TEMPLATE_OVERVIEW.md`
-
-## Contact
-
-For general questions, business cooperation, Studio, Enterprise, or private deployment:
-
-```text
-hello@mawflow.com
-```
-
-For product support, installation issues, account activation, Seed usage, Host Base, Lite, Studio usage, privacy, security, or data requests:
-
-```text
-support@mawflow.com
-```
-
-## License
-
-MAWflow Seed is released under the MIT License. See `LICENSE`.
+- MAWflow 官方网站：<https://ai.mawflow.com>
+- Seed 使用手册：<https://ai.mawflow.com/seed/>
+- 快速开始：<https://ai.mawflow.com/docs/quickstart>
+- 产品能力：<https://ai.mawflow.com/docs/product-features>
+- 信任中心：<https://ai.mawflow.com/docs/trust-center>
