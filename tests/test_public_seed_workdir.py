@@ -42,6 +42,15 @@ def materialize_minimal_payload(tmp_path: Path) -> Path:
 
 
 class PublicSeedWorkdirTest(unittest.TestCase):
+    def test_public_upgrade_docs_use_host_base_drift_entry(self) -> None:
+        instruction = (ROOT / "docs/ai-instructions/instructions/derived-template-drift-upgrade.md").read_text(
+            encoding="utf-8"
+        )
+        quickstart = (ROOT / "docs/public-seed/quickstart.md").read_text(encoding="utf-8")
+        self.assertIn("mawflow project drift", instruction)
+        self.assertIn("mawflow project drift", quickstart)
+        self.assertIn("源码兼容入口", instruction)
+
     def test_accepts_complete_payload(self) -> None:
         with tempfile.TemporaryDirectory() as temp_name:
             root = Path(temp_name)

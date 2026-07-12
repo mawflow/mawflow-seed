@@ -25,6 +25,14 @@ cd my-project
 
 公开仓不包含内部开发源 `.maw/template-source.yaml`。如需在项目中声明 Seed 来源，可复制 `.maw/template-source.example.yaml` 为 `.maw/template-source.yaml`，再按项目事实调整；本机路径、私有模板源和维护者覆盖只能写入 `.local/.maw/template-source.yaml`。
 
+通过 `mawflow project init` 创建的项目会自动写入公开来源、tag 和已采用 commit。后续先运行：
+
+```bash
+mawflow project drift
+```
+
+状态为 `behind` 时，按输出的 commit 范围在当前会话做语义增量升级；不得整仓覆盖已有 `README.md`、`code/`、发布配置、仓库映射、secrets、`.local` 或模块档案。验证通过并更新 `template_source.applied_version` 后再次运行，状态应为 `up_to_date`。
+
 ## 3. 启动 AI 会话
 
 在 Codex、Claude Code、Gemini CLI 或 Cursor Agent 中进入项目目录后，先让 AI 读取：

@@ -4,6 +4,11 @@
 
 - 暂无。
 
+## v0.2.28 - 2026-07-13
+
+- 派生项目模板漂移统一优先使用 Host Base 的 `mawflow project drift`，公开 Seed 不再依赖被公开 payload 裁剪或缺少 Python 依赖的仓库脚本。
+- 漂移结果直接生成当前会话的语义增量升级要求，明确保护 `README.md`、`code/`、app_key、发布配置、仓库映射、secrets、`.local` 和模块档案；源码开发环境仍可使用 `ops/scripts/plan-template-drift.py` 作为兼容入口。
+
 ## v0.2.27 - 2026-07-11
 
 - 将开源入口 `README.md` 改为全中文说明，仅保留产品名、命令、文件名和 URL 等必要英文内容；保持 Seed 定位、产品关系、快速开始、仓库结构、升级路径和安全边界不变。

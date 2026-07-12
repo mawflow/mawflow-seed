@@ -142,7 +142,10 @@ cd my-project
 ```bash
 mawflow project init my-project
 cd my-project
+mawflow project drift
 ```
+
+`project drift` 会读取 `.maw/template-source.yaml`，核对当前已采用 commit 与目标 tag/commit；只有确认并完成语义增量升级、验证项目事实未丢失后，才更新 `template_source.applied_version`。
 
 然后更新生成项目中的真实项目信息：
 

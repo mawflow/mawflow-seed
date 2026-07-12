@@ -69,13 +69,13 @@ git status --short
 3. 运行模板漂移计划：
 
 ```bash
-python3 ops/scripts/plan-template-drift.py
+mawflow project drift
 ```
 
-   如果项目要求使用 `rtk`，使用：
+   `mawflow project drift` 是公开 Seed 和 Project Init 项目的统一入口，由 Host Base 提供，不依赖目标仓库携带内部脚本。只有当前仓库是完整 Seed 源码开发 checkout、且尚未安装新版 Host Base 时，才使用源码兼容入口：
 
 ```bash
-rtk proxy python3 ops/scripts/plan-template-drift.py
+python3 ops/scripts/plan-template-drift.py
 ```
 
 4. 按计划结果处理：
@@ -85,17 +85,14 @@ rtk proxy python3 ops/scripts/plan-template-drift.py
    - `status: ahead` 或 `diverged`：停止自动升级，说明当前项目记录的模板基线与目标模板不是简单落后关系，需要人工确认。
    - `status: baseline_invalid`：停止并要求修正 `template_source.applied_version` 为 commit SHA。
 
-5. 执行当前会话提示词时，按 `TINST-007 创建和执行任务提示词工程` 处理：
-   - 如果目标项目已有 `prompts/codex/task-packs/template-feature-upgrade-codex-tasks/`，直接执行该任务包。
-   - 如果没有，从源模板复制该任务包目录到目标项目相同路径；只复制任务包文件，不复制源模板 `.git`、remote、镜像目标、secrets、`.local/` 或业务占位值。
-   - 保持 `same_session_auto_run`，从任务包 `SESSION_STATE.md` 继续，直到完成、阻塞或用户打断。
+5. 直接执行 `current_session_prompt` 给出的语义增量升级：先创建安全分支，审计 commit 范围，只采用适合目标项目的差异，并保护目标项目事实。目标项目已经有模板升级任务包时可以按 `TINST-007` 继续使用；没有任务包时不得从私有 Seed 源复制，也不得因此阻塞公开项目升级。
 
 6. 升级完成后，必须把 `.maw/template-source.yaml` 中的 `template_source.applied_version` 更新为计划中的 `target_commit`。
 7. 运行目标项目可用的最小验证；至少包含：
 
 ```bash
 git diff --check
-python3 ops/scripts/plan-template-drift.py
+mawflow project drift
 ```
 
    如果项目有对应检查脚本，按目标项目规则补充运行。
@@ -117,7 +114,7 @@ python3 ops/scripts/plan-template-drift.py
 
 ## 验证方式
 
-- `python3 ops/scripts/plan-template-drift.py` 能输出 `target_commit`、`applied_version`、`behind_count` 和状态。
+- `mawflow project drift` 能输出 `target_commit`、`applied_version`、`behind_count` 和状态；完整源码开发 checkout 的兼容脚本应保持同一状态语义。
 - 当 `behind_count > 0` 时，输出包含当前会话执行提示词。
 - 当升级完成后再次运行计划，应显示 `status: up_to_date` 或 `behind_count: 0`。
 - `.maw/template-source.yaml` 已记录新的 `template_source.applied_version`。
@@ -143,3 +140,4 @@ python3 ops/scripts/plan-template-drift.py
 ## 更新记录
 
 - 2026-06-14：创建派生项目模板漂移升级指令，基于 `template_source.applied_version` 计算落后提交数，并在当前会话执行升级提示词。
+- 2026-07-13：公开项目统一优先使用 `mawflow project drift`；源码脚本降级为完整 Seed checkout 的兼容入口，任务包改为可选而非公开升级前置。
