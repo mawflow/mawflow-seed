@@ -108,6 +108,117 @@ def test_multi_file_change_set_adds_component_and_runtime_atomically(tmp_path: P
     assert list((root / ".maw/changes").glob("seed-change-*.yaml"))
 
 
+def test_project_change_set_updates_nested_project_fields(tmp_path: Path) -> None:
+    root = tmp_path / "project"
+    materialize_project(root, project_key="demo", name="Demo", profile="minimal")
+    _git_init(root)
+    projection = compile_project_definition(root)
+    public, private = plan_change_set(
+        root,
+        {
+            "schema": "mawflow.seed_change_set.v2",
+            "base_projection_fingerprint": projection["fingerprint"],
+            "operations": [
+                {
+                    "op": "project.update",
+                    "scope": "shared",
+                    "values": {
+                        "classification.delivery_mode": "existing_evolution",
+                        "classification.requirement_maturity": "partial",
+                        "classification.onboarding_status": "confirmed",
+                        "objective.value_statement": "真实项目演进目标",
+                        "objective.primary_users": ["教师", "学员"],
+                        "objective.success_metrics": ["真实旅程通过"],
+                    },
+                }
+            ],
+        },
+    )
+    result = apply_change_plan(
+        root,
+        private,
+        public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    assert result["projection"]["project"]["classification"]["delivery_mode"] == "existing_evolution"
+    assert result["projection"]["project"]["classification"]["onboarding_status"] == "confirmed"
+    assert result["projection"]["project"]["objective"]["primary_users"] == ["教师", "学员"]
+    project = yaml.safe_load((root / ".maw/project.yaml").read_text(encoding="utf-8"))["project"]
+    assert "classification.delivery_mode" not in project
+
+
+def test_module_update_preserves_following_sequence_item_indentation(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "project"
+    materialize_project(
+        root, project_key="demo", name="Demo", profile="web-api"
+    )
+    modules_path = root / ".maw/modules.yaml"
+    modules_path.write_text(
+        """schema_version: 2
+modules:
+  - key: server-module
+    name: 服务端
+    type: component
+    status: active
+    doc_status: pending_confirm
+    confidence: low
+    component_refs: [server]
+  - key: client-module
+    name: 客户端
+    type: component
+    status: active
+    doc_status: pending_confirm
+    confidence: low
+    component_refs: [client]
+""",
+        encoding="utf-8",
+    )
+    modules = yaml.safe_load(modules_path.read_text(encoding="utf-8"))
+    first = modules["modules"][0]
+    first.pop("last_verified_at", None)
+    first.pop("last_verified_by", None)
+    modules_path.write_text(
+        yaml.safe_dump(modules, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+    _git_init(root)
+    projection = compile_project_definition(root)
+
+    public, private = plan_change_set(
+        root,
+        {
+            "schema": "mawflow.seed_change_set.v2",
+            "base_projection_fingerprint": projection["fingerprint"],
+            "operations": [
+                {
+                    "op": "module.update",
+                    "key": first["key"],
+                    "scope": "shared",
+                    "values": {
+                        "doc_status": "confirmed",
+                        "confidence": "high",
+                        "last_verified_at": "2026-07-26",
+                        "last_verified_by": "human",
+                    },
+                }
+            ],
+        },
+    )
+    apply_change_plan(
+        root,
+        private,
+        public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    migrated = yaml.safe_load(modules_path.read_text(encoding="utf-8"))
+    assert migrated["modules"][0]["last_verified_by"] == "human"
+    assert migrated["modules"][1]["key"] == modules["modules"][1]["key"]
+
+
 def test_local_scope_requires_ignored_canonical_overlay(tmp_path: Path) -> None:
     root = tmp_path / "project"
     materialize_project(root, project_key="demo", name="Demo", profile="service")
@@ -148,6 +259,80 @@ def test_migration_normalizes_legacy_project_and_moves_local_overlay(tmp_path: P
     assert not (root / ".maw/app-runtime.local.yaml").exists()
     assert (root / ".local/.maw/app-runtime.yaml").is_file()
     assert ".local/" in (root / ".gitignore").read_text(encoding="utf-8").splitlines()
+
+
+def test_migration_preserves_business_readme_private_docs_and_repairs_modules(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "legacy"
+    materialize_project(root, project_key="learning", name="AI Learning Engine", profile="web-api")
+    readme = root / "README.md"
+    private_doc = root / "docs/handbooks/requirements/README.md"
+    project_path = root / ".maw/project.yaml"
+    components_path = root / ".maw/components.yaml"
+    readme.write_text("# AI Learning Engine\n\n真实业务事实\n", encoding="utf-8")
+    private_doc.write_text("# 私有需求手册\n\n不得覆盖\n", encoding="utf-8")
+    project_payload = yaml.safe_load(project_path.read_text(encoding="utf-8"))
+    project_payload.pop("schema_version", None)
+    project_original = (
+        "# 项目自己的定义注释\n"
+        + yaml.safe_dump(project_payload, allow_unicode=True, sort_keys=False)
+    )
+    project_path.write_text(project_original, encoding="utf-8")
+    components_payload = yaml.safe_load(components_path.read_text(encoding="utf-8"))
+    components_payload.pop("schema_version", None)
+    components_original = (
+        "# 项目自己的组件注释\n"
+        + yaml.safe_dump(components_payload, allow_unicode=True, sort_keys=False)
+    )
+    components_path.write_text(components_original, encoding="utf-8")
+    modules_path = root / ".maw/modules.yaml"
+    modules_path.write_text(
+        """# 真实模块事实
+schema_version: 2
+modules:
+  - key: server
+    name: 服务端
+    type: component
+    status: active
+    private_extension:
+      owner: learning-team
+  - key: client
+    name: 客户端
+    type: component
+    status: active
+    doc_status: confirmed
+    confidence: high
+""",
+        encoding="utf-8",
+    )
+    _git_init(root)
+
+    public, private = plan_migration(root, profile="web-api")
+    result = apply_migration_plan(
+        root,
+        private,
+        public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    assert result["projection"]["status"] == "ready"
+    assert readme.read_text(encoding="utf-8") == "# AI Learning Engine\n\n真实业务事实\n"
+    assert private_doc.read_text(encoding="utf-8") == "# 私有需求手册\n\n不得覆盖\n"
+    assert public["migration_safety"]["business_readme_preserved"] is True
+    assert public["migration_safety"]["project_owned_yaml_text_preserved"] is True
+    assert "README.md" in public["migration_safety"]["protected_existing_paths"]
+    assert project_path.read_text(encoding="utf-8") == (
+        project_original + "schema_version: 2\n"
+    )
+    assert components_path.read_text(encoding="utf-8") == (
+        components_original + "schema_version: 2\n"
+    )
+    migrated = yaml.safe_load(modules_path.read_text(encoding="utf-8"))
+    assert migrated["modules"][0]["doc_status"] == "pending_confirm"
+    assert migrated["modules"][0]["confidence"] == "low"
+    assert migrated["modules"][0]["private_extension"] == {"owner": "learning-team"}
+    assert migrated["modules"][1]["doc_status"] == "confirmed"
 
 
 def test_compiler_rejects_catalog_value_drift(tmp_path: Path) -> None:
@@ -275,6 +460,7 @@ def test_change_set_updates_technology_and_credential_requirements(tmp_path: Pat
                     "development_environment.standard": "docker_compose",
                     "development_environment.compose_files": ["compose.dev.yml"],
                     "development_environment.devcontainer": "optional",
+                    "verification.commands": ["npm run app:test"],
                 },
             },
             {
@@ -314,9 +500,58 @@ def test_change_set_updates_technology_and_credential_requirements(tmp_path: Pat
     assert result["projection"]["status"] == "ready"
     technology = yaml.safe_load((root / ".maw/technology.yaml").read_text(encoding="utf-8"))["technology"]
     assert technology["runtime_mode"] == "container"
+    assert technology["verification"]["commands"] == ["npm run app:test"]
     assert technology["languages"][0]["key"] == "python"
     requirements = yaml.safe_load((root / ".maw/project.yaml").read_text(encoding="utf-8"))["credentials"]["requirements"]
     assert requirements[0]["key"] == "database-local"
+
+
+def test_change_set_appends_to_existing_indentless_technology_sequence(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "project"
+    materialize_project(root, project_key="demo", name="Demo", profile="web-api")
+    _git_init(root)
+    projection = compile_project_definition(root)
+
+    public, private = plan_change_set(
+        root,
+        {
+            "schema": "mawflow.seed_change_set.v2",
+            "base_projection_fingerprint": projection["fingerprint"],
+            "base_contract_fingerprint": contract_fingerprint(),
+            "reason": "补齐真实工具链",
+            "operations": [
+                {
+                    "op": "technology.language.add",
+                    "key": "python",
+                    "scope": "shared",
+                    "values": {
+                        "version": ">=3.10",
+                        "package_manager": "pip",
+                        "role": "server",
+                        "required": True,
+                    },
+                }
+            ],
+        },
+    )
+    result = apply_change_plan(
+        root,
+        private,
+        public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    assert result["projection"]["status"] == "ready"
+    technology = yaml.safe_load(
+        (root / ".maw/technology.yaml").read_text(encoding="utf-8")
+    )["technology"]
+    assert [item["key"] for item in technology["languages"]] == [
+        "client-runtime",
+        "server-runtime",
+        "python",
+    ]
 
 
 def test_migration_round_trip_preserves_existing_project_facts(tmp_path: Path) -> None:
@@ -380,7 +615,10 @@ def test_migration_round_trip_preserves_existing_project_facts(tmp_path: Path) -
     assert applied["projection"]["status"] == "ready"
     migrated_environments = yaml.safe_load((root / ".maw/environments.yaml").read_text(encoding="utf-8"))
     assert migrated_environments["environments"]["local"]["custom_existing_field"] == "keep-me"
-    assert {"local", "test", "staging", "production"} <= set(migrated_environments["environments"])
+    assert set(migrated_environments["environments"]) == {"local", "test"}
+    assert migrated_environments["environments"]["local"]["custom_existing_field"] == "keep-me"
+    assert migrated_environments["environments"]["test"]["description"] == "兼容旧测试别名"
+    assert migrated_environments["environments"]["test"]["profile"] == "local"
     assert (root / "compose.dev.yml").read_text(encoding="utf-8") == "services: {}\n"
     assert (root / "docs/handbooks/manifest.yaml").is_file()
 

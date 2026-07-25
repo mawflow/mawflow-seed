@@ -1,7 +1,7 @@
 {
   "schema": "mawflow.seed_contract_catalog.v2",
   "contract_version": 2,
-  "seed_version": "2.1.0",
+  "seed_version": "2.1.1",
   "required_files": [
     ".maw/seed.lock",
     ".maw/project.yaml",
@@ -27,7 +27,7 @@
     "project": {
       "source": ".maw/project.yaml",
       "root": "project",
-      "kind": "mapping",
+      "kind": "mapping_paths",
       "fields": {
         "name": {"type": "text", "label": "项目名称", "required": true, "scope": ["shared"], "risk": "low"},
         "description": {"type": "long_text", "label": "业务目标与价值", "required": false, "scope": ["shared"], "risk": "low"},
@@ -143,7 +143,8 @@
         "runtime_mode": {"type": "enum", "label": "开发环境模式", "options": ["container", "hybrid", "host", "external"], "required": true, "scope": ["shared"], "risk": "medium"},
         "development_environment.standard": {"type": "enum", "label": "开发环境标准", "options": ["docker_compose", "devcontainer", "host_runtime", "external"], "required": true, "scope": ["shared"], "risk": "medium"},
         "development_environment.compose_files": {"type": "path_list", "label": "Compose 文件", "required": false, "scope": ["shared"], "risk": "medium"},
-        "development_environment.devcontainer": {"type": "enum", "label": "Dev Container", "options": ["required", "optional", "disabled"], "required": true, "scope": ["shared"], "risk": "medium"}
+        "development_environment.devcontainer": {"type": "enum", "label": "Dev Container", "options": ["required", "optional", "disabled"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "verification.commands": {"type": "string_list", "label": "项目验证命令", "required": false, "scope": ["shared"], "risk": "medium"}
       }
     },
     "technology_language": {

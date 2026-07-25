@@ -1,6 +1,6 @@
 # mawflow-seed-kit
 
-`mawflow-seed-kit` 是 Seed Contract v2 的唯一可执行分发包。v2.1.0 在保持协议主版本为 2 的同时，补齐项目分类与目标、技术栈、三层环境、凭证需求、模块依赖和六卷项目手册，并继续提供 Project Definition 编译器、ChangeSet 规划与应用、旧项目一次性迁移以及新项目模板。
+`mawflow-seed-kit` 是 Seed Contract v2 的唯一可执行分发包。v2.1.1 在保持协议主版本为 2 的同时，补齐项目分类与目标、技术栈、三层环境、凭证需求、模块依赖和六卷项目手册，并继续提供 Project Definition 编译器、ChangeSet 规划与应用、旧项目一次性增量迁移以及新项目模板。迁移会保护业务 README、既有模块事实和项目私有文件，只为旧模块补齐缺失的证据字段。
 
 主仓 CLI 和 Host Program 必须固定消费同一版本；项目仓库通过 `.maw/seed.lock` 记录版本、BOM 和契约指纹。
 

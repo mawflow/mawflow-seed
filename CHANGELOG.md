@@ -1,5 +1,13 @@
 # 模板变更记录
 
+## v0.2.31 - 2026-07-26
+
+### Seed Kit 2.1.1
+
+- 修复旧项目迁移到 Seed Contract v2 时的增量保真：既有业务 `README.md`、项目私有文件、模块名称/类型/注释/扩展字段保持不变，旧模块只补齐缺失的 `doc_status: pending_confirm` 与 `confidence: low`。
+- 迁移预览新增受保护路径、模块字段补齐和项目事实保留摘要；最终校验失败继续事务回滚，并允许 Host 展示具体 contract issue，而不是只返回通用错误码。
+- 修复 YAML 节点插入与块序列替换的缩进边界，Catalog 增加 `verification.commands` 受控字符串列表操作；Seed Kit、模板 lock、公开 BOM 和契约指纹同步升级。
+
 ## v0.2.30 - 2026-07-25
 
 - 修正 Seed 2.1 公开分发清单：根 `PUBLIC_PAYLOAD_MANIFEST.json` 与 `.maw/seed.lock`、Kit 版本和契约指纹保持一致。

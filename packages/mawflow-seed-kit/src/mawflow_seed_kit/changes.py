@@ -60,6 +60,12 @@ def _mapping_entries(node: MappingNode) -> dict[str, tuple[ScalarNode, Node]]:
     return {str(key.value): (key, value) for key, value in node.value if isinstance(key, ScalarNode)}
 
 
+def _mapping_field_indent(node: MappingNode, fallback: int) -> int:
+    if node.value and isinstance(node.value[0][0], ScalarNode):
+        return node.value[0][0].start_mark.column
+    return fallback
+
+
 def _mapping_value(node: MappingNode, key: str) -> Node | None:
     entry = _mapping_entries(node).get(key)
     return entry[1] if entry else None
@@ -81,6 +87,19 @@ def _scalar_text(value: object) -> str:
     raise ValueError("seed_change_value_type_forbidden")
 
 
+def _node_replacement(text: str, node: Node, value: object) -> str:
+    replacement = _scalar_text(value)
+    if isinstance(node, SequenceNode) and not node.flow_style:
+        # PyYAML starts an indentless block sequence at the dash. Replacing the
+        # sequence with a flow scalar must indent it beneath the mapping key.
+        replacement = f"  {replacement}"
+    original = text[node.start_mark.index : node.end_mark.index]
+    trailing_indent = re.search(r"\n[ \t]*\Z", original)
+    if trailing_indent:
+        replacement += trailing_indent.group(0)
+    return replacement
+
+
 def _parse(text: str) -> tuple[dict[str, Any], MappingNode]:
     try:
         payload, node = yaml.safe_load(text), yaml.compose(text)
@@ -89,6 +108,16 @@ def _parse(text: str) -> tuple[dict[str, Any], MappingNode]:
     if not isinstance(payload, dict) or not isinstance(node, MappingNode):
         raise ValueError("seed_change_yaml_mapping_required")
     return dict(payload), node
+
+
+def _node_insertion_index(text: str, node: Node) -> int:
+    """Insert before indentation owned by the following sibling, if present."""
+
+    index = node.end_mark.index
+    if index >= len(text):
+        return index
+    line_start = text.rfind("\n", 0, index) + 1
+    return line_start if not text[line_start:index].strip() else index
 
 
 def _read(root: Path, source_ref: str, skeleton: str) -> tuple[str, int, bool]:
@@ -163,7 +192,7 @@ def _validate(field: str, value: object, rule: str) -> object:
             if item not in result:
                 result.append(item)
         return result
-    if rule == "text_list":
+    if rule in {"string_list", "text_list"}:
         if not isinstance(value, list) or len(value) > 40:
             raise ValueError("seed_change_text_list_required")
         result = []
@@ -271,12 +300,17 @@ def _apply_fields(text: str, mapping: MappingNode, fields: dict[str, object], in
     for field, value in fields.items():
         entry = entries.get(field)
         if entry:
-            edits.append((entry[1].start_mark.index, entry[1].end_mark.index, _scalar_text(value)))
+            edits.append((
+                entry[1].start_mark.index,
+                entry[1].end_mark.index,
+                _node_replacement(text, entry[1], value),
+            ))
         else:
             missing.append((field, value))
     if missing:
         insertion = "".join(f"{' ' * indent}{field}: {_scalar_text(value)}\n" for field, value in missing)
-        edits.append((mapping.end_mark.index, mapping.end_mark.index, insertion))
+        insertion_index = _node_insertion_index(text, mapping)
+        edits.append((insertion_index, insertion_index, insertion))
     for start, end, replacement in sorted(edits, reverse=True):
         text = text[:start] + replacement + text[end:]
     return text
@@ -289,7 +323,11 @@ def _apply_paths(text: str, mapping: MappingNode, fields: dict[str, object], ind
     def collect(target: MappingNode, field: str, value: object, field_indent: int) -> None:
         entry = _mapping_entries(target).get(field)
         if entry:
-            edits.append((entry[1].start_mark.index, entry[1].end_mark.index, _scalar_text(value)))
+            edits.append((
+                entry[1].start_mark.index,
+                entry[1].end_mark.index,
+                _node_replacement(text, entry[1], value),
+            ))
             return
         bucket = missing_by_mapping.setdefault(id(target), (target, field_indent, []))
         bucket[2].append((field, value))
@@ -305,7 +343,8 @@ def _apply_paths(text: str, mapping: MappingNode, fields: dict[str, object], ind
         collect(target, parts[-1], value, indent + 2 * (len(parts) - 1))
     for target, field_indent, missing in missing_by_mapping.values():
         insertion = "".join(f"{' ' * field_indent}{field}: {_scalar_text(value)}\n" for field, value in missing)
-        edits.append((target.end_mark.index, target.end_mark.index, insertion))
+        insertion_index = _node_insertion_index(text, target)
+        edits.append((insertion_index, insertion_index, insertion))
     for start, end, replacement in sorted(edits, reverse=True):
         text = text[:start] + replacement + text[end:]
     return text
@@ -333,7 +372,8 @@ def _append_sequence(
     if sequence.flow_style:
         replacement = "\n" + insertion.rstrip("\n")
         return text[:sequence.start_mark.index] + replacement + text[sequence.end_mark.index:]
-    return text[:sequence.end_mark.index] + insertion + text[sequence.end_mark.index:]
+    insertion_index = _node_insertion_index(text, sequence)
+    return text[:insertion_index] + insertion + text[insertion_index:]
 
 
 def _remove_node(text: str, node: Node) -> str:
@@ -356,7 +396,8 @@ def _append_mapping(text: str, mapping: MappingNode, key: str, fields: dict[str,
     if mapping.flow_style:
         replacement = "\n" + insertion.rstrip("\n")
         return text[:mapping.start_mark.index] + replacement + text[mapping.end_mark.index:]
-    return text[:mapping.end_mark.index] + insertion + text[mapping.end_mark.index:]
+    insertion_index = _node_insertion_index(text, mapping)
+    return text[:insertion_index] + insertion + text[insertion_index:]
 
 
 def _operation_map() -> dict[str, dict[str, Any]]:
@@ -440,7 +481,11 @@ def _apply_operation(root: Path, texts: dict[str, str], operation: dict[str, Any
         )
         if not isinstance(collection, SequenceNode):
             raise ValueError("seed_change_target_missing")
-        base_indent = 4 if target.get("collection") else 2
+        base_indent = (
+            collection.start_mark.column
+            if not collection.flow_style
+            else (4 if target.get("collection") else 2)
+        )
         item = _sequence_item(collection, key)
         if mode == "create":
             if item:
@@ -455,7 +500,12 @@ def _apply_operation(root: Path, texts: dict[str, str], operation: dict[str, Any
         else:
             if not item:
                 raise ValueError("seed_change_item_missing")
-            proposed = _apply_fields(original, item, values, base_indent + 2)
+            proposed = _apply_fields(
+                original,
+                item,
+                values,
+                _mapping_field_indent(item, base_indent + 2),
+            )
     else:
         if not isinstance(root_node, MappingNode):
             raise ValueError("seed_change_target_missing")
