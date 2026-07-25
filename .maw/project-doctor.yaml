@@ -1,0 +1,25 @@
+schema_version: 2
+project_doctor:
+  required_sources:
+    - .maw/seed.lock
+    - .maw/project.yaml
+    - .maw/technology.yaml
+    - .maw/components.yaml
+    - .maw/modules.yaml
+    - .maw/app-runtime.yaml
+    - .maw/environments.yaml
+    - .maw/project-lifecycle.yaml
+    - .maw/template-source.yaml
+    - .maw/upgrade-policy.yaml
+    - .maw/agent-entry.yaml
+    - AI_START_HERE.md
+    - docs/handbooks/manifest.yaml
+  checks:
+    - seed_contract
+    - component_references
+    - runtime_references
+    - technology_requirements
+    - handbook_manifest
+    - local_overlay_boundary
+    - seed_kit_tests
+    - public_payload_manifest

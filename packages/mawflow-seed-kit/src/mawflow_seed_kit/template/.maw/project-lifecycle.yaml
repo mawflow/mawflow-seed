@@ -1,0 +1,76 @@
+schema_version: 2
+project_lifecycle:
+  collaboration_mode: local_standalone
+  supported_collaboration_modes:
+    - local_standalone
+    - cloud_collaborative
+  methodology:
+    key: solo_lean_loop
+    effective_boundary: immediate_new_work_only
+  git:
+    branch_roles:
+      formal_release: main
+      development_integration: dev
+      task_branch_pattern: "task/{task_key}"
+      hotfix_branch_pattern: "hotfix/{task_key}"
+    initialization:
+      baseline_branch: main
+      create_development_branch: true
+      checkout_after_create: dev
+      push_remote_branches: true
+    direct_dev_policy:
+      enabled: true
+      max_changed_files: 5
+      max_owned_paths: 2
+      forbidden_change_kinds:
+        - database_schema
+        - credential
+        - permission
+        - release
+        - cross_module
+      parallel_writers_allowed: false
+    task_branch_policy:
+      independent_worktree_required: true
+      baseline_sha_required: true
+      write_lease_required: true
+  release:
+    formal_environment: production
+    staging_environment: staging
+    source_remote_ref: refs/remotes/origin/main
+    formal_tag_required: true
+    dirty_worktree_allowed: false
+    failure_mode: fail_closed
+  handbook:
+    manifest: docs/handbooks/manifest.yaml
+    compatibility_manifest: docs/project-manual/manual.yaml
+  configuration:
+    field_metadata:
+      - key: project_lifecycle.collaboration_mode
+        label: 协作模式
+        type: enum
+        options: [local_standalone, cloud_collaborative]
+        editable: true
+        sensitive: false
+        required: true
+        risk: high
+      - key: project_lifecycle.methodology.key
+        label: 当前方法论
+        type: string
+        editable: true
+        sensitive: false
+        required: true
+        risk: high
+      - key: project_lifecycle.git.branch_roles.formal_release
+        label: 正式发布分支
+        type: string
+        editable: false
+        sensitive: false
+        required: true
+        risk: critical
+      - key: project_lifecycle.git.branch_roles.development_integration
+        label: 开发集成分支
+        type: string
+        editable: true
+        sensitive: false
+        required: true
+        risk: critical

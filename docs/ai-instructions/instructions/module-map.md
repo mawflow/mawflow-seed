@@ -17,7 +17,7 @@
 
 - 根目录维护一级模块入口、跨一级模块关系和审计报告入口。
 - 一级模块维护二级模块菜单、共享边界和 `route-api-index.md`。
-- 二级模块维护 `module.md`、`changelog.md`、页面索引、后端/API 索引、业务流程、AI 边界指引和必要的 detail docs。
+- 二级模块维护 `module.md`、集中 `docs/changelogs/<module_key>.md`、页面索引、后端/API 索引、业务流程、AI 边界指引和必要的 detail docs；模块页只保留 `changelog_path` 与 `changelog_time`。
 - 页面和后端审计页只作为二级模块下的证据维度，不升级为正式模块。
 - 文档记录 `doc_status`、`confidence`、`last_verified_commit`、`source_paths` 和必要的 `last_audit_id`。
 - 证据不足时进入 `.maw/module-candidates.yaml` 和 `docs/modules/_discovery/`，不强行补全。
@@ -46,7 +46,7 @@
 ## 执行步骤
 
 1. 先读取启动上下文、`.maw/modules.yaml`、`.maw/module-candidates.yaml`、`docs/modules/README.md`、`docs/modules/_discovery/README.md`、`docs/modules/_audits/README.md`、`docs/ai-coding/module-dossier-rules.md`、`docs/ai-instructions/instructions/split-module-tree.md` 和 `docs/ai-instructions/instructions/progressive-module-discovery.md`。
-2. 读取模板：`docs/modules/_template/group-README.md`、`route-api-index.md`、`module.md`、`changelog.md`、`page.md`、`backend-slice.md`、`traceability.md` 和 `docs/modules/_audits/_template.md`。只在复杂模块需要 AI 读取提示时读取 `ai-context.md`。
+2. 读取 `docs/changelogs/README.md` 和模板：`docs/modules/_template/group-README.md`、`route-api-index.md`、`module.md`、`changelog.md`、`page.md`、`backend-slice.md`、`traceability.md` 和 `docs/modules/_audits/_template.md`。先运行 `python3 ops/scripts/migrate-module-changelogs.py plan --format json`；发现旧模块目录日志、旧 `changelog:` 字段或内嵌历史段时，自动执行 `migrate --execute`，再继续当前模块地图任务。只在复杂模块需要 AI 读取提示时读取 `ai-context.md`。
 3. 盘点现状：
    - `.maw/modules.yaml` 中已有 group / leaf / component / cross-cutting，以及 `doc_status`、`last_verified_commit`、`detail_docs` 等字段。
    - `docs/modules/` 下已有一级模块、二级模块、孤立 `module.md`、过宽 component 档案、候选区和审计报告。
@@ -56,7 +56,7 @@
    - 一级模块是否清晰。
    - 二级模块是否是可独立交付 leaf。
    - 页面 URL/API 是否能通过一级 `route-api-index.md` 定位到二级模块。
-   - 二级模块是否有 `module.md`、`changelog.md`、AI 边界指引和必要索引。
+   - 二级模块是否有 `module.md`、集中 changelog、`changelog_path`、`changelog_time`、AI 边界指引和必要索引。
    - detail docs 是否存在、缺失是否可接受、哪些需要优先补。
    - `doc_status`、`confidence`、`last_verified_commit`、`source_paths` 是否可信。
    - 不确定项进入待确认或候选模块，不阻塞可确认部分。
@@ -80,11 +80,11 @@
 7. 改造目录：
    - 根目录只补一级模块入口、跨一级模块关系说明和 `_audits/`。
    - 一级模块补 `README.md` 和按需 `route-api-index.md`。
-   - 二级模块补 `module.md`、`changelog.md`、页面/API/后端索引和 AI 边界指引。
+   - 二级模块补 `module.md`、`docs/changelogs/<module_key>.md`、页面/API/后端索引和 AI 边界指引。
    - 高频、复杂、正在审计或容易误读的页面/API 才创建 `pages/`、`backend/`、`traceability.md`。
 8. 更新 `.maw/modules.yaml`：
    - group 可登记 `route_api_index`。
-   - leaf 必须登记 `doc`、`changelog`、`parent_key`、`component_refs`、`app_keys` 和已知路径/API/表/配置/测试边界。
+   - leaf 必须登记 `doc`、`changelog_path`、`changelog_time`、`parent_key`、`component_refs`、`app_keys` 和已知路径/API/表/配置/测试边界。
    - leaf 可登记 `detail_docs.page_docs`、`detail_docs.backend_docs`、`detail_docs.traceability_doc`。
    - 可选登记 `doc_status`、`confidence`、`last_verified_commit`、`last_verified_at`、`last_audit_id`、`audit_docs` 和 `lifecycle`。
    - 未知路径使用空列表，不猜测。
@@ -129,7 +129,7 @@ AI 不得把 `stale` 或 `deprecated` 文档当作当前实现依据。确需读
 - `.maw/modules.yaml` 可被 YAML 解析。
 - `.maw/module-candidates.yaml` 可被 YAML 解析。
 - 一级模块 `README.md` 包含子模块菜单；如有 URL/API 索引，`route-api-index.md` 存在且只写轻量定位。
-- 每个 confirmed leaf 都有 `module.md` 和 `changelog.md`。
+- 每个 confirmed leaf 都有 `module.md` 和 `docs/changelogs/<module_key>.md`，且旧格式自动迁移检查为零待办。
 - `pages/`、`backend/` 和 `traceability.md` 如存在，能被 `module.md`、`route-api-index.md` 或 `.maw/modules.yaml` 追溯引用。
 - `doc_status`、`confidence`、`last_verified_commit`、`source_paths` 没有把未知事实伪装成 confirmed。
 - 没有新增 `general`、`misc`、`common` 兜底模块。

@@ -24,6 +24,7 @@ read_contract:
 
 > 复制本模板到 `docs/modules/<一级模块>/<二级模块>/module.md` 后填写。二级模块代表最小可交付功能模块；如果需要大模块或中间模块组，请先创建对应目录的 `README.md`。默认内容是边界与功能规格填写指南，不代表完整业务实现；不要把一次性需求原文整段粘贴到模板或模块档案中，应提炼为可维护的页面、接口、状态、规则和待确认项。
 > 如果本模块有复杂页面或后端接口，详细审计内容放入同目录 `pages/`、`backend/` 和 `traceability.md`；本文件只维护模块级事实和索引。
+> 模块历史统一写入 `docs/changelogs/<module_key>.md`。本文件不得再维护“最近变更摘要”或历史表，只在末尾保留 `changelog_path` 和 `changelog_time`。
 
 ## 1. 模块元信息
 
@@ -231,13 +232,12 @@ read_contract:
 - 修改页面字段、按钮、展示规则、空态、交互或 API 调用时必须更新：本文件第 4-8 节、对应 `pages/<page-key>.md` 和必要的 `traceability.md`。
 - 修改接口 URL、请求方式、owner_module、后端文件或模块归属时必须更新：一级模块 `route-api-index.md`、本文件第 14 节、对应 `backend/<api-group-or-file>.md` 和必要的 `traceability.md`。
 - 修改接口入参、出参、权限、错误码、副作用或数据读写时必须更新：本文件第 8、14、15 节、对应 `backend/<api-group-or-file>.md` 和必要的 `traceability.md`。
-- 修改数据表时必须更新：
-- 修改状态流/权限/发布规则时必须更新：
+- 修改数据表时必须更新：本文件第 8、15 节、必要的 backend/traceability 文档和集中 changelog。
+- 修改状态流/权限/发布规则时必须更新：相关边界章节和集中 changelog。
 - 新增或复用公共能力时必须更新：
 - 新增澄清、缺口、口径变更或审计提示时必须更新：
 
-## 21. 最近变更摘要
+## 21. 变更日志引用
 
-| 日期 | commit | 任务/提交 | 变更摘要 | doc_status | 是否更新档案 |
-| --- | --- | --- | --- | --- | --- |
-|  |  |  |  | confirmed / inferred / pending_confirm / stale / deprecated |  |
+- changelog_path: `docs/changelogs/<module_key>.md`
+- changelog_time: `<带时区 ISO 8601 时间；仅在集中日志内容实际变化时更新>`

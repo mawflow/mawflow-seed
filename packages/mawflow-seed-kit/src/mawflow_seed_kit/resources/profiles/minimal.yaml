@@ -1,0 +1,16 @@
+schema: mawflow.seed_profile.v2
+key: minimal
+components: []
+modules: []
+apps: {}
+technology:
+  runtime_mode: host
+  languages: []
+  frameworks: []
+  services: []
+  development_environment:
+    standard: host_runtime
+    compose_files: []
+    devcontainer: optional
+  verification:
+    commands: []

@@ -14,7 +14,7 @@
 - `template-source.yaml`：共享源模板来源占位、git 来源和 Seed 来源通道；统一“种子仓库/模板仓库”口径，并提供派生项目能力来源追踪字段；个人本机路径和内部私有源覆盖写入 `.local/.maw/template-source.yaml`。公开仓不会导出该文件；外部项目如需声明来源，可复制 `template-source.example.yaml` 为 `template-source.yaml` 后按项目事实修改。
 - `template-source.example.yaml`：公开安全的 Seed 来源示例，默认指向 `https://github.com/mawflow/mawflow-seed`。
 - `components.yaml`：端和组件清单。
-- `modules.yaml`：功能模块机器索引，连接 module_key、模块档案、页面/API/数据表、配置、发布和测试边界。
+- `modules.yaml`：功能模块机器索引，连接 module_key、模块档案、`changelog_path` / `changelog_time`、页面/API/数据表、配置、发布和测试边界。
 - `module-candidates.yaml`：渐进式模块发现索引，用于记录 seed/candidate/provisional 模块、证据和提升条件。
 - `health/`：项目健康上下文目录，保存健康问题、需求事实、决策、普通健康待办、审计缺口、调研会话摘要和验收缺口，供 Mawflow 主项目和 AI 健康关注导入。
 - `app-runtime.yaml`：按 app_key 组织的 AI 调试运行索引，帮助 AI 找到启动入口、URL、数据库引用和测试账号引用。
@@ -27,18 +27,18 @@
 - `policies.yaml`：脱敏、保密、禁提交和交付策略。
 - `secrets.example.yaml`：公开安全的密钥配置示例。
 - `secrets.yaml` / `secrets.dev.yaml` / `secrets.pro.yaml`：仅限受信任私有派生项目按自身安全策略使用；公开 Seed 不导出这些文件，公开项目不得提交真实密钥。
-- `*.local.yaml`：本机覆盖配置，优先级最高，不提交 git。
+- `.local/.maw/*.yaml`：本机覆盖配置，优先级最高，不提交 git；旧 `.maw/*.local.yaml` 仅兼容读取。
 - `.maw/<domain>.d/*.yaml`：同一配置域的拆分片段；片段顶层可写 `enabled: false` 暂不参与合并，适合测试/正式客户仓分支、不同镜像目标等预先配好后按需启用。
 
 公开 Seed 默认不提交真实密钥。`.maw/secrets.yaml`、`.maw/secrets.dev.yaml`、`.maw/secrets.pro.yaml` 不进入公开发布 payload，也不应在公开派生项目中保存真实密钥。公开仓只提供 `.maw/secrets.example.yaml` 等示例文件；真实凭证应写入 `.local/`、运行环境变量、宿主机密钥管理、mawsec / mawlocal / mawproxy 引用，或受信任私有派生项目自己的安全配置中。
 
-受信任私有派生项目如果确实需要使用 `.maw/secrets*.yaml`，必须由项目自身安全策略确认，并确保外部交付、公开发布、诊断包、日志和客户仓同步前完成脱敏。`.maw/*.local.yaml` 只用于本机路径、临时账号和个人覆盖，必须被 `.gitignore` 忽略。
+受信任私有派生项目如果确实需要使用 `.maw/secrets*.yaml`，必须由项目自身安全策略确认，并确保外部交付、公开发布、诊断包、日志和客户仓同步前完成脱敏。本机路径、临时账号和个人覆盖统一写入 `.local/.maw/`，必须被 `.gitignore` 忽略；旧 `.maw/*.local.yaml` 不再作为新写入路径。
 
 业务代码相关配置的权威来源始终在 `code/<app_key>/` 内部工程文件中，例如 `.env.example`、框架配置、构建配置和路由配置。`.maw/app-runtime.yaml` 只为 AI 和人工协作提供调试索引，模板默认按 `server`、`client` 区分后端和前端；如项目确实存在独立管理后台、设备端、运营端等独立构建或发布目标，应按项目实际新增 app_key。若与 code 内配置冲突，以 code 为准并同步修正 `.maw`。
 
 SSH key 可以放在仓库根目录 `.ssh/`，也可以放在团队约定的任意公共目录；路径可写相对路径或绝对路径。`.ssh/` 下真实 key 文件必须被 git 忽略，只保留说明文件。
 
-客户仓很大时，`external_mapped.components.<component>.external.local_repository_path` 可指向本机预克隆客户仓。真实本机路径请写入 `.maw/repositories.local.yaml` 或 `.local/.maw/repositories.yaml`，不要提交共享配置；共享 `.maw/repositories.yaml` 只保留空占位和说明。
+客户仓很大时，`external_mapped.components.<component>.external.local_repository_path` 可指向本机预克隆客户仓。真实本机路径请写入 `.local/.maw/repositories.yaml`，不要提交共享配置；共享 `.maw/repositories.yaml` 只保留空占位和说明。
 
 可提交文档、提示词、报告、交付说明和 AI 最终输出中，凡指向当前项目目录或文件的路径，一律写项目根相对路径，避免多台设备协作时混入某台机器的项目绝对路径。远程服务器 workdir、公共 SSH key 目录、URL 和第三方系统路径不是项目目录路径，可保留原始形式。
 
@@ -77,8 +77,8 @@ SSH key 可以放在仓库根目录 `.ssh/`，也可以放在团队约定的任�
 .maw/<domain>.d/*.yaml
 .maw/<domain>.dev.yaml 或 .maw/<domain>.pro.yaml
 .maw/<domain>.dev.d/*.yaml 或 .maw/<domain>.pro.d/*.yaml
-.maw/<domain>.local.yaml
-.maw/<domain>.local.d/*.yaml
+.local/.maw/<domain>.yaml
+.local/.maw/<domain>.d/*.yaml
 ```
 
 `local` 永远最后读取，优先级最高。

@@ -50,7 +50,7 @@
 - 需求和设计变化：`docs/requirements/`、`docs/design/`、`docs/planning/`。
 - 发布和运维变化：`release/rules.yaml`、`ops/`、`docs/delivery/`。
 - 仓库同步变化：`docs/customer-repository-sync-guide.md`、`docs/component-mirror-repository-guide.md`、`.maw/repositories.yaml`。
-- 模块边界变化：优先更新 `docs/modules/<module-key>/module.md` 和 `docs/modules/<module-key>/changelog.md`。
+- 模块边界变化：优先更新 `docs/modules/<module-key>/module.md` 和 `docs/changelogs/<module_key>.md`；模块页只保留 `changelog_path`、`changelog_time`。
 - 公共能力变化：优先更新 `.maw/capabilities.yaml`、必要的 `docs/capabilities/<capability-key>.md` 和 `docs/technical-map/README.md`。
 - 脚本规范变化：优先更新 `docs/capabilities/ai-python-script-contract.md`、`docs/ai-instructions/instructions/script-contract-upgrade.md`、`ops/scripts/README.md` 和 `.maw/capabilities.yaml`。
 - 项目健康上下文变化：优先更新 `.maw/health/`、`docs/capabilities/project-health-context.md`、`docs/ai-instructions/instructions/project-health-context.md` 和 `ops/scripts/check-project-health-context.py`。

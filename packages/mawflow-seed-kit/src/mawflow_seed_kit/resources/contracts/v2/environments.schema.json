@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://mawflow.com/schemas/environments.v2.json","type":"object","required":["schema_version","environments"],"properties":{"schema_version":{"const":2},"environments":{"type":"object","additionalProperties":{"type":"object"}}},"additionalProperties":true}

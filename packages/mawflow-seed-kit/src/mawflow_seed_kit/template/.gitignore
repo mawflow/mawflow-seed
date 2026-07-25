@@ -1,0 +1,7 @@
+.local/
+*.local.yaml
+artifacts/
+runtime/
+workspaces/
+__pycache__/
+node_modules/

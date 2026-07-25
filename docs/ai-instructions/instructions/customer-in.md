@@ -59,7 +59,7 @@ ops/scripts/sync-to-external-repo.sh pull <component> --local-repository-path <�
 - 不要把客入前置绑定为必须客主。
 - 不要把客户测试反馈当作客户分支代码回流；测试单回到 `INTERNAL_DEV` 修复。
 - 不要把客户仓库 clone、submodule 或 worktree 放进 `code/<component>`。
-- 不要把真实本机客户仓路径写入共享配置；应放在 `.maw/repositories.local.yaml`、`.local/.maw/repositories.yaml` 或当次命令参数。
+- 不要把真实本机客户仓路径写入共享配置；应放在 `.local/.maw/repositories.yaml` 或当次命令参数。
 
 ## 冲突与覆盖规则
 

@@ -64,6 +64,13 @@
 - 本机调试差异写入 `.local/config/`、`.local/ai/` 或 `.local/device.yaml` 这类被忽略的本机文件；需要给团队示例时，只提交 README 或 `*.example.yaml`。
 - 当本机浏览器调试遇到 CORS、web-security 或 profile 差异时，先读取 `.local/config/` 的本机说明再执行，不要把具体机器命令复制回共享文档、提示词或默认 `.maw` 配置。
 
+## External Mawflow Skill
+
+- Mawflow Agent Skills 是可选的用户级发现与 CLI/MCP 适配入口，不是项目规则、运行依赖或第二套指令系统。
+- 无论是否安装 Skill，Agent 都必须继续读取 `AI_START_HERE.md`、`.maw/agent-entry.yaml` 和当前任务命中的项目文件；项目事实与安全限制优先于 Skill 建议。
+- Skill 不得复制 `PROJECT_COMMANDS.md`、模块事实、客户信息或凭据，也不得自动修改项目来解决版本差异。
+- 卸载、禁用或未安装 Skill 不影响 Seed 的启动、doctor、开发、验证与交付流程；兼容边界见 `docs/capabilities/agent-skill-integration.md`。
+
 ## Validation And Git
 
 - Shell 命令默认使用 `rtk`；需要原始机器输出时使用 `rtk proxy`，并限制路径和输出行数。

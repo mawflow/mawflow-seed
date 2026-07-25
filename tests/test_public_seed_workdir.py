@@ -42,15 +42,6 @@ def materialize_minimal_payload(tmp_path: Path) -> Path:
 
 
 class PublicSeedWorkdirTest(unittest.TestCase):
-    def test_public_upgrade_docs_use_host_base_drift_entry(self) -> None:
-        instruction = (ROOT / "docs/ai-instructions/instructions/derived-template-drift-upgrade.md").read_text(
-            encoding="utf-8"
-        )
-        quickstart = (ROOT / "docs/public-seed/quickstart.md").read_text(encoding="utf-8")
-        self.assertIn("mawflow project drift", instruction)
-        self.assertIn("mawflow project drift", quickstart)
-        self.assertIn("源码兼容入口", instruction)
-
     def test_accepts_complete_payload(self) -> None:
         with tempfile.TemporaryDirectory() as temp_name:
             root = Path(temp_name)
@@ -63,7 +54,7 @@ class PublicSeedWorkdirTest(unittest.TestCase):
             root = Path(temp_name)
             manifest_path = materialize_minimal_payload(root)
             (root / "AGENTS.md").unlink()
-            forbidden = root / ".maw/template-source.yaml"
+            forbidden = root / ".maw/secrets.yaml"
             forbidden.parent.mkdir(parents=True, exist_ok=True)
             forbidden.write_text("source_channel: internal\n", encoding="utf-8")
             summary = MODULE.check_public_workdir(root, manifest_path, strict=True)
@@ -83,6 +74,19 @@ class PublicSeedWorkdirTest(unittest.TestCase):
             summary = MODULE.check_public_workdir(root, manifest_path, strict=True)
             self.assertEqual(summary["status"], "blocked")
             self.assertIn("relative_link_escapes_payload", {item["kind"] for item in summary["blockers"]})
+
+    def test_allows_local_examples_but_blocks_local_runtime_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_name:
+            root = Path(temp_name)
+            manifest_path = materialize_minimal_payload(root)
+            runtime_file = root / ".local/.maw/project.yaml"
+            runtime_file.parent.mkdir(parents=True, exist_ok=True)
+            runtime_file.write_text("credentials: {}\n", encoding="utf-8")
+
+            summary = MODULE.check_public_workdir(root, manifest_path, strict=True)
+
+            self.assertEqual(summary["status"], "blocked")
+            self.assertIn("forbidden_local_runtime_file", {item["kind"] for item in summary["blockers"]})
 
 
 if __name__ == "__main__":

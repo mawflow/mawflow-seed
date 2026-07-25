@@ -1,8 +1,9 @@
+schema_version: 2
 project:
   # 项目短标识；用于目录、远程服务器工作目录、部署记录和自动化任务命名。
-  key: replace_me
+  key: mawflow-seed
   # 项目显示名称；用于 README、报告、交付文档和通知。
-  name: Replace Me
+  name: MAWflow Seed
   # 仓库模式：internal_only 表示只使用我方仓库；external_mapped 表示 code 下每个组件可独立映射客户仓库。
   repository_mode: internal_only # internal_only | external_mapped
   # 默认主干分支；脚本和 AI 任务在未指定分支时使用它。
@@ -10,9 +11,20 @@ project:
   # 项目默认时区；影响定时任务、发布时间和报告日期。
   timezone: Asia/Shanghai
   # 项目负责人或团队；用于交接、审批和风险升级。
-  owner: ""
+  owner: MAWflow
   # 项目简介；建议用一两句话说明业务目标和主要端。
-  description: ""
+  description: Seed Contract、Seed Kit、项目模板与公开分发的唯一开发源
+  type: seed_repository
+  classification:
+    delivery_mode: existing_evolution
+    requirement_maturity: clear
+    source_state: existing_repository
+    onboarding_status: confirmed
+    selected_methodology: solo_lean_loop
+  objective:
+    value_statement: 为新项目提供可验证、可迁移、可视化维护的 AI 工作目录契约。
+    primary_users: [project_owner, developer, ai_executor]
+    success_metrics: [materialization_pass, migration_pass, public_payload_pass]
 
 workflow:
   # 是否要求 AI 编码前完成初始化清单；生产项目建议保持 true。
@@ -21,6 +33,10 @@ workflow:
   require_release_review: true
   # 是否要求同步客户仓库或导出交付包前执行脱敏检查。
   require_desensitize_before_external_delivery: true
+  # 通用项目生命周期、分支、正式发布来源和工作台字段元数据事实源。
+  project_lifecycle_ref: .maw/project-lifecycle.yaml
+  # 默认单机独立可完整运行；接入云端协作后仍由本地仓库安全门禁裁决写操作。
+  collaboration_mode: local_standalone
 
 configuration_profiles:
   # 默认配置档；日常开发和远程测试服务器优先使用 dev。
@@ -30,7 +46,7 @@ configuration_profiles:
   committed_profiles:
     - dev
     - pro
-  # 本地覆盖档；`.maw/*.local.yaml` 不提交，且永远最后加载。
+  # 本地覆盖档统一放 `.local/.maw/*.yaml`，不提交且永远最后加载；旧 `.maw/*.local.yaml` 仅兼容读取。
   local_profile: local
 
 ssh_key_policy:
@@ -52,6 +68,24 @@ collaboration_boundary:
   non_code_purpose: ai_human_collaboration
   # `.maw` 是否可保存 AI 调试所需的显式索引和凭证引用。
   maw_can_store_ai_debug_index: true
+
+# 项目只声明“需要什么凭证”，不在本文件保存凭证值或具体绑定。
+# 具体机器的绑定写入被 Git 忽略的 `.local/.maw/project.yaml`，并且只能保存 mawsec/mawlocal/mawproxy 引用。
+credentials:
+  schema_version: 1
+  requirements: []
+  # 示例（按项目事实增量添加，不要把占位项当成真实需求）：
+  # - key: source-repository-read
+  #   name: 源仓库只读凭证
+  #   credential_type: git_https_token
+  #   required: true
+  #   credential_class: user
+  #   subject_scope: project
+  #   storage_location: either
+  #   environments: [dev]
+  #   required_fields: [token]
+  #   allowed_use_modes: [git-fetch]
+  #   host_authorization_required: true
 
 documentation_path_policy:
   # 输入资料整理、提示词、报告、交付说明和最终输出中，凡指向本项目目录或文件的路径，一律使用项目根相对路径。

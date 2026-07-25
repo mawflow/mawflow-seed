@@ -22,7 +22,7 @@
 
 ## 执行步骤
 
-1. 读取 `.maw/modules.yaml`、`.maw/module-candidates.yaml`、`docs/modules/README.md`、`docs/modules/_discovery/README.md` 和 `docs/modules/_template/group-README.md`；如果需要创建 leaf，再读取 `docs/modules/_template/module.md` 和 `docs/modules/_template/changelog.md`。如果需要建立 URL/API 定位或审计页，再读取 `docs/modules/_template/route-api-index.md`、`page.md`、`backend-slice.md` 和 `traceability.md`。只有模块复杂、AI 经常误读或用户明确需要 AI 读取提示时，才读取 `docs/modules/_template/ai-context.md`。
+1. 读取 `.maw/modules.yaml`、`.maw/module-candidates.yaml`、`docs/modules/README.md`、`docs/changelogs/README.md`、`docs/modules/_discovery/README.md` 和 `docs/modules/_template/group-README.md`；先运行集中日志迁移 plan，发现旧格式时自动执行迁移；如果需要创建 leaf，再读取 `docs/modules/_template/module.md` 和 `docs/modules/_template/changelog.md`。如果需要建立 URL/API 定位或审计页，再读取 `docs/modules/_template/route-api-index.md`、`page.md`、`backend-slice.md` 和 `traceability.md`。只有模块复杂、AI 经常误读或用户明确需要 AI 读取提示时，才读取 `docs/modules/_template/ai-context.md`。
 2. 根据任务输入和最小必要代码/文档，识别候选模块节点。
 3. 为每个候选节点填写模块拆分判定：
 
@@ -43,7 +43,7 @@ API/命令边界:
 
 4. 判定为 `group` 的节点，只创建或更新 `README.md`，并维护子模块菜单、共享边界、不做范围和待确认问题。
 5. 一级 `group` 下有页面 URL、API、命令或关键文件线索时，创建或更新同目录 `route-api-index.md`；该文件只写轻量定位，不写字段、按钮、入参出参和状态流详情。
-6. 判定为 `leaf` 的节点，才创建或更新 `module.md` 与 `changelog.md`；同时记录 `doc_status`、`confidence`、`last_verified_commit` 和 `source_paths`，证据不足时写 `pending_confirm` 或 `inferred`。
+6. 判定为 `leaf` 的节点，才创建或更新 `module.md` 与 `docs/changelogs/<module_key>.md`；`module.md` 只保留 `changelog_path`、`changelog_time`，同时记录 `doc_status`、`confidence`、`last_verified_commit` 和 `source_paths`，证据不足时写 `pending_confirm` 或 `inferred`。
    - 普通 leaf 不创建 AI 专用文件。
    - 有页面、API 或后端文件需要人工对照审计时，可以在 leaf 下按需创建 `pages/`、`backend/` 和 `traceability.md`。这些是 detail docs，不是新的正式模块。
    - 复杂 leaf 可以按需创建 `ai-context.md`，只写 AI 读取路线、常见误判、执行提示和验证提示。
@@ -51,7 +51,7 @@ API/命令边界:
 8. 判定为 `defer` 或 `unknown` 的节点，不生成 leaf；写入 `.maw/module-candidates.yaml`、`docs/modules/_discovery/`、父级 group 的待确认问题或最终说明。
 9. 更新 `.maw/modules.yaml`：
    - group/component 节点可以登记 `key`、`name`、`type`、`doc`、`parent_key` 和共享路径。
-   - leaf 节点必须登记 `doc`、`changelog`、`parent_key`、`component_refs`、`app_keys`、路径/API/表/配置/测试边界。
+   - leaf 节点必须登记 `doc`、`changelog_path`、`changelog_time`、`parent_key`、`component_refs`、`app_keys`、路径/API/表/配置/测试边界。
    - 一级 group 可以可选登记 `route_api_index` 指向 `docs/modules/<group>/route-api-index.md`。
    - leaf 可以可选登记 `detail_docs.page_docs`、`detail_docs.backend_docs` 和 `detail_docs.traceability_doc`。
    - leaf 可以可选登记 `doc_status`、`confidence`、`last_verified_commit`、`last_verified_at`、`last_audit_id` 和 `audit_docs`。
@@ -76,8 +76,9 @@ API/命令边界:
 - `.maw/module-candidates.yaml` 能被 YAML 解析；候选模块字段完整。
 - group `README.md` 包含子模块菜单和模块拆分判定表。
 - 一级 group 如存在 URL/API 定位索引，`route-api-index.md` 只包含定位关系和待确认项，不复制详细规格。
-- 每个 leaf 都有 `module.md` 和 `changelog.md`。
-- `.maw/modules.yaml` 中 leaf 的 `doc` 和 `changelog` 路径真实存在。
+- 每个 leaf 都有 `module.md` 和 `docs/changelogs/<module_key>.md`。
+- `.maw/modules.yaml` 中 leaf 的 `doc` 和 `changelog_path` 路径真实存在，`changelog_time` 是带时区 ISO 8601 时间。
+- `python3 ops/scripts/migrate-module-changelogs.py check --format json` 显示零待迁移路径；重复迁移不产生 diff。
 - leaf 下存在 `pages/`、`backend/` 或 `traceability.md` 时，它们被 `module.md` 或 `.maw/modules.yaml` 可追溯引用。
 - 如果 leaf 登记了 `ai_doc`，该路径真实存在，且内容只包含 AI 读取路线、常见误判、执行和验证提示，不复制完整模块事实。
 - 没有新增 `general`、`misc`、`common` 这类兜底模块。

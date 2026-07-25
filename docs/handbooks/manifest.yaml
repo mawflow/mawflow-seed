@@ -1,0 +1,44 @@
+schema_version: 2
+handbook_system:
+  index_path: docs/handbooks/README.md
+  evidence_required: true
+  volumes:
+    - key: requirements
+      title: 需求手册
+      root: docs/handbooks/requirements
+      audience: [product_owner, project_manager, acceptance_owner]
+      authority: human_confirmed_requirement
+      required: true
+    - key: technical
+      title: 技术手册
+      root: docs/handbooks/technical
+      audience: [technical_owner, developer, ai_executor]
+      authority: confirmed_technical_baseline
+      required: true
+    - key: task_audit
+      title: 任务与 AI 行为审计手册
+      root: docs/handbooks/task-audit
+      audience: [project_owner, auditor]
+      authority: task_execution_evidence
+      required: true
+    - key: quality
+      title: 测试与质量手册
+      root: docs/handbooks/quality
+      audience: [tester, acceptance_owner]
+      authority: verified_quality_evidence
+      required: true
+    - key: release_ops
+      title: 发布与运维手册
+      root: docs/handbooks/release-ops
+      audience: [release_owner, operator]
+      authority: verified_release_evidence
+      required: true
+    - key: decisions_risks
+      title: 决策、风险与技术债手册
+      root: docs/handbooks/decisions-risks
+      audience: [project_owner, technical_owner, auditor]
+      authority: confirmed_decision_record
+      required: true
+  compatibility:
+    legacy_manifest: docs/project-manual/manual.yaml
+    legacy_manual_type: internal

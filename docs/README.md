@@ -49,7 +49,7 @@ AI/Codex 不应在任务开始时全量读取 `docs/**`。本目录采用“总�
 
 | 任务类型 | 默认入口 | 继续读取条件 |
 | --- | --- | --- |
-| 功能开发 / 修 bug | `.maw/modules.yaml`、`.maw/module-candidates.yaml`、`docs/modules/README.md`、相关模块组 README | 定位到叶子模块后读 `module.md`；只有页面 URL/API/命令只能定位到一级模块时读该一级模块 `route-api-index.md`；具体页面或后端审计再读二级模块内命中的 `pages/`、`backend/` 或 `traceability.md`；复杂模块可按需读 `ai-context.md`；无法确定正式 module_key 时读 `docs/modules/_discovery/` 并输出 `module_candidate`；执行 `#模块地图：检查/审计/清理过期/变更影响/发布前检查` 时按需写入 `docs/modules/_audits/` 并记录 `module_map_score`；涉及设计时再读 `docs/design/**` |
+| 功能开发 / 修 bug | `.maw/modules.yaml`、`.maw/module-candidates.yaml`、`docs/modules/README.md`、`docs/changelogs/README.md`、相关模块组 README | 先自动迁移旧 changelog 格式；定位到叶子模块后读 `module.md`，需要追溯时按 `changelog_path` 读集中日志；只有页面 URL/API/命令只能定位到一级模块时读 `route-api-index.md`；具体页面或后端审计再读命中的 `pages/`、`backend/` 或 `traceability.md`；执行模块地图审计时记录 `module_map_score`；涉及设计时再读 `docs/design/**` |
 | AI 工作目录入口 / Agent 启动协议 | `AI_START_HERE.md`、`.maw/agent-entry.yaml`、`.maw/agent-rules.yaml`、`AGENTS.md` | 调整 AI 进入目录后的启动顺序、工具适配规则、禁读路径、验证入口或收口字段时读取；派生项目只做增量合并，不覆盖目标项目事实 |
 | 需求澄清 / 范围确认 | `docs/requirements/README.md` | 需要基线时读 `requirement-baseline.md`；需要原始资料分析结果时按主题读 `raw/` 相关 Markdown；用户要求追溯原始资料时再读 `.local/docs/requirements/raw/` |
 | 架构 / API / 数据模型 | `docs/design/README.md` | 只读相关的 `architecture.md`、`api-design.md`、`data-model.md`、`page-flow.md` 或 `feature-spec.md` |
@@ -99,7 +99,8 @@ AI/Codex 不应在任务开始时全量读取 `docs/**`。本目录采用“总�
 - `ai-instructions/`：项目内可被 Codex 精准命中的指令、专有名词、关键词候选、经验索引、用户经验候选、执行经验候选、经验总结和方案详情库。
 - `ai-instructions/templates/final-closeout.zh-CN.md`：中文人类优先最终说明模板。
 - `seed-repository-upgrade-candidates.md`：派生项目记录适合回流到 `maw-project-template` 种子仓库的候选优化或新增能力；种子仓库自身保留模板和示例口径。
-- `modules/`：功能模块档案目录，配合 `.maw/modules.yaml` 记录模块边界、实现程度、页面/API/数据表边界和变更日志；一级模块可维护 `route-api-index.md` 用 URL/API 快速定位二级模块，二级模块可按需维护 `pages/`、`backend/` 和 `traceability.md` 审计页，并用 `doc_status`、`last_verified_commit` 和 `module_map_score` 做渐进审计。
+- `modules/`：功能模块档案目录，配合 `.maw/modules.yaml` 记录当前边界、实现程度和页面/API/数据表事实；一级模块可维护 `route-api-index.md`，二级模块可按需维护审计页，并用证据字段和 `module_map_score` 做渐进审计。
+- `changelogs/`：模块变更日志唯一集中目录；模块档案只保留 `changelog_path`、`changelog_time`，旧格式由迁移脚本自动转换。
 - `modules/_audits/`：模块地图审计报告目录，记录 `#模块地图` 检查、审计、查漏补缺、清理过期、变更影响和发布前检查结果。
 - `modules/_template/ai-context.md`：可选 AI 模块上下文模板，只在复杂模块需要短小读取路线和常见误判提示时使用。
 - `modules/_discovery/`：渐进式模块发现区，记录候选模块、证据和待确认问题。

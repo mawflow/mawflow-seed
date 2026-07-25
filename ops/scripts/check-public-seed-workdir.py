@@ -63,6 +63,17 @@ def check_public_workdir(root: Path, manifest_path: Path, strict: bool) -> dict[
         if (root / rel_path).exists():
             blockers.append({"kind": "forbidden_path_present", "path": rel_path})
 
+    local_root = root / ".local"
+    if local_root.exists():
+        for path in sorted(local_root.rglob("*")):
+            if not path.is_file():
+                continue
+            if path.name == "README.md" or path.name.endswith(".example.yaml"):
+                continue
+            blockers.append(
+                {"kind": "forbidden_local_runtime_file", "path": path.relative_to(root).as_posix()}
+            )
+
     for path in sorted(root.rglob("*")):
         rel_path = path.relative_to(root).as_posix()
         if path.is_symlink():

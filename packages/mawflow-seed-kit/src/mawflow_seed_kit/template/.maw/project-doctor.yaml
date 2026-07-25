@@ -1,0 +1,19 @@
+schema_version: 2
+project_doctor:
+  required_sources:
+    - .maw/seed.lock
+    - .maw/project.yaml
+    - .maw/technology.yaml
+    - .maw/components.yaml
+    - .maw/modules.yaml
+    - .maw/app-runtime.yaml
+    - .maw/environments.yaml
+    - .maw/project-lifecycle.yaml
+    - docs/handbooks/manifest.yaml
+  checks:
+    - seed_contract
+    - component_references
+    - runtime_references
+    - technology_requirements
+    - handbook_manifest
+    - local_overlay_boundary

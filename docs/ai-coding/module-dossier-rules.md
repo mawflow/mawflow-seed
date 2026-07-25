@@ -8,8 +8,8 @@
 2. 如果任务里有 `module_key`，必须先读 `.maw/modules.yaml`，再读取对应 `doc` 指向的叶子模块档案；没有定位到叶子模块前，不读取所有模块详情。
 3. 如果用户提到模块名、页面名、页面路径、接口名、接口路径、命令名、数据表名或集合名，必须先尝试从 `.maw/modules.yaml` 定位模块。
 4. 如果只能定位到一级大模块，先读取该一级模块 `README.md`；当任务输入是页面 URL、API、命令或文件路径时，再读取同目录 `route-api-index.md` 快速定位二级模块。
-5. 如果只能定位到中间模块组，先读取该模块组 `README.md` 的子模块菜单，按需继续向下定位；只有选中具体叶子模块或需要确认跨模块影响时，才读取 `module.md` 和 `changelog.md`。
-6. 定位后只读取最小必要上下文：对应叶子模块档案、必要 changelog、相关代码路径和必要设计文档；涉及具体页面或后端审计时，再读取二级模块内的具体 `pages/`、`backend/` 或 `traceability.md`。
+5. 如果只能定位到中间模块组，先读取该模块组 `README.md` 的子模块菜单，按需继续向下定位；只有选中具体叶子模块或需要确认跨模块影响时，才读取 `module.md` 和 `changelog_path` 指向的集中日志。
+6. 定位后只读取最小必要上下文：对应叶子模块档案、必要的 `docs/changelogs/<module_key>.md`、相关代码路径和必要设计文档；涉及具体页面或后端审计时，再读取二级模块内的具体 `pages/`、`backend/` 或 `traceability.md`。
 7. 如果 `.maw/modules.yaml` 配置了 `ai_doc`，或叶子目录下存在 `ai-context.md`，且当前任务是实现、审查、修 bug、发布判断或该模块容易被 AI 误读，可在读取 `module.md` 后读取该 AI 专用上下文。
 8. 找不到模块时，不允许为了省事把所有任务归到 `general`；应记录待确认，并建议补充 `.maw/modules.yaml`、一级模块 `route-api-index.md` 或模块候选。
 9. `docs/archive/**` 默认不作为当前实现依据，也不自动读取。
@@ -26,7 +26,7 @@
 
 ## 执行中维护
 
-发生以下变化后，必须判断是否更新对应模块档案和 changelog：
+发生以下变化后，必须判断是否更新对应模块档案和集中 changelog。执行前先运行 `python3 ops/scripts/migrate-module-changelogs.py plan --format json`；发现旧 `docs/modules/**/changelog.md`、旧 `changelog:` 字段或内嵌历史段时，自动运行 `migrate --execute` 完成迁移：
 
 - 页面、路由、组件、菜单或用户流程变化。
 - API、命令、事件、状态流、权限或错误码变化。
@@ -44,7 +44,7 @@
 需要更新时，优先更新：
 
 - `docs/modules/<module-key>/module.md`
-- `docs/modules/<module-key>/changelog.md`
+- `docs/changelogs/<module_key>.md`；模块档案只保留 `changelog_path` 与 `changelog_time`，后者仅在日志内容实际变化时更新。
 - 归属一级模块的 `docs/modules/<group>/route-api-index.md`，当页面 URL、API、命令、关键文件或 owner_module 变化时更新。
 - 受影响二级模块的 `docs/modules/<group>/<module-key>/pages/<page-key>.md`，当具体页面字段、按钮、交互、状态或 API 调用变化时更新。
 - 受影响二级模块的 `docs/modules/<group>/<module-key>/backend/<api-group-or-file>.md`，当 API、后端文件、服务、权限、错误码或数据读写变化时更新。
@@ -69,7 +69,7 @@
 
 不更新时，最终说明必须写明原因，例如“只调整错别字，不影响模块边界”或“只新增检查脚本，模块业务边界未变化”。
 
-AI 专用上下文是可选文件，建议命名为 `ai-context.md`，或由 `.maw/modules.yaml` 的 `ai_doc` 指向。它只记录读取路线、常见误判、执行提示、验证提示和收口注意事项；真实页面/API/数据表边界仍以 `module.md` 为准，历史变化仍以 `changelog.md` 为准。
+AI 专用上下文是可选文件，建议命名为 `ai-context.md`，或由 `.maw/modules.yaml` 的 `ai_doc` 指向。它只记录读取路线、常见误判、执行提示、验证提示和收口注意事项；真实页面/API/数据表边界仍以 `module.md` 为准，历史变化仍以 `docs/changelogs/<module_key>.md` 为准。
 
 页面和后端审计页也是可选的渐进式 detail docs。新增或改造模块地图时，先保证一级/二级模块与 owner 关系可读，再补 `route-api-index.md`；只有高频、复杂、正在审计或容易误读的页面/API 需要立即创建详细审计页。历史项目缺少这些 detail docs 时默认 warning-only，不阻塞普通开发。
 

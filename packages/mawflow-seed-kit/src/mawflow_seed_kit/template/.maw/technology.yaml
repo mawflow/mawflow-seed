@@ -1,0 +1,13 @@
+schema_version: 1
+technology:
+  runtime_mode: container
+  languages: []
+  frameworks: []
+  services: []
+  development_environment:
+    standard: docker_compose
+    compose_files:
+      - compose.dev.yml
+    devcontainer: optional
+  verification:
+    commands: []

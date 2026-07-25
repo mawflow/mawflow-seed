@@ -1,0 +1,138 @@
+schema_version: 1
+upgrade_policy:
+  project_upgrade:
+    trigger_keywords:
+      - "#项目升级"
+      - "模板派生项目升级"
+      - "升级到最新模板"
+    strategy: audit_matrix_then_apply
+    source_resolution_order:
+      - user_input
+      - ".local/.maw/template-source.yaml"
+      - ".maw/template-source.yaml"
+      - current_repository
+    required_steps:
+      - confirm_upgrade_type
+      - resolve_template_source
+      - audit_target_project_facts
+      - audit_source_template_changes
+      - produce_upgrade_decision_matrix
+      - apply_selected_changes_by_risk
+      - validate_and_closeout
+    protect_paths_and_facts:
+      - README.md
+      - code/
+      - ".local/"
+      - ".maw/secrets*.yaml"
+      - ".maw/repositories*.yaml"
+      - ".maw/releases*.yaml"
+      - app_key
+      - module_dossiers
+      - customer_repository_mappings
+    risk_levels:
+      R0: "文档说明补缺，可自动执行。"
+      R1: "AI 控制面新增字段或提示词增强，可自动执行但必须记录取舍。"
+      R2: "脚本、任务包、配置 schema，需更严格验证。"
+      R3: "发布、客户仓、密钥、环境策略，默认人工确认。"
+      R4: "code/ 或业务行为变化，默认不由项目升级自动处理。"
+  template_upgrade:
+    trigger_keywords:
+      - "#模板升级"
+      - "#模版升级"
+      - "生成模板新特性升级提示词"
+    strategy: produce_upgrade_assets
+    outputs:
+      machine_policy: ".maw-template/upgrades/<upgrade_key>.yaml"
+      migration_note: "docs/template-migrations/YYYYMMDD-<slug>.md"
+      prompt: "prompts/codex/template-upgrade-prompts/YYYYMMDD-<slug>-prompt.md"
+      task_pack_when_high_risk: "prompts/codex/task-packs/<slug>-codex-tasks/"
+    risk_levels:
+      T0: "模板内部说明，不需要派生项目升级。"
+      T1: "文档/提示词增强，生成轻量提示词。"
+      T2: ".maw 配置字段、任务路由、收口协议，生成迁移说明和提示词。"
+      T3: "脚本、发布、客户仓、密钥策略，生成任务包和人工确认清单。"
+      T4: "影响 code/ 结构、app_key 或发布行为，默认不自动传播。"
+  derived_template_drift_upgrade:
+    trigger_keywords:
+      - "#模板升级"
+      - "#模版升级"
+      - "派生项目模板升级"
+      - "模板漂移升级"
+      - "当前模板落后多少提交"
+    strategy: plan_template_drift_then_execute_current_session
+    source_baseline_ref: "template_source.applied_version"
+    planner: "ops/scripts/plan-template-drift.py"
+    task_pack: "prompts/codex/task-packs/template-feature-upgrade-codex-tasks/"
+    required_steps:
+      - resolve_template_source
+      - resolve_template_source_channel
+      - compare_applied_version_to_target_commit
+      - generate_current_session_execution_prompt
+      - execute_template_feature_upgrade_task_pack
+      - update_template_source_applied_version_to_target_commit
+      - validate_commit_push_and_mirror
+    notes:
+      - "This route is for derived projects. Source template repositories still use template_upgrade to generate migration assets."
+      - "If applied_version is empty, initialize the baseline from the current target commit and do not backfill old history."
+      - "Resolve template_source.source_channel before drift execution: controlled internal projects use a trusted source or local overlay, public_seed uses the public mawflow/mawflow-seed source, and unknown_legacy requires human confirmation."
+  seed_repository_upgrade:
+    trigger_keywords:
+      - "#种子仓库升级"
+      - "种子仓库升级"
+      - "模板仓库升级建议"
+      - "回流种子仓库"
+      - "回流模板仓库"
+      - "建议更新种子仓库"
+    strategy: record_candidate_then_generate_seed_repository_prompt
+    terminology:
+      seed_repository: "maw-project-template"
+      template_repository: "maw-project-template"
+    candidate_registry: "docs/seed-repository-upgrade-candidates.md"
+    prompt_registry: "prompts/codex/seed-repository-upgrade-prompts"
+    prompt_target: seed_repository
+    backward_compatibility: additive_only
+    candidate_levels:
+      S0: "明显只适合当前项目，不回流。"
+      S1: "有复用可能但证据不足，先记录候选并补证据。"
+      S2: "已验证且可默认关闭或可选启用，记录候选并生成种子仓执行提示词。"
+      S3: "多项目高价值治理能力，建议种子仓接纳后生成模板升级资产。"
+      S4: "涉及发布、客户仓、密钥、MCP、宿主机或远端写，需人工确认和高风险升级处理。"
+    status_values:
+      - candidate
+      - prompt_generated
+      - sent_to_seed_repository
+      - accepted_in_seed_repository
+      - rejected_or_local_only
+      - needs_more_evidence
+    capability_origin_values:
+      - seed_repository
+      - derived_project_custom
+      - candidate_for_seed_repository
+      - unknown_legacy
+    required_steps:
+      - determine_repository_role
+      - classify_capability_origin
+      - classify_candidate_level
+      - check_test_contract_drift_when_terminology_or_copy_changes
+      - record_candidate_with_scenario_reason_and_evidence
+      - generate_seed_repository_execution_prompt
+      - store_prompt_under_seed_repository_upgrade_prompts_when_requested
+      - closeout_with_seed_repository_upgrade_status
+    protect_paths_and_facts:
+      - README.md
+      - code/
+      - ".local/"
+      - ".maw/secrets*.yaml"
+      - ".maw/repositories*.yaml"
+      - ".maw/releases*.yaml"
+      - app_key
+      - module_dossiers
+      - customer_repository_mappings
+      - historical_derived_project_compatibility
+      - template_source.source_channel
+    notes:
+      - "In derived projects, this route records a candidate and generates a prompt for maw-project-template; it does not directly modify the seed repository."
+      - "Reverse prompts belong in prompts/codex/seed-repository-upgrade-prompts; template-upgrade-prompts is only for seed-to-derived propagation."
+      - "In maw-project-template, consume the generated prompt, evaluate reuse value, and if accepted produce template upgrade assets through template_upgrade."
+      - "Missing capability origin fields in older derived projects must be treated as unknown_legacy and must not block the current task."
+      - "When the feedback comes from a CI/pytest failure after terminology, copy, API, status, PM source, or command-output changes, treat it as test-contract-drift-guard evidence and require assertion sync guidance."

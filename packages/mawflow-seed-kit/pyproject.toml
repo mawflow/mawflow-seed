@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mawflow-seed-kit"
+version = "2.1.0"
+description = "Canonical MAWflow Seed contract, compiler, reconciler, and project template"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["PyYAML>=6.0"]
+
+[project.scripts]
+mawflow-seed-kit = "mawflow_seed_kit.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mawflow_seed_kit = [
+  "manifest.json",
+  "resources/**/*.json",
+  "resources/**/*.yaml",
+  "resources/**/*.md",
+  "template/**/*",
+  "template/**/.*",
+  "template/.maw/*",
+  "template/.maw/**/*",
+]

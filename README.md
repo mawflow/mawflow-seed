@@ -10,6 +10,8 @@ MAWflow Seed 是安装在 AI 编程工作目录中的开源 AI Coding 项目导�
 
 MAWflow Seed 不只是一个项目模板，也不只是一个演示仓库。
 
+从 v2.0.0 起，它同时是 MAWflow 项目定义协议的唯一开发源；当前 Seed Kit 版本为 v2.1.0：`mawflow-seed-kit`、Seed Contract、Schema/UI/Operation Catalog、初始化 profiles 和公开 Seed 产物必须共享同一 BOM 与契约指纹。项目仓只保存事实，Project OS 是本地工作台随时可重建的投影。
+
 它是面向 AI 编程项目的仓库级导航层，用于帮助 AI 工具在修改文件前回答这些问题：
 
 - 这是什么项目？
@@ -103,12 +105,13 @@ Enterprise 不是一条与 Studio 无关的独立产品路径。它复用相同�
 
 本仓库是 MAWflow Seed 的公开开源入口。
 
-当前版本包含以下核心结构：
+当前 v2 版本包含以下核心结构：
 
 ```text
 AI_START_HERE.md
 AGENTS.md
 .maw/
+packages/mawflow-seed-kit/
 docs/
 prompts/
 ops/
@@ -120,6 +123,10 @@ LICENSE
 这些文件用于提供：
 
 - AI 工作目录入口规则；
+- 可供 CLI、Host 和本地工作台共同消费的 Seed Contract v2；
+- v2.1 项目分类/目标、技术栈、三层环境、凭证需求、模块依赖和六卷手册契约；
+- 可视化表单所需的字段、枚举、作用域、风险与操作目录；
+- 多文件 preview/confirm/rollback ChangeSet 与一次性旧项目迁移；
 - 项目身份和模块地图；
 - 任务与提示词规范；
 - 验证和就绪检查；
@@ -142,10 +149,8 @@ cd my-project
 ```bash
 mawflow project init my-project
 cd my-project
-mawflow project drift
+mawflow project doctor --root .
 ```
-
-`project drift` 会读取 `.maw/template-source.yaml`，核对当前已采用 commit 与目标 tag/commit；只有确认并完成语义增量升级、验证项目事实未丢失后，才更新 `template_source.applied_version`。
 
 然后更新生成项目中的真实项目信息：
 
@@ -158,14 +163,14 @@ AI_START_HERE.md
 .maw/app-runtime.yaml
 ```
 
-如果要在已有仓库中引入 Seed，不要使用 Seed 文件整包覆盖现有代码，应采用增量方式接入：
+如果要在已有 0.2.x 仓库中引入 Seed，不要复制文件或保留长期双写，必须使用一次性迁移事务：
 
-1. 创建或切换到安全的 Git 分支。
-2. 增加 `.maw/` 项目事实配置。
-3. 增加 `AI_START_HERE.md` 等 AI 入口文件。
-4. 补充模块和运行时信息。
-5. 增加验证记录和评审说明。
-6. 确保私有数据、本机文件和凭证材料不进入 Git。
+1. 创建或切换到安全的 Git 分支并保持工作区可审计。
+2. 运行 `mawflow project adopt --root .` 生成迁移预览。
+3. 在本地工作台核对写入、删除、风险和精确确认串。
+4. 确认后原子应用并回读 Project Definition；失败自动回滚。
+5. 运行 `mawflow project doctor --root .`，确认项目可编辑。
+6. 提交共享 `.maw/`；本机绑定只留在被忽略的 `.local/.maw/`。
 
 当 Seed 被用于创建真实项目后，应根据实际产品或服务重写项目 `README.md`。维护者可以通过 `TEMPLATE_OVERVIEW.md` 了解 Seed 仓库自身的内部结构。
 

@@ -26,7 +26,7 @@ read_contract:
 | 编号 | module_candidate | 问题 | 影响 | 建议确认对象 | 状态 |
 | --- | --- | --- | --- | --- | --- |
 |  |  |  |  | 用户 / 产品 / 技术负责人 / Reviewer | open / answered / deferred |
-| Q-20260615-001 | template-secret-governance | 模板敏感配置治理是否应提升为正式 cross-cutting leaf module，还是长期只作为候选能力记录？ | 影响是否创建正式 `docs/modules/<module>/module.md` 与 changelog，以及后续任务的 `module_key` 收口口径。 | 用户 / Reviewer | open |
+| Q-20260615-001 | template-secret-governance | 模板敏感配置治理是否应提升为正式 cross-cutting leaf module，还是长期只作为候选能力记录？ | 影响是否创建正式 `docs/modules/<module>/module.md` 与 `docs/changelogs/<module_key>.md`，以及后续任务的 `module_key` 收口口径。 | 用户 / Reviewer | open |
 
 ## 使用规则
 

@@ -33,6 +33,23 @@ read_contract:
 - 模板治理协议、项目指令和检查脚本。
 - 可被主项目、审计或 AI 健康关注导入的数据契约，例如项目健康上下文。
 - 可被 AI Coding 选择、锁定、预览和注入的工程知识资源协议，例如 MCP Knowledge Runtime Pack registry。
+- 可选用户级 Agent Skill 的发现、CLI/MCP 适配、无 Skill 降级和版本兼容协议。
+
+## Agent 发现与适配
+
+- [Mawflow Agent Skill 集成](agent-skill-integration.md)：定义可选用户级 Skill 与 Seed 项目规则的权威顺序、安装计划、无 Skill 降级和版本兼容边界。
+
+## 凭证治理
+
+- [项目凭证需求与本机引用绑定](project-credential-requirements.md)：定义 requirement、ref-only binding、Git Commit Identity 分离、readiness 消费和兼容边界。
+
+## 本机目录治理
+
+- [本机文件 `.local` 规范目录](local-directory-canonicalization.md)：定义本机配置、凭证引用、运行状态、旧路径兼容读取和公开安全示例边界。
+
+## 项目生命周期
+
+- [项目生命周期与双端工作台治理](project-lifecycle-governance.md)：定义 main/dev、正式发布来源、配置字段元数据、成员分支/worktree/租约、变更片段、项目手册和 preview-first 迁移边界。
 
 ## 维护规则
 

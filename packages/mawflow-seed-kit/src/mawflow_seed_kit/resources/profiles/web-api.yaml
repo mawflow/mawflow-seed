@@ -1,0 +1,55 @@
+schema: mawflow.seed_profile.v2
+key: web-api
+components:
+  - key: server
+    app_key: server
+    name: 服务端
+    type: backend
+    path: code/server
+    source_root: src
+    enabled: true
+    guide: docs/components/server.md
+  - key: client
+    app_key: client
+    name: Web 前端
+    type: frontend
+    path: code/client
+    source_root: src
+    enabled: true
+    guide: docs/components/client.md
+modules: []
+apps:
+  server:
+    enabled: true
+    component_ref: server
+    code_path: code/server
+    local_url: http://127.0.0.1:8080
+    healthcheck_path: /health
+    api_base_path: /api
+  client:
+    enabled: true
+    component_ref: client
+    code_path: code/client
+    local_url: http://127.0.0.1:5173
+    local_test_entry: /
+technology:
+  runtime_mode: container
+  languages:
+    - key: client-runtime
+      version: ""
+      package_manager: ""
+      role: client
+      required: false
+    - key: server-runtime
+      version: ""
+      package_manager: ""
+      role: server
+      required: false
+  frameworks: []
+  services: []
+  development_environment:
+    standard: docker_compose
+    compose_files: [compose.dev.yml]
+    devcontainer: optional
+  verification:
+    commands: []

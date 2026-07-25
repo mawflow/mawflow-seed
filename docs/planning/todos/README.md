@@ -102,7 +102,7 @@ TODO-YYYYMMDD-<short-slug>
 完成后至少处理：
 
 - 移除或替换 mock、stub、假数据、绕过逻辑和“先当成完成”的说明。
-- 更新主模块和受影响模块的 `module.md`、`changelog.md` 或必要设计文档。
+- 更新主模块和受影响模块的 `module.md`、集中 changelog 或必要设计文档。
 - 把记录从 `active.md` 移到 `closed.md`，状态写 `completed`。
 - 写清联调建议或联调结果，包括页面、接口、数据、权限、状态流、发布组件和验收命令。
 

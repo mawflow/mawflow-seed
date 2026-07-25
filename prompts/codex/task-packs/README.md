@@ -39,6 +39,8 @@
 | `_template/` | 新建任务包时复制的结构模板。 |
 | `examples/mawflow-packs/task-pack/` | 最小公开 Task Pack 示例。 |
 
+维护者任务包 `project-credential-requirements-v2-codex-tasks/` 用于增量维护项目凭证需求和本机引用绑定协议；它不属于公开 Seed 默认任务入口。
+
 模板升级、既有项目改造、密钥治理、开源准备和其它维护任务属于具体项目或维护者工作流，不作为公开 Seed 默认任务包入口。公开发布包只应包含通用模板、公开示例和安全边界说明。
 
 ## 安全边界

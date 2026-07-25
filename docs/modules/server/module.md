@@ -97,7 +97,7 @@ read_contract:
 - `.maw` 配置：`.maw/components.yaml`、`.maw/app-runtime.yaml`、`.maw/environments.yaml`、`.maw/repositories.yaml`、`.maw/releases.yaml`、`.maw/policies.yaml`；其中 `.maw/components.yaml` 通过 `release_ref` 指向发布配置。
 - 客户仓库规则：`.maw/customer-repository-rules.yaml` 记录 server 客出白名单、客户仓子目录、整仓替换开关和执行前方案目录；默认不得整仓替换客户仓库。
 - 组件配置：`code/server/.maw.component.yaml`、`code/server/.env.example`。
-- 环境变量：真实值放入允许提交的 `.maw/secrets*.yaml` 或本机 `.maw/*.local.yaml`，不要写入本档案。
+- 环境变量：真实值放入允许提交的 `.maw/secrets*.yaml` 或本机安全存储，本机引用映射写入 `.local/.maw/secrets.yaml`，不要写入本档案。
 - AI 调试入口：`.maw/app-runtime.yaml` 的 `app_runtime.apps.server`。
 - 仓库级镜像边界：整仓 mirror 由聚合后的仓库配置和 `ops/scripts/sync-repository-mirror.sh plan` 有效计划控制；`auto_sync_after_project_push` 默认开启，项目仓库 push 成功后先看计划再同步。
 - 逻辑 key 读取边界：平台、节点脚本和 AI 提示词可通过 `ops/scripts/maw-key-get.py` 读取 `template.applied_version`、`release.component.command`、`module.dossier` 等稳定语义 key；索引定义在 `.maw-template/config-key-index.yaml`，项目只允许用声明式 `.maw/config-key-index*.yaml` 增补，不执行目标项目任意代码作为读取逻辑。
@@ -124,20 +124,7 @@ read_contract:
 - 修改仓库级镜像或组件镜像仓库目标、自动同步开关或同步方向时必须更新：第 9、10 节、`.maw/repositories.yaml`、`docs/repository-mirror-sync-guide.md`、`docs/component-mirror-repository-guide.md` 和 changelog。
 - 修改源码、运行配置、发布覆盖、部署脚本或外部同步逻辑时必须在最终说明同步 `release_update_status`、`release_commands` 和 `release_confirmation_prompt`；本轮未执行并验证发布时写 `当前未发布` 或 `当前未发布/未验证`，并给出 `#发布` 指令。中文环境口令未指定组件时，先按默认组件范围和发布版本状态计算实际发布名单；收口末尾询问是否“确认发布全部”，用户回复“确认发布全部/确认/是”则发布全部待发布组件，复制单条指令则只发布对应组件。
 
-## 12. 最近变更摘要
+## 变更日志引用
 
-| 日期 | 任务/提交 | 变更摘要 | 是否更新档案 |
-| --- | --- | --- | --- |
-| 2026-06-29 | 发布测试/上线/生产边界强化 | 补充 `发布测试` 的本地调试地址、`发布上线` 仍属测试且需线上可访问地址、`发布生产` 生产环境安装或版本上线必须人工审计 | 是 |
-| 2026-06-17 | 配置逻辑 key 索引 | 补充 `maw-key-get.py` 和 `.maw-template/config-key-index.yaml` 作为平台/节点/AI 读取稳定语义事实的工具链边界 | 是 |
-| 2026-06-16 | 待办任务治理 | 区分模块内部待办与 `docs/planning/todos/active.md` 跨模块被依赖待办，模块档案只回链 TODO-ID | 是 |
-| 2026-06-16 | 发布版本状态与最新代码门 | 补充 server 按 `artifacts/release-state/<env>/server.json` 记录已发布 commit、按组件路径差异筛选发布名单，以及上线/生产必须校验本地候选 commit 等于发布来源远端分支 | 是 |
-| 2026-06-15 | 中文发布口令与默认组件范围 | 补充 `发布测试`、`发布上线`、`发布生产`/`发布生成` 口令和默认发布范围；基础映射为 `发布测试` 本地调试、`发布上线` 部署到 `remote_staging_server`、`发布生产` 部署到 `remote_production_server` | 是 |
-| 2026-06-14 | 中文人类优先收口规则同步 | 将发布确认文案同步为“确认发布全部”，与 TINST-020 中文收口规则保持一致 | 是 |
-| 2026-06-13 | 仓库级镜像与发布收口优化 | 补充 repository_mirrors 自动同步开关，并将发布收口改为“需要发布才会生效/是否全部发布”语义 | 是 |
-| 2026-06-12 | 客户仓库规则治理 | 补充 server 客户仓库白名单客出、执行前方案和多通道 git 凭证配置边界 | 是 |
-| 2026-06-12 | 发布配置环境选项 | 补充 server 默认发布环境、可选环境和快捷发布指令配置边界 | 是 |
-| 2026-06-12 | 发布快捷指令收口规则 | 补充 server 需要发布但未发布时的 `#发布` 快捷指令和确认后执行发布要求 | 是 |
-| 2026-06-12 | 最终说明发布状态约束 | 补充 server 命中与发布状态最终说明要求 | 是 |
-| 2026-06-12 | 组件镜像仓库协议 | 补充 server 镜像仓库单向同步边界和配置引用 | 是 |
-| 2026-05-20 | 模板模块档案协议初始化 | 新增服务端模块档案样例 | 是 |
+- changelog_path: `docs/changelogs/server.md`
+- changelog_time: `2026-07-12T00:16:46+08:00`

@@ -1,0 +1,19 @@
+schema_version: 1
+technology:
+  runtime_mode: host
+  languages:
+    - key: python
+      version: ">=3.11"
+      package_manager: pip
+      role: tooling
+      required: true
+  frameworks: []
+  services: []
+  development_environment:
+    standard: host_runtime
+    compose_files: []
+    devcontainer: optional
+  verification:
+    commands:
+      - python3 -m pytest tests
+      - python3 -m build packages/mawflow-seed-kit

@@ -1,3 +1,4 @@
+schema_version: 2
 components:
   # 默认模板只启用前后端两类：server=后端/API，client=前端/用户侧应用。
   # 如果项目确实存在独立后台前端、独立构建或独立发布目标，应按项目实际新增组件。

@@ -1,0 +1,7 @@
+schema_version: 2
+upgrade_policy:
+  mode: explicit_preview
+  compatibility_window: none_before_public_launch
+  require_clean_worktree: true
+  require_human_confirmation: true
+  rollback_required: true

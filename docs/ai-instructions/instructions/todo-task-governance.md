@@ -51,7 +51,7 @@
 1. 读取该 TODO 的 `active.md` 记录、详情页和所有受影响模块档案。
 2. 对照“当前假设”，检查是否需要移除 mock、stub、假数据、绕过校验、固定成功返回或临时说明。
 3. 按普通开发流程完成实现、验证和必要联调；涉及 `code/` 时按 app_key 判断发布影响。
-4. 更新主模块和受影响模块的 `module.md`、`changelog.md` 或必要设计/验收文档。
+4. 更新主模块和受影响模块的 `module.md`、集中 changelog 或必要设计/验收文档。
 5. 将记录从 `active.md` 移到 `closed.md`，关闭状态写 `completed`。
 6. 最终说明列出联调结果或后续联调建议，以及 `todo_task_update_status: 已完成 <TODO-ID>`。
 

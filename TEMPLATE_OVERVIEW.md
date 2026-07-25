@@ -57,7 +57,8 @@ Mawflow v1.1 对外口径中，本仓库承接 **Mawflow Seed 开源版**：一�
 - `code/`：业务代码根目录，默认以 `server` 和 `client` 表示后端与前端；模板不内置 `admin`，如项目确实需要独立后台前端，应按项目实际新增 app_key。
 - `.local/`：本机资料、本机配置 overlay 和维护者本机记录目录，默认只提交 README 说明；其中 `.local/.maw/` 可覆盖同名 `.maw` 配置，`.local/docs/requirements/raw/` 存放用户原始大文件资料，`.local/maintenance/` 可存放模板仓库自身 mirror remote 等本机维护记录。
 - `docs/`：需求、AI 编码边界、功能模块档案、设计、计划、验收、交付文档，其中 `docs/requirements/raw/` 存放原始资料分析结果 Markdown。
-- `docs/modules/`：功能模块档案目录，配合 `.maw/modules.yaml` 维护模块边界、实现程度、页面/API/数据表边界、证据字段、过期状态和 changelog；`docs/modules/_audits/` 记录模块地图检查、审计、查漏补缺和 `module_map_score`。
+- `docs/modules/`：功能模块档案目录，配合 `.maw/modules.yaml` 维护当前模块边界、实现程度、页面/API/数据表、证据字段和过期状态；`docs/modules/_audits/` 记录模块地图审计。
+- `docs/changelogs/`：模块 changelog 唯一集中目录；模块页和机器索引只保留 `changelog_path`、`changelog_time`，新规则遇到旧格式时自动迁移。
 - `docs/modules/_discovery/`：渐进式模块发现区，记录候选模块、证据和待确认问题，证据不足时不生成正式 leaf。
 - `docs/technical-map/`：技术地图入口，说明开发前如何查询 modules、capabilities、project signals、任务和验收。
 - `docs/repository-identity/`：仓库身份地图入口，说明种子仓、主仓、平台项目仓、客户项目仓、混合仓和历史未分类仓的多角色约束。
@@ -145,7 +146,7 @@ Mawflow v1.1 对外口径中，本仓库承接 **Mawflow Seed 开源版**：一�
 
 默认组件按前后端两类理解：`server` 是后端/API，`client` 是前端或用户侧应用。`admin`、`mobile`、`worker` 等只能由创建向导或项目事实按需启用；模板不把它们作为默认必启组件。如果项目确实存在独立后台代码、构建或发布目标，应按项目实际新增前端 app_key。模块档案不要停留在 `server`、`client` 这种 component 粒度，应按业务域继续拆成 group 和 leaf。
 
-本模板默认信任受控开发节点、AI 节点和私有 git 仓库，继续兼容把项目协作必需的真实密钥提交到 `.maw/secrets.yaml`、`.maw/secrets.dev.yaml`、`.maw/secrets.pro.yaml`；新项目推荐优先使用 `mawsec://`、`mawlocal://`、`mawproxy://` 或宿主机本地 SecretStore。可信私有仓库中的明文检查默认 warning，不阻断协作；公开仓库、发布包、日志、诊断包、外部交付、客户仓库同步或显式严格模式必须 block 或先脱敏。本地机器差异写入 `.maw/*.local.yaml`，不提交 git。种子仓若准备公开开源，先运行 `bash ops/scripts/check-seed-open-source-readiness.sh --strict`，确认 `LICENSE`、`docs/public-seed/open-source-release.md` 和公开 Git remote 均满足 gate；开源种子仓只是公开装备包，主仓中枢和 MCP/HostCommand/Approval 链路仍负责 loop 控制。
+本模板默认信任受控开发节点、AI 节点和私有 git 仓库，继续兼容把项目协作必需的真实密钥提交到 `.maw/secrets.yaml`、`.maw/secrets.dev.yaml`、`.maw/secrets.pro.yaml`；新项目推荐优先使用 `mawsec://`、`mawlocal://`、`mawproxy://` 或宿主机本地 SecretStore。可信私有仓库中的明文检查默认 warning，不阻断协作；公开仓库、发布包、日志、诊断包、外部交付、客户仓库同步或显式严格模式必须 block 或先脱敏。本地机器差异统一写入 `.local/.maw/`，不提交 git；旧 `.maw/*.local.yaml` 仅兼容读取。种子仓若准备公开开源，先运行 `bash ops/scripts/check-seed-open-source-readiness.sh --strict`，确认 `LICENSE`、`docs/public-seed/open-source-release.md` 和公开 Git remote 均满足 gate；开源种子仓只是公开装备包，主仓中枢和 MCP/HostCommand/Approval 链路仍负责 loop 控制。
 
 业务代码相关配置以 `code/<app_key>/` 内部工程文件为权威来源，例如 `.env.example`、框架配置、构建配置和路由配置。为了方便 Codex 或其它 AI 调试，`.maw/app-runtime.yaml` 会按 `server`、`client` 和项目实际新增 app_key 显式记录调试 URL、数据库引用、API 地址引用和测试账号引用。
 
@@ -159,7 +160,7 @@ Mawflow v1.1 对外口径中，本仓库承接 **Mawflow Seed 开源版**：一�
 
 ## 日常维护规则
 
-- 页面、接口、数据表、配置、状态流、发布规则、external_mapped 同步边界发生变化后，必须判断是否同步更新对应 `docs/modules/<module-key>/module.md` 和 `changelog.md`。
+- 页面、接口、数据表、配置、状态流、发布规则、external_mapped 同步边界发生变化后，必须判断是否同步更新对应 `docs/modules/<module-key>/module.md` 和 `docs/changelogs/<module_key>.md`。
 - 当前业务流程依赖暂不实现的能力时，必须判断是否登记到 `docs/planning/todos/active.md`；完成或取消后移入 `closed.md`，并同步受影响模块档案和联调/回归建议。
 - 开发新功能、接口、公共基类或横切能力前，先查 `.maw/capabilities.yaml`，避免重复实现；对人或 AI 有提示意义的澄清、缺口、口径变更或审计提示进入 `.maw/project-signals.yaml`。
 - 无法确定正式 `module_key` 时，先把 `module_candidate`、证据和待确认问题写入 `.maw/module-candidates.yaml` 与 `docs/modules/_discovery/`，不要把 seed/candidate 直接写入正式 leaf。

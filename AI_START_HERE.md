@@ -20,6 +20,10 @@ Seed gives the AI:
 
 Seed does not replace the user's IDE, project manager, cloud platform, or review process. It gives local AI tools a stable project map and execution contract.
 
+## Optional Agent Skill
+
+Mawflow Agent Skills may be installed at user scope to help an Agent discover this directory and adapt natural-language requests to the `mawflow` CLI or Local MCP. The Skill is optional: when it is absent, disabled, uninstalled, or older than this Seed, continue with the project-local startup order below. A Skill never replaces project files, never overrides project facts, and never becomes a prerequisite for development or validation.
+
 ## Startup Order
 
 1. Read `AGENTS.md` if your tool supports it.

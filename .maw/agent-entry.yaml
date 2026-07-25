@@ -110,6 +110,18 @@ tool_adapters:
     file: .cursor/rules/mawflow.md
     status: planned_generated_adapter
 
+external_agent_skills:
+  mawflow:
+    protocol_version: 1
+    minimum_skill_protocol_version: 1
+    status: optional_supported
+    required: false
+    recommended_scope: user
+    role: discovery_and_adapter
+    project_local_authority: true
+    project_files_remain_required: true
+    compatibility_contract: docs/capabilities/agent-skill-integration.md
+
 validation:
   doctor_checks:
     - AGENTS.md exists

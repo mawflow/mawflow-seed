@@ -1,0 +1,61 @@
+schema_version: 2
+environment_model:
+  canonical_order: [local, staging, production]
+  aliases:
+    dev: local
+    test: local
+    online: staging
+    pro: production
+    prod: production
+environments:
+  local:
+    role: local_development
+    profile: local
+    description: 本地源码开发与调试
+    docs: ""
+    remote_required: false
+    runtime_mode: inherit
+    deployment:
+      mode: development
+      build_artifact_required: false
+    remote_server:
+      port: ""
+      healthcheck_url: ""
+      credential_ref: ""
+      branch: ""
+  staging:
+    role: production_like_validation
+    profile: dev
+    description: 线上编译包验证环境
+    docs: ""
+    remote_required: true
+    runtime_mode: container
+    deployment:
+      mode: compiled_package
+      build_artifact_required: true
+      backup_required: true
+      rollback_required: true
+    remote_server:
+      port: ""
+      healthcheck_url: ""
+      credential_ref: ""
+      branch: main
+  production:
+    role: production
+    profile: pro
+    description: 正式生产环境
+    docs: ""
+    remote_required: true
+    runtime_mode: inherit
+    deployment:
+      mode: production_release
+      build_artifact_required: true
+      approval_required: true
+      backup_required: true
+      rollback_required: true
+      downtime_assessment_required: true
+    remote_server:
+      port: ""
+      healthcheck_url: ""
+      credential_ref: ""
+      branch: main

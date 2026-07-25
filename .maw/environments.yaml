@@ -1,0 +1,817 @@
+config_profiles:
+  # local 是本地覆盖档；统一写入 `.local/.maw/*.yaml`，不提交且优先级最高。
+  local:
+    role: local_development
+    runtime_mode: inherit
+    deployment:
+      mode: development
+      build_artifact_required: false
+    # 是否允许提交到 git；local 必须为 false。
+    commit_to_git: false
+    # 合并优先级；数字越大越后加载，local 永远最高。
+    priority: 300
+    # 本地覆盖文件命名；每个 domain 都可有独立 local 覆盖。
+    file_pattern: ".local/.maw/<domain>.yaml"
+    # 本地覆盖片段目录；适合把机器差异拆开维护。
+    fragment_pattern: ".local/.maw/<domain>.d/*.yaml"
+    # 历史派生项目兼容读取；新写入不得继续使用这些路径。
+    legacy_read_patterns:
+      - ".maw/<domain>.local.yaml"
+      - ".maw/<domain>.local.d/*.yaml"
+
+  # dev 是共享开发/本地测试档；默认指本地调试模式，代码改动应尽量即改即生效。
+  dev:
+    # 是否允许提交到 git；本模板假设节点和私有仓库可信。
+    commit_to_git: true
+    # 合并优先级；dev/pro 是互斥的活动档，加载后仍会被 local 覆盖。
+    priority: 200
+    # dev 覆盖文件命名；例如 `.maw/environments.dev.yaml`。
+    file_pattern: ".maw/<domain>.dev.yaml"
+    # dev 覆盖片段目录；适合按服务器、数据库、第三方服务拆分。
+    fragment_pattern: ".maw/<domain>.dev.d/*.yaml"
+    # dev/local 默认不要求真实远端凭证；只有项目显式启用远端服务器能力时才填写 server_ssh ref。
+    require_real_remote_credentials: false
+
+  # pro 是共享生产档；可提交到受信任私有 git，但外部交付前必须脱敏。
+  pro:
+    # 是否允许提交到 git；仅限受信任私有仓库，不代表可以交付给外部。
+    commit_to_git: true
+    # 合并优先级；dev/pro 是互斥的活动档，加载后仍会被 local 覆盖。
+    priority: 200
+    # pro 覆盖文件命名；例如 `.maw/environments.pro.yaml`。
+    file_pattern: ".maw/<domain>.pro.yaml"
+    # pro 覆盖片段目录；适合按生产节点、备份和监控拆分。
+    fragment_pattern: ".maw/<domain>.pro.d/*.yaml"
+
+host_purpose_modes:
+  platform:
+    purpose_type: platform
+    description: 平台可信宿主机；可在可信工作区完整 clone 和开发主项目仓库，但项目创建、授权和凭证下发仍由中枢控制台治理。
+    repository_visibility: full_clone_allowed_in_trusted_workspace
+    allowed_capabilities:
+      - github_repository_management
+      - gitlab_repository_management
+      - main_project_development
+      - development_task
+      - publish_deploy
+      - ai_provider_runtime
+      - database_migration
+      - artifact_storage
+      - third_party_integration
+  customer:
+    purpose_type: customer
+    description: 商业化客户端宿主机；只暴露客户可见项目包、code/ 镜像出口和 AI 可写协作文档，避免完整种子仓或内部任务包被直接分发复用。
+    repository_visibility: customer_visible_package_only
+    code_directory_policy:
+      visible_code_export: code/
+      forbid_nested_git_metadata: true
+      strip_on_customer_sync:
+        - ".git"
+        - ".git/**"
+        - ".local/**"
+        - "artifacts/**"
+        - "node_modules/**"
+        - "vendor/**"
+        - "dist/**"
+        - "build/**"
+        - "*.log"
+    hidden_by_default:
+      - seed template original directory
+      - hidden workspace
+      - task context
+      - original prompts
+      - internal remotes
+      - full git history
+      - Template Pack
+    ai_writable_paths:
+      - ".maw/**"
+      - "docs/modules/**"
+      - "doc/modules/**"
+      - "docs/ai-instructions/**"
+      - "code/**"
+    credential_limits:
+      git_https_token:
+        allowed_use_modes:
+          - code-directory-mirror
+      git_ssh_deploy_key:
+        allowed_use_modes:
+          - code-directory-mirror
+      server_ssh:
+        allowed_use_modes:
+          - deploy-staging
+          - deploy-production
+
+host_project_binding:
+  enabled_by_default: false
+  optional_until_configured: true
+  missing_binding_behavior: unknown_not_blocking_normal_development
+  ownership_type_values:
+    - platform_owned
+    - customer_owned
+    - platform_owned_customer_development_allowed
+    - not_applicable
+    - unknown
+  binding_type_values:
+    - full_source
+    - customer_development
+    - none
+    - unknown
+  source_access_mode_values:
+    - full_source
+    - code_mirror
+    - template_pack_assisted
+    - metadata_only
+    - disabled
+    - unknown
+  mcp_exposure_profile_values:
+    - platform_full
+    - customer_scoped
+    - disabled
+    - unknown
+  compatibility_policy:
+    older_project_behavior: "Treat missing ownership or binding fields as unknown/not_applicable; do not block normal development."
+    high_risk_review_required_for:
+      - customer_sync
+      - project_level_mcp_controlled_write
+      - release
+      - secret_handling
+      - external_delivery
+  channel_matrix:
+    platform_full_source:
+      host_purpose: platform
+      ownership_types:
+        - platform_owned
+      binding_type: full_source
+      source_access_mode: full_source
+      mcp_exposure_profile: platform_full
+    customer_project_development:
+      host_purpose: customer
+      ownership_types:
+        - customer_owned
+      binding_type: customer_development
+      source_access_mode: code_mirror
+      mcp_exposure_profile: customer_scoped
+    platform_authorized_customer_development:
+      host_purpose: customer
+      ownership_types:
+        - platform_owned_customer_development_allowed
+      binding_type: customer_development
+      source_access_mode: code_mirror
+      mcp_exposure_profile: customer_scoped
+  code_mirror_return_protocol:
+    status: protocol_reminder
+    required_snapshot_fields:
+      - base_commit
+      - path_scope
+      - file_hash_manifest
+      - generated_at
+      - ownership_type
+      - binding_type
+      - source_access_mode
+    return_methods:
+      - patch
+      - change_package
+      - controlled_delivery_request
+    concurrency_rule: "The same owned paths must not be written by multiple customer hosts and platform hosts without a lease or explicit merge plan."
+
+project_level_mcp:
+  enabled_by_default: false
+  optional_until_configured: true
+  non_maw_project_behavior: disabled_without_project_config
+  project_identity_sources:
+    - ".maw/project.yaml"
+    - "MAW_MCP_PROJECT_KEY"
+    - "MAW_PROJECT_ROOT"
+  codex_shell_env:
+    MAW_MCP_ENDPOINT: "mawlocal://host/<host_service_key>/mcp/<project_key>#endpoint"
+    MAW_MCP_PROJECT_KEY: "<project_key>"
+    MAW_PROJECT_ROOT: "<project-root>"
+    MAW_MCP_CLIENT_PROFILE: "project"
+    MAW_MCP_CALLER_SURFACE: "codex_shell"
+  isolation_keys:
+    - project_key
+    - project_root
+    - session_profile
+  fail_closed_checks:
+    - wrong_project_key
+    - wrong_working_directory
+    - unauthorized_capability
+    - sensitive_path_write
+
+host_runtime_environment:
+  status: protocol
+  default_runtime: docker
+  install_environment_instruction:
+    enabled: true
+    instruction_ref: docs/ai-instructions/instructions/install-environment.md
+    command_aliases:
+      install_development_environment:
+        user_phrase: 安装开发环境
+        aliases:
+          - 安装本地环境
+          - 修复本地环境
+        environment: development
+        maps_to:
+          - local
+          - test
+        default_target: local_development
+        confirmation_required_before_install: true
+      install_online_environment:
+        user_phrase: 安装线上环境
+        environment: staging
+        maps_to:
+          - staging
+          - remote_staging_server
+        default_target: remote_staging_server
+        confirmation_required_before_install: true
+      install_production_environment:
+        user_phrase: 安装生产环境
+        environment: production
+        maps_to:
+          - production
+          - remote_production_server
+        default_target: remote_production_server
+        confirmation_required_before_install: true
+    required_preflight:
+      - inspect_existing_runtime
+      - inspect_existing_database
+      - inspect_ports_domains_proxy
+      - inspect_workdir_logs_backup_rollback
+      - present_reuse_vs_docker_vs_host_install_plan
+      - get_user_confirmation_before_mutation
+    closeout_fields:
+      - local_environment_status
+      - local_test_entry
+      - local_update_commands
+      - local_environment_install_hint
+  environment_terms:
+    development:
+      display_name: 开发环境
+      description: 本机/当前宿主机的本地开发调试环境；发布测试/本地测试默认同属本地调试模式，应能自主完成目标组件环境安装、程序部署或启动，提供可访问调试地址，并让代码改动尽量即改即生效。
+      default_scope:
+        - local
+        - test
+      install_command: "#安装开发环境"
+      entry_sources:
+        - .maw/app-runtime.yaml app_runtime.apps.<app_key>.local_url
+        - code/<app_key>/.maw.component.yaml commands
+        - compose.dev.yml or project-specific local compose files
+    online:
+      display_name: 线上环境
+      description: 线上环境默认对应 staging / remote_staging_server；发布上线本质是线上服务器上的编译包部署测试，需要完成目标组件线上环境安装、编译后程序部署并提供线上可访问地址，部署包和运行环境按生产发布标准对齐，但不等同于 production。
+      default_scope:
+        - staging
+        - remote_staging_server
+      install_command: "#安装线上环境"
+      requires:
+        - remote_server_fact_check
+        - backup_and_rollback_plan
+        - healthcheck_url
+    production:
+      display_name: 生产环境
+      description: 正式生产环境；默认对应 production / remote_production_server。生产服务器程序部署、生产环境安装和生产版本上线必须经过人工审计。
+      default_scope:
+        - production
+        - remote_production_server
+      install_command: "#安装生产环境"
+      requires:
+        - manual_release_audit
+        - production_approval
+        - backup_and_rollback_plan
+        - downtime_or_no_downtime_assessment
+        - healthcheck_url
+  environment_execution_model:
+    local_test:
+      display_name: 本地测试
+      canonical_meaning: local_debug_hot_reload
+      description: 本地测试/发布测试默认指本地调试模式，优先使用本机 dev server、watch、热更新或等价启动方式；AI 可自主完成目标组件本地环境安装、程序部署或启动，并提供可访问调试地址，改动应尽量即改即生效。
+      maps_to:
+        - local
+        - test
+      release_target: false
+      component_environment_install_required_when_missing: true
+      program_deploy_or_start_required: true
+      accessible_debug_url_required: true
+      default_database_policy: same_as_online_test_unless_remote_test_server_database_explicit
+    online_release:
+      display_name: 线上发布
+      canonical_meaning: compiled_test_environment
+      description: 发布上线本质也是测试环境，只不过在线上服务器运行编译后的部署包；应完成目标组件线上环境安装、编译后程序部署并提供线上可访问地址，用于模拟发布生产的程序包部署测试，部署包、服务编排、目录、健康检查、备份和回滚口径应与发布生产对齐。
+      maps_to:
+        - staging
+        - remote_staging_server
+      release_target: true
+      testing_classification: compiled_package_deployment_test
+      package_runtime_alignment: production_like
+      accessible_online_url_required: true
+      simulates_production_release_package: true
+      default_database_policy: share_with_local_by_default
+    production_release:
+      display_name: 生产发布
+      canonical_meaning: production_deployment_manual_audit
+      description: 发布生产是在生产服务器进行程序部署；涉及生产环境安装、生产版本上线或客户正式服务变更时，必须先完成人工审计，并记录审批、备份、回滚、停机影响和健康检查方案。
+      maps_to:
+        - production
+        - remote_production_server
+      release_target: true
+      human_audit_required: true
+      production_version_online_requires_audit: true
+      requires:
+        - manual_release_audit
+        - production_approval
+        - backup_and_rollback_plan
+        - downtime_or_no_downtime_assessment
+        - healthcheck_url
+    remote_test_server_fallback:
+      enabled: true
+      when: remote_test_server_config_missing_or_blank
+      fallback_to: remote_staging_server
+      fallback_config_ref: environments.staging.remote_server
+      description: 旧项目或脚本仍读取 remote_test_server 时，如果 test.remote_server 或 secrets.remote_test_server 缺失，应优先读取 remote_staging_server 的同名字段；目标项目显式配置独立远端测试机时，以目标项目事实为准。
+    test_install_database_plan:
+      default_database_source: online_environment_database
+      explicit_override_config_paths:
+        - .maw/environments.dev.yaml environments.test.remote_server.database
+        - .maw/environments.yaml environments.test.remote_server.database
+        - .maw/secrets.yaml secrets.remote_test_server.database
+        - .maw/secrets.dev.yaml secrets.remote_test_server.database
+      rationale: 本地环境和线上测试环境本质上都属于测试；本地环境用于本地调试，线上测试环境用于预生产部署测试，因此安装测试环境方案默认保持数据库与线上测试环境一致。
+      warning_required_when_using_online_database: true
+      warning_text: 安装测试环境将复用线上测试环境数据库；请确认这是测试/联调库而非真实生产库，并在执行迁移、写入或清理数据前确认备份和回滚方案。
+    root_package_scripts:
+      enabled_by_default: true
+      package_json_path: package.json
+      purpose: 安装测试环境时，把本地调试/测试环境启动命令落实到仓库根 package.json，作为人和 AI 都可复制执行的统一命令面板。
+      update_required_during_test_environment_install: true
+      merge_policy: additive_preserve_existing_scripts
+      root_scripts_are_entrypoints_not_source_of_truth: true
+      source_of_truth_refs:
+        - code/<app_key>/.maw.component.yaml commands
+        - component package.json scripts
+        - ops/scripts
+        - docker compose files
+      required_scripts:
+        dev: 默认本地开发验收入口；一键启动或重启本地开发环境，并输出本机 127.0.0.1 与局域网调试地址，可转发到 local:dev。
+        local:dev: 稳定底层本地开发入口；可直接接 ops/scripts/local-dev.sh、组件 dev server、Docker Compose 或等价命令。
+        test:dev: 本地测试/调试兼容入口；应转发到 dev 或 local:dev。
+      recommended_scripts:
+        - local:test
+        - client:dev
+        - client:build
+        - server:start
+        - server:restart
+        - scripts:help
+        - check:all
+        - test:plan
+        - release:plan:test
+        - mirror:plan
+      script_description_field: mawScriptDescriptions
+      description_required_for_each_script: true
+      help_script: scripts:help
+      canonical_local_dev_script: dev
+      local_dev_outputs_debug_url: true
+      local_dev_outputs_lan_url: true
+      closeout_should_prompt_debug_url_when_running: true
+      missing_local_dev_script_install_hint: implement_npm_run_dev
+      sync_tool: ops/scripts/sync-root-package-scripts.py
+      check_script: scripts:sync:check
+      write_script: scripts:sync:write
+      standalone_ops_scripts_should_be_registered: true
+      high_risk_scripts_default_to_plan_dry_run_or_confirmation: true
+      allowed_targets:
+        - npm --prefix code/<app_key> run <script>
+        - pnpm --dir code/<app_key> run <script>
+        - yarn --cwd code/<app_key> <script>
+        - ops/scripts/<script>.sh
+        - docker compose
+        - make
+      forbidden_content:
+        - machine_private_path
+        - hardcoded_token
+        - real_password
+        - production_connection_string
+      fallback_when_node_is_unavailable: use_ops_script_makefile_or_docker_compose_and_record_reason
+  deployment_transports:
+    status: protocol
+    default_transport: project_release_script
+    supported_transports:
+      - ssh_rsync
+      - sftp
+      - ftp
+      - ftps
+    implemented_template_tools:
+      ftp_ftps_overwrite: ops/scripts/deploy-via-ftp.py
+    config_path: environments.<env>.remote_server.deployment
+    credential_paths:
+      - .maw/project.yaml credentials.requirements
+      - .maw/environments*.yaml environments.<env>.remote_server.deployment.ftp.credential_ref
+      - .local/.maw/project.yaml credential_bindings
+    trusted_plaintext_policy:
+      allowed_in_trusted_private_config: false
+      allowed_files: []
+      warning: "Seed 2.1 新增或改写的部署配置只允许 credential_ref；历史明文仅可在迁移前兼容读取，必须由人工迁移到本机 SecretStore，不得继续写回 Git。"
+      preferred_for_new_projects:
+        - ftps
+        - sftp
+        - credential_ref
+        - mawsec_or_mawlocal_reference
+    strategies:
+      full_overwrite:
+        description: Upload every managed local file to the remote directory and overwrite existing files with the same path.
+        delete_unmanaged_default: false
+        rollback_level: weak_without_remote_backup
+        requires:
+          - release_plan
+          - preserve_paths
+          - healthcheck_after_upload
+      managed_sync:
+        description: Upload managed changed files and optionally delete unmanaged remote files only when explicitly enabled.
+        delete_unmanaged_default: false
+        rollback_level: weak_without_remote_backup
+        requires:
+          - release_plan
+          - preserve_paths
+          - delete_unmanaged_confirmation
+      versioned_static:
+        description: Upload versioned static assets first and switch entry files last; recommended for static frontend where remote command execution is unavailable.
+        implemented_by_template_tool: false
+      versioned_release:
+        description: Upload releases/<stamp> and switch current; requires SSH, panel API or another remote command channel, not pure FTP alone.
+        implemented_by_template_tool: false
+    safety_defaults:
+      plan_before_execute: true
+      execute_flag_required: true
+      redact_url_password_in_output: true
+      forbid_remote_delete_by_default: true
+      preserve_paths:
+        - ".env"
+        - ".env.*"
+        - "public/uploads/**"
+        - "runtime/log/**"
+        - "runtime/cache/**"
+        - "logs/**"
+      exclude_paths:
+        - ".git/**"
+        - ".local/**"
+        - ".ssh/**"
+        - "node_modules/**"
+        - "vendor/**"
+        - "*.pem"
+        - "*.key"
+      release_record_policy:
+        include:
+          - environment
+          - app_key
+          - strategy
+          - sanitized_target
+          - uploaded_count
+          - deleted_count
+          - healthcheck_result
+        forbid:
+          - ftp_password
+          - unredacted_ftp_url
+          - raw_logs_with_credentials
+  docker:
+    preferred_by_default: true
+    required_by_default: false
+    compose_preferred: true
+    compose_required: false
+    install_and_upgrade_via_docker: prefer_after_environment_discovery
+    local_development_host_required: false
+    development_environment_required: false
+    remote_online_environment_default: docker_preferred_when_no_existing_runtime
+    production_environment_policy: project_or_customer_defined_after_environment_discovery
+    environment_discovery_required: true
+    user_confirmation_required_before_install: true
+    respect_user_specified_runtime: true
+    existing_environment_first: true
+    recommendation_policy:
+      inspect_existing_environment_before_install: true
+      ask_user_when_existing_runtime_or_database_is_present: true
+      follow_user_explicit_runtime_or_database_choice: true
+      explain_tradeoffs_before_mutating_environment: true
+      apply_to_environments:
+        - local
+        - test
+        - staging
+        - online
+        - production
+      documented_decision_fields:
+        - detected_runtime
+        - detected_database
+        - recommended_runtime
+        - recommended_database
+        - user_confirmation
+        - deviation_reason
+    shared_database_policy:
+      allow_test_online_production_shared_database: true
+      local_and_online_shared_database_by_default: true
+      test_install_defaults_to_online_database_unless_remote_test_server_database_explicit: true
+      warning_required_when_test_uses_online_database: true
+      reason: "Many projects intentionally reuse one database across local debug, online compiled test, and production-like integration environments for joint debugging."
+      requirements:
+        - document_environment_scope
+        - confirm_with_user_before_repointing_database
+        - record_backup_and_rollback_plan_for_online_or_production
+        - do_not_replace_existing_database_engine_without_confirmation
+    offline_image_delivery:
+      supported: true
+      required_for_customer_or_restricted_network_hosts: true
+      image_manifest_path: release/docker-images/IMAGES.lock
+      bundle_format_options:
+        - docker_archive
+        - oci_layout
+      checksum_required: true
+      import_command_examples:
+        - "docker load -i <image-bundle>.tar"
+        - "docker compose --env-file <env-file> up -d"
+      shared_docs_must_not_include_large_image_blobs: true
+    naming_convention:
+      status: recommended_default
+      project_key_source: ".maw/project.yaml project.key"
+      environment_values:
+        - local
+        - test
+        - staging
+        - production
+      compose_project_name: "maw_<project_key>_<environment>"
+      container_name: "maw-<project_key>-<service>-<environment>"
+      network_name: "maw_<project_key>_<environment>_net"
+      volume_name: "maw_<project_key>_<service>_<purpose>_<environment>"
+      image_tag: "<registry>/<project_key>/<service>:<version>"
+      service_dns_alias: "<service>.<project_key>.<environment>.local"
+      preserve_existing_names: true
+      rename_existing_resources_requires_user_confirmation: true
+    change_safety:
+      preserve_existing_environment: true
+      destructive_actions_require_user_confirmation: true
+      user_confirmation_required_for:
+        - deleting_or_recreating_named_volumes
+        - changing_existing_compose_project_name
+        - renaming_existing_containers_networks_or_volumes
+        - changing_existing_host_ports
+        - stopping_shared_services
+        - replacing_existing_database_engine
+        - clearing_local_sync_state
+      default_upgrade_action: add_missing_examples_and_docs_without_mutating_running_environment
+  lightweight_device_adaptation:
+    status: todo
+    default_blocking: false
+    notes:
+      - "Default protocol stays Docker-first, but existing runtimes and user-specified environments can override after discovery and confirmation."
+  local_host_data_plane:
+    enabled_by_default: true
+    default_engine: postgresql
+    scope: current_host_maintained_project_data
+    central_sync: bidirectional_async_after_action
+    central_authority: central_governance_and_cross_host_review
+    local_authority: local_cache_review_workspace_and_unsynced_work
+    data_classes:
+      - project_document_index
+      - ai_work_outputs
+      - task_source_execution_logic_and_evidence
+      - design_and_module_documents
+      - audit_summaries
+      - local_sync_queue
+      - mcp_audit_ping_summary
+    required_sync_identity_fields:
+      - host_id
+      - project_key
+      - base_commit
+      - path_scope
+      - event_id
+      - generated_at
+    conflict_policy: human_review_when_central_and_host_facts_diverge
+    secret_policy: examples_only_no_real_credentials_in_template
+  supported_databases:
+    local_host_default: postgresql
+    development:
+      - postgresql
+      - mysql
+    online:
+      - postgresql
+      - mysql
+    production: project_or_customer_defined
+  project_environment_matrix:
+    main_repository:
+      local_development_host:
+        runtime: docker_preferred_existing_environment_first
+        source_access: full_source
+        local_database: host_local_postgresql
+        sync: bidirectional_with_central
+      remote_online_environment:
+        runtime: docker_preferred_or_existing_runtime
+        database: postgresql_or_mysql_by_main_repo_fact
+        sync: central_authority
+      production:
+        runtime: environment_defined
+        database: project_defined
+        notes: "Main repository implementation details, real app_key, secrets and release topology stay outside the seed protocol."
+    platform_project:
+      development:
+        runtime: docker_preferred_existing_environment_first
+        source_access: full_source_on_platform_host
+        local_database: host_local_postgresql
+        sync: bidirectional_with_central
+      online:
+        runtime: docker_preferred_or_existing_runtime
+        database: postgresql_or_mysql_or_shared_by_project_fact
+        sync: central_governance
+    customer_project:
+      development_host:
+        runtime: docker_preferred_existing_environment_first
+        source_access: customer_visible_package_and_code_mirror
+        local_database: host_local_postgresql
+        sync: authorized_project_data_and_audit_summary_only
+      online_or_production:
+        runtime: docker_preferred_customer_defined_or_existing_runtime
+        database: postgresql_mysql_shared_or_customer_defined
+        sync: contract_and_authorization_defined
+  compatibility_policy:
+    older_project_behavior: missing_host_runtime_environment_is_warning_only
+    preserve_target_facts: true
+    do_not_copy_main_repo_runtime_details_to_seed: true
+    docker_first_is_not_hard_requirement: true
+    user_explicit_environment_overrides_default: true
+    shared_test_online_production_database_supported: true
+
+environment_model:
+  canonical_order: [local, staging, production]
+  aliases:
+    dev: local
+    test: local
+    online: staging
+    pro: production
+    prod: production
+
+environments:
+  # local 环境代表当前开发机器与宿主机执行环境。
+  local:
+    # 环境使用的配置档；local 会覆盖 dev/pro 的同名字段。
+    profile: local
+    # 环境说明；用于快速理解该环境用途。
+    description: 本地开发与宿主机执行环境
+    # 环境文档入口；记录启动方式、依赖和本机注意事项。
+    docs: ops/local/README.md
+    # 是否必须配置远程服务器；本地环境通常不需要。
+    remote_required: false
+    # 宿主机能力预期；派生项目本机 Docker test 只验证服务容器可启动，不等同于完整宿主机环境。
+    host_environment:
+      description: 派生项目本机宿主机能力预期
+      warning_message: 本机 Docker test 只代表服务容器可启动，不等同于完整宿主机执行环境；未检测到 Docker、Host Manager 或 Node Runner 等能力时，只表示对应工作流在本机未覆盖，涉及宿主机调度、账号池、端口代理、发布/回滚或节点任务的验证必须标记为未覆盖。
+      expected_capabilities:
+        - key: docker
+          description: Docker Engine / Docker Compose，用于本机服务容器启动和基础冒烟。
+          required_for:
+            - local_docker_test
+            - service_container_smoke
+          detection:
+            command: docker
+          missing_severity: warning
+        - key: host_manager
+          description: MAW Host Manager，本机宿主机管理、账号池、端口代理和节点状态能力。
+          required_for:
+            - host_manager_workflows
+            - account_pool_validation
+            - host_port_proxy_validation
+          detection:
+            url: "http://127.0.0.1:8765/local/api/health"
+          coverage_warning: 未检测到本机 Host Manager 当前标准健康接口 `http://127.0.0.1:8765/local/api/health`；仅当本轮需要本机管理后台、账号池、端口代理或节点状态验证时，相关验证应标记为未覆盖。
+          missing_severity: warning
+        - key: node_runner
+          description: MAW Node Runner 或等价宿主机任务执行器，用于验证节点任务、发布辅助和宿主机侧自动化。
+          required_for:
+            - node_runner_jobs
+            - host_side_automation
+          detection:
+            command: maw-node-runner
+          coverage_warning: 未检测到 `maw-node-runner` 命令或等价宿主机任务执行器；仅当本轮需要节点任务、发布辅助或宿主机侧自动化验证时，相关验证应标记为未覆盖。
+          missing_severity: warning
+        - key: project_level_mcp
+          description: 项目级本地 MCP 网关，用于模板规则查询、项目上下文、受控写入和交付工具调用。
+          required_for:
+            - mcp_service_diagnostics
+            - project_bound_tool_calls
+          detection:
+            env: MAW_MCP_ENDPOINT
+          missing_severity: warning
+
+  # test 环境默认指本地调试模式；若项目显式配置远端测试机，或旧脚本仍读取 remote_test_server，按 fallback 规则处理。
+  test:
+    role: compatibility
+    runtime_mode: inherit
+    deployment:
+      mode: compatibility
+      build_artifact_required: false
+    # 环境使用的配置档；dev 可提交到受信任私有 git，方便人机协作。
+    profile: dev
+    # 环境说明；这里承载本地调试、即改即生效联调、冒烟和验收前检查；编译后线上测试发布默认走 staging。
+    description: 本地调试模式；默认即改即生效，编译后线上测试发布走 staging/remote_staging_server
+    # 环境文档入口；必须写清部署方式、服务器和回滚路径。
+    docs: ops/test/README.md
+    # 是否必须配置远程服务器；默认 false，项目确有独立远端测试机时再改为 true。
+    remote_required: false
+    # 可选远端测试机配置；默认不填。字段缺失或为空时，可从 staging/remote_staging_server 读取编译后测试发布配置。
+    remote_server:
+      # 远端测试机主机名或 IP；没有特别指定远端测试机时留空。
+      host: ""
+      # SSH 端口；默认 22，云服务器若改端口应同步修改。
+      port: 22
+      # SSH 登录用户；建议使用专用 deploy 用户，不使用 root。
+      user: "deploy"
+      # 远端测试机工作目录；部署脚本、日志和回滚都以此为根目录。
+      workdir: "/srv/replace_me/test"
+      # 默认部署分支；远端测试机通常跟随 main 或 develop。
+      branch: main
+      # 凭证引用名；只有启用远端测试机时才需要，对应 `secrets.remote_test_server`。
+      credential_ref: remote_test_server
+      credential_type: server_ssh
+      credential_env: MAW_SERVER_SSH_REF
+      # 健康检查地址；部署后可用于冒烟验证。
+      healthcheck_url: ""
+      # remote_test_server 配置缺失时的回退来源；仅用于旧脚本/旧项目兼容，不改变本地测试默认即改即生效口径。
+      fallback_remote_server_ref: environments.staging.remote_server
+      fallback_credential_ref: remote_staging_server
+      fallback_when_missing_or_blank: true
+      # 未指定组件时的默认发布组件范围；逗号分隔 app_key。
+      # 模板默认只有 server/client；派生项目有 admin 时可按项目事实改为 "client,admin"。
+      default_release_components: "server,client"
+
+  # staging 环境可选；通常是中枢服务所在服务器，或另一套宿主机维护且具备公开访问地址的 Docker 环境。
+  staging:
+    role: production_like_validation
+    runtime_mode: container
+    deployment:
+      mode: compiled_package
+      build_artifact_required: true
+      backup_required: true
+      rollback_required: true
+    # 环境使用的配置档；预发通常接近生产，因此默认使用 pro。
+    profile: pro
+    # 环境说明；用于生产前发布演练、中枢联调或公开访问 Docker 环境。
+    description: 中枢/预发 Docker 环境
+    # 环境文档入口；记录预发与生产的差异。
+    docs: ops/staging/README.md
+    # 是否必须配置远程服务器；按项目是否需要预发决定。
+    remote_required: false
+    # 预发或中枢服务器配置；真实凭证值放在 `.maw/secrets*.yaml` 或 local 覆盖里。
+    remote_server:
+      host: ""
+      port: 22
+      user: "deploy"
+      workdir: "/srv/replace_me/staging"
+      branch: main
+      credential_ref: remote_staging_server
+      credential_type: server_ssh
+      credential_env: MAW_SERVER_SSH_REF
+      healthcheck_url: ""
+      # `发布上线` 未指定组件时的默认发布组件范围；逗号分隔 app_key。
+      # 例如派生项目预发只发 client/admin 时，可改为 "client,admin"。
+      default_release_components: "server,client"
+
+  # production 环境代表真实生产运行环境，通常是客户服务器。
+  production:
+    role: production
+    runtime_mode: inherit
+    deployment:
+      mode: production_release
+      build_artifact_required: true
+      approval_required: true
+      backup_required: true
+      rollback_required: true
+      downtime_assessment_required: true
+    # 环境使用的配置档；生产共享配置走 pro。
+    profile: pro
+    # 环境说明；用于客户服务器正式发布、备份、监控和应急。
+    description: 客户生产服务器
+    # 环境文档入口；必须写清发布审批、备份和回滚流程。
+    docs: ops/production/README.md
+    # 是否必须配置远程服务器；上线前应改为 true 并补齐 server 信息。
+    remote_required: false
+    # 客户生产服务器配置；上线前补齐并使用独立凭证。
+    remote_server:
+      host: ""
+      port: 22
+      user: "deploy"
+      workdir: "/srv/replace_me/production"
+      branch: main
+      credential_ref: remote_production_server
+      credential_type: server_ssh
+      credential_env: MAW_SERVER_SSH_REF
+      healthcheck_url: ""
+      # `发布生产` 或兼容口令 `发布生成` 未指定组件时的默认发布组件范围；逗号分隔 app_key。
+      default_release_components: "server,client"
+
+rules:
+  # Seed 2.1 新项目只提交 Requirement/Ref，不允许在 Git 中保存真实值。
+  allow_committed_trusted_secrets: false
+  # 是否禁止提交 `.maw/*.local.yaml`；local 只属于当前机器。
+  forbid_committed_local_overrides: true
+  # 是否要求导出交付包或同步客户仓库前脱敏。
+  require_desensitize_before_external_delivery: true
+  # 是否禁止在普通文档、外部提示词和 issue 中扩散密钥值。
+  keep_secret_values_out_of_public_docs: true
+  # 派生项目本机缺少 Docker、Host Manager 或 Node Runner 等宿主机能力时，模板检查输出 warning。
+  warn_when_seed_derived_local_host_environment_missing: true
+  # 没有 `.maw/project.yaml` 或明确项目级 MCP 配置时，普通非 MAW 项目保持普通 Codex 开发体验。
+  project_level_mcp_requires_project_config: true

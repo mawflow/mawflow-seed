@@ -1,0 +1,193 @@
+schema_version: 1
+project_lifecycle:
+  collaboration_mode: local_standalone
+  supported_collaboration_modes:
+    - local_standalone
+    - cloud_collaborative
+  authority:
+    repository_facts: local_repository
+    local_runtime_state: local_workbench
+    organization_and_membership: cloud_control_plane
+    rule: cloud_actions_must_pass_local_repository_safety_gates
+  methodology:
+    key: solo_lean_loop
+    effective_boundary: immediate_new_work_only
+
+  git:
+    branch_roles:
+      formal_release: main
+      development_integration: dev
+      member_branch_pattern: "member/{member_key}/{task_key}"
+      task_branch_pattern: "task/{task_key}"
+      hotfix_branch_pattern: "hotfix/{task_key}"
+    initialization:
+      baseline_branch: main
+      create_development_branch: true
+      checkout_after_create: dev
+      push_remote_branches: true
+    direct_dev_policy:
+      enabled: true
+      max_changed_files: 5
+      max_owned_paths: 2
+      forbidden_change_kinds:
+        - database_schema
+        - credential
+        - permission
+        - release
+        - cross_module
+      parallel_writers_allowed: false
+    task_branch_policy:
+      independent_worktree_required: true
+      baseline_sha_required: true
+      write_lease_required: true
+    integration:
+      solo_direct_write_branch: dev
+      member_branch_target: dev
+      formal_promotion_route: dev_to_main
+      force_push_allowed: false
+    member_branch_binding:
+      required_fields:
+        - member_key
+        - branch
+        - worktree_path
+        - baseline_sha
+        - owned_paths
+        - blocked_paths
+        - lease_id
+        - lease_expires_at
+      branch_must_have_independent_worktree: true
+      baseline_sha_required: true
+      write_lease_required: true
+    shared_branch:
+      parallel_writers_allowed: false
+      serialized_integration_required: true
+      refresh_before_write: true
+      revalidate_after_integration: true
+      conflict_policy: preserve_candidates_and_require_human_review
+
+  release:
+    formal_environment: production
+    staging_environment: staging
+    source_remote_ref: refs/remotes/origin/main
+    candidate_must_be_reachable_from_source: true
+    formal_tag_required: true
+    tag_must_resolve_to_candidate: true
+    tag_must_be_reachable_from_source: true
+    dirty_worktree_allowed: false
+    failure_mode: fail_closed
+  handbook:
+    manifest: docs/handbooks/manifest.yaml
+    compatibility_manifest: docs/project-manual/manual.yaml
+
+  configuration:
+    schema: .maw/schemas/project-lifecycle.schema.json
+    field_metadata:
+      - key: project_lifecycle.collaboration_mode
+        label: 协作模式
+        type: enum
+        required: true
+        default: local_standalone
+        options: [local_standalone, cloud_collaborative]
+        editable: true
+        sensitive: false
+        risk: medium
+        impact: "决定成员、租约和审计由本地还是云端协调；不改变仓库事实权威。"
+        validation_command: "python3 ops/scripts/manage-project-lifecycle.py check --format json"
+      - key: project_lifecycle.git.branch_roles.formal_release
+        label: 正式发布分支
+        type: string
+        required: true
+        default: main
+        editable: false
+        sensitive: false
+        risk: critical
+        impact: "正式发布只接受 origin/main 可达提交和位于 main 历史的 tag。"
+        validation_command: "python3 ops/scripts/manage-project-lifecycle.py release-check --tag <tag> --format json"
+      - key: project_lifecycle.git.branch_roles.development_integration
+        label: 开发集成分支
+        type: string
+        required: true
+        default: dev
+        editable: true
+        sensitive: false
+        risk: high
+        impact: "成员分支和个人开发变更先汇入该分支，再提主。"
+        validation_command: "python3 ops/scripts/manage-project-lifecycle.py check --format json"
+      - key: project_lifecycle.release.source_remote_ref
+        label: 正式发布远端基线
+        type: string
+        required: true
+        default: refs/remotes/origin/main
+        editable: false
+        sensitive: false
+        risk: critical
+        impact: "阻止从未同步到正式远端主分支的提交发布生产。"
+        validation_command: "python3 ops/scripts/manage-project-lifecycle.py release-check --tag <tag> --format json"
+
+  project_creation:
+    preview_required: true
+    expected_fingerprint_required: true
+    atomic_write_required: true
+    checklist:
+      - id: validate_target_boundary
+        required: true
+      - id: initialize_or_verify_git_repository
+        required: true
+      - id: create_main_baseline
+        required: true
+      - id: create_dev_from_main
+        required: true
+      - id: checkout_dev
+        required: true
+      - id: validate_project_lifecycle
+        required: true
+      - id: record_creation_evidence
+        required: true
+
+  change_fragments:
+    source_glob: .maw/changes/*.yaml
+    generated_index: .maw/generated/change-index.yaml
+    sort_keys: [record_key, task_key, source_path]
+    semantic_identity_key: record_key
+    same_identity_different_payload: preserve_all_and_require_human_review
+    generated_files_are_authoritative: false
+
+  project_manual:
+    manifest: docs/project-manual/manual.yaml
+    documentation: docs/project-manual/README.md
+    conclusion_evidence_required: true
+    allowed_evidence_kinds:
+      - repository_path
+      - git_commit
+      - command_output
+      - test_result
+      - release_record
+      - decision_record
+
+  migration:
+    command: "python3 ops/scripts/manage-project-lifecycle.py migrate"
+    preview_required: true
+    expected_fingerprint_required: true
+    atomic_write_required: true
+    overwrite_existing_files: false
+    protected_paths:
+      - README.md
+      - code
+      - .maw/project.yaml
+      - .maw/repositories.yaml
+      - .maw/releases.yaml
+      - .maw/modules.yaml
+      - .maw/*.local.yaml
+      - .local
+      - .ssh
+      - runtime
+      - workspaces
+      - artifacts
+    managed_additive_paths:
+      - .maw/project-lifecycle.yaml
+      - .maw/schemas/project-lifecycle.schema.json
+      - .maw/changes/README.md
+      - docs/project-manual/README.md
+      - docs/project-manual/manual.yaml
+      - docs/capabilities/project-lifecycle-governance.md
+      - ops/scripts/manage-project-lifecycle.py

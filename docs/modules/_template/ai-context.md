@@ -23,7 +23,7 @@ read_contract:
 
 # AI 模块上下文：<模块名称>
 
-> 本文件是可选文件，只在模块复杂、AI 经常误读、`module.md` 过长或需要固定执行提示时创建。它不是新的事实源，不替代 `module.md` 和 `changelog.md`。如果内容冲突，以 `module.md`、`.maw/modules.yaml` 和当前代码为准。
+> 本文件是可选文件，只在模块复杂、AI 经常误读、`module.md` 过长或需要固定执行提示时创建。它不是新的事实源，不替代 `module.md` 和集中 changelog。发生冲突时，以 `module.md`、`.maw/modules.yaml` 和当前代码为准。
 
 ## 何时读取
 
@@ -40,7 +40,7 @@ read_contract:
 ## 最小必读路径
 
 - 模块档案：`docs/modules/<...>/<leaf>/module.md`
-- 变更日志：`docs/modules/<...>/<leaf>/changelog.md`
+- 变更日志：`docs/changelogs/<module_key>.md`
 - 代码路径：
   - `<code path>`
 - 相关设计：

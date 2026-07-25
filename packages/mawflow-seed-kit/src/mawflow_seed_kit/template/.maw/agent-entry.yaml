@@ -1,0 +1,9 @@
+schema_version: 2
+agent_entry:
+  start_here: AI_START_HERE.md
+  project_definition: .maw/project.yaml
+  components: .maw/components.yaml
+  modules: .maw/modules.yaml
+  lifecycle: .maw/project-lifecycle.yaml
+  local_overlay_root: .local/.maw
+  secret_policy: references_only

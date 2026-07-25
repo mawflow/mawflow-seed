@@ -37,7 +37,7 @@
 
 ## 执行步骤
 
-1. 读取 `.maw/modules.yaml`、`docs/modules/README.md`、`docs/modules/_template/group-README.md`、`docs/modules/_template/module.md` 和 `docs/modules/_template/changelog.md`；如果用户提供页面 URL、API、命令或后端文件线索，再读取 `docs/modules/_template/route-api-index.md`；如果需要具体页面或后端审计页，再读取 `page.md`、`backend-slice.md` 或 `traceability.md`。
+1. 读取 `.maw/modules.yaml`、`docs/modules/README.md`、`docs/changelogs/README.md`、`docs/modules/_template/group-README.md`、`docs/modules/_template/module.md` 和 `docs/modules/_template/changelog.md`；先执行集中日志迁移 plan，命中旧格式时自动执行迁移；如果用户提供页面 URL、API、命令或后端文件线索，再读取 `docs/modules/_template/route-api-index.md`；如果需要具体页面或后端审计页，再读取 `page.md`、`backend-slice.md` 或 `traceability.md`。
 2. 如果用户给出需求文档、原型、截图或相关资料路径，读取最小必要片段，提炼为页面、流程、字段、按钮、状态、接口、数据表和待确认项。
 3. 先做 leaf 判定：
    - 如果候选模块可以独立验收、边界清晰、无需继续拆分，继续生成 `module.md`。
@@ -49,7 +49,7 @@
    - 若无法可靠生成或与现有模块冲突，先向用户确认。
 5. 检查 `.maw/modules.yaml` 中是否已有同名或近似模块：
    - 已存在时，读取对应 `doc`，在不覆盖已有有效内容的前提下补齐缺失章节。
-   - 不存在时，创建 `docs/modules/<module-key>/module.md`，并按需要创建 `docs/modules/<module-key>/changelog.md`。
+   - 不存在时，创建 `docs/modules/<module-key>/module.md` 和 `docs/changelogs/<module-key>.md`。
 6. 按 `docs/modules/_template/module.md` 填写初版：
    - 用用户描述填充业务目标、用户角色、核心场景、上游触发、下游影响和关键状态。
    - 将页面、弹窗、字段、按钮、状态流、异常边界拆成结构化条目。
@@ -59,13 +59,13 @@
 8. 只有页面或后端规则复杂、正在审计或用户明确要求时，才在二级模块下创建 `pages/<page-key>.md`、`backend/<api-group-or-file>.md` 或 `traceability.md`；否则先在 `module.md` 写索引和待确认项。
 9. 如果新建了模块档案，同步向 `.maw/modules.yaml` 增加最小模块索引；路径、接口、表名未知时使用空列表，不猜测。一级 group 可选登记 `route_api_index`，leaf 可选登记 `detail_docs`、`doc_status`、`confidence`、`last_verified_commit` 和 `last_audit_id`。
 10. 如果新建或更新了模块组，同步更新父级 `README.md` 的子模块菜单；如果只生成拆分方案，不创建 leaf 的 `module.md`。
-11. 更新模块 `changelog.md`，记录本次生成初版属于 `docs` 变更。
+11. 更新 `docs/changelogs/<module-key>.md`，记录本次生成初版属于 `docs` 变更，并同步模块档案与机器索引的 `changelog_path`、`changelog_time`。
 12. 最终说明中给出：生成的调用句、拆分判定、更新文件、URL/API 索引补齐程度、detail docs 补齐程度、推断内容、待确认项和后续补齐建议。
 
 ## 验证方式
 
 - 确认 `docs/modules/<module-key>/module.md` 存在，标题、`module_key` 和章节编号完整。
-- 如新增模块，确认 `.maw/modules.yaml` 中存在对应 `key`、`doc`、`changelog`。
+- 如新增模块，确认 `.maw/modules.yaml` 中存在对应 `key`、`doc`、`changelog_path`、`changelog_time`。
 - 如输入是大模块或中间模块组，确认只更新 group `README.md` 和拆分判定表，没有误建过宽 leaf。
 - 如输入包含 URL/API/命令，确认所属一级模块 `route-api-index.md` 已更新或说明未更新原因。
 - 如新增页面/后端审计页，确认它们仍归属于二级模块，不被登记为新的正式 leaf。

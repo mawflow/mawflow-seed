@@ -1,0 +1,264 @@
+{
+  "schema": "mawflow.seed_contract_catalog.v2",
+  "contract_version": 2,
+  "seed_version": "2.1.0",
+  "required_files": [
+    ".maw/seed.lock",
+    ".maw/project.yaml",
+    ".maw/technology.yaml",
+    ".maw/project-lifecycle.yaml",
+    ".maw/components.yaml",
+    ".maw/modules.yaml",
+    ".maw/app-runtime.yaml",
+    ".maw/environments.yaml",
+    ".maw/project-doctor.yaml",
+    ".maw/template-source.yaml",
+    ".maw/upgrade-policy.yaml",
+    ".maw/agent-entry.yaml",
+    "AI_START_HERE.md",
+    "docs/handbooks/manifest.yaml"
+  ],
+  "profiles": [
+    {"key": "web-api", "label": "Web + API", "description": "前端与服务端双组件项目"},
+    {"key": "service", "label": "服务端", "description": "单服务或 API 项目"},
+    {"key": "minimal", "label": "最小内核", "description": "只建立项目协议，组件后续从工作台添加"}
+  ],
+  "targets": {
+    "project": {
+      "source": ".maw/project.yaml",
+      "root": "project",
+      "kind": "mapping",
+      "fields": {
+        "name": {"type": "text", "label": "项目名称", "required": true, "scope": ["shared"], "risk": "low"},
+        "description": {"type": "long_text", "label": "业务目标与价值", "required": false, "scope": ["shared"], "risk": "low"},
+        "owner": {"type": "text", "label": "负责人 / 团队", "required": false, "scope": ["shared"], "risk": "low"},
+        "type": {"type": "text", "label": "项目类型", "required": false, "scope": ["shared"], "risk": "low"},
+        "classification.delivery_mode": {"type": "enum", "label": "项目交付类型", "options": ["new_defined", "existing_evolution", "discovery_experiment"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "classification.requirement_maturity": {"type": "enum", "label": "需求成熟度", "options": ["clear", "partial", "exploratory"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "classification.source_state": {"type": "enum", "label": "源码状态", "options": ["new_repository", "existing_repository"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "classification.onboarding_status": {"type": "enum", "label": "首次体检状态", "options": ["draft", "confirmed"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "classification.selected_methodology": {"type": "key", "label": "项目方法论", "required": true, "scope": ["shared"], "risk": "medium"},
+        "objective.value_statement": {"type": "long_text_or_empty", "label": "价值目标", "required": false, "scope": ["shared"], "risk": "low"},
+        "objective.primary_users": {"type": "text_list", "label": "主要用户", "required": false, "scope": ["shared"], "risk": "low"},
+        "objective.success_metrics": {"type": "text_list", "label": "成功指标", "required": false, "scope": ["shared"], "risk": "low"},
+        "repository_mode": {"type": "enum", "label": "仓库模式", "options": ["internal_only", "external_mapped"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "default_branch": {"type": "git_ref", "label": "默认分支", "required": true, "scope": ["shared"], "risk": "medium"},
+        "timezone": {"type": "text", "label": "默认时区", "required": true, "scope": ["shared"], "risk": "low"}
+      }
+    },
+    "component": {
+      "source": ".maw/components.yaml",
+      "root": "components",
+      "kind": "sequence",
+      "identity": "key",
+      "fields": {
+        "app_key": {"type": "key", "label": "应用标识", "required": true, "scope": ["shared"], "risk": "medium"},
+        "name": {"type": "text", "label": "组件名称", "required": true, "scope": ["shared"], "risk": "low"},
+        "type": {"type": "enum", "label": "组件类型", "options": ["backend", "frontend", "mobile_frontend", "job", "worker", "agent", "shared", "library", "shared_frontend", "integration_portal", "admin", "site", "vitepress_site", "service", "api", "web", "mobile", "cli", "custom"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "path": {"type": "path", "label": "组件目录", "required": true, "scope": ["shared"], "risk": "high"},
+        "source_root": {"type": "path_or_empty", "label": "源码根目录", "required": false, "scope": ["shared"], "risk": "medium"},
+        "enabled": {"type": "bool_or_optional", "label": "启用状态", "required": true, "scope": ["shared"], "risk": "medium"},
+        "guide": {"type": "path_or_empty", "label": "组件说明文档", "required": false, "scope": ["shared"], "risk": "low"}
+      }
+    },
+    "module": {
+      "source": ".maw/modules.yaml",
+      "root": "modules",
+      "kind": "sequence",
+      "identity": "key",
+      "fields": {
+        "name": {"type": "text", "label": "模块名称", "required": true, "scope": ["shared"], "risk": "low"},
+        "type": {"type": "enum", "label": "模块类型", "options": ["group", "leaf", "component", "cross-cutting", "domain", "product-surface"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "status": {"type": "enum", "label": "生命周期", "options": ["active", "stale", "deprecated"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "doc_status": {"type": "enum", "label": "文档状态", "options": ["confirmed", "inferred", "pending_confirm", "stale", "deprecated"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "confidence": {"type": "enum", "label": "置信度", "options": ["high", "medium", "low"], "required": true, "scope": ["shared"], "risk": "low"},
+        "parent_key": {"type": "key_or_empty", "label": "上级模块", "required": false, "scope": ["shared"], "risk": "medium"},
+        "component_refs": {"type": "key_list", "label": "关联组件", "required": false, "scope": ["shared"], "risk": "medium"},
+        "business_domain": {"type": "key_or_empty", "label": "业务域", "required": false, "scope": ["shared"], "risk": "low"},
+        "business_line": {"type": "key_or_empty", "label": "业务线", "required": false, "scope": ["shared"], "risk": "low"},
+        "product_surface": {"type": "key_or_empty", "label": "产品界面", "required": false, "scope": ["shared"], "risk": "low"},
+        "depends_on": {"type": "key_list", "label": "依赖模块", "required": false, "scope": ["shared"], "risk": "medium"},
+        "dependency_mode": {"type": "enum", "label": "依赖类型", "options": ["strong", "weak", "data", "api", "mixed"], "required": false, "scope": ["shared"], "risk": "medium"},
+        "parallel_group": {"type": "key_or_empty", "label": "并行组", "required": false, "scope": ["shared"], "risk": "low"},
+        "delivery_priority": {"type": "integer", "label": "交付优先级", "required": false, "scope": ["shared"], "risk": "low"},
+        "criticality": {"type": "enum", "label": "关键性", "options": ["critical", "high", "medium", "low"], "required": false, "scope": ["shared"], "risk": "medium"},
+        "acceptance_refs": {"type": "path_list", "label": "验收依据", "required": false, "scope": ["shared"], "risk": "low"},
+        "doc": {"type": "path_or_empty", "label": "模块档案", "required": false, "scope": ["shared"], "risk": "low"},
+        "last_verified_at": {"type": "date_or_empty", "label": "最近确认日期", "required": false, "scope": ["shared"], "risk": "low"},
+        "last_verified_by": {"type": "enum", "label": "确认方", "options": ["human", "ai", "reviewer"], "required": false, "scope": ["shared"], "risk": "low"}
+      }
+    },
+    "runtime_app": {
+      "source": ".maw/app-runtime.yaml",
+      "local_source": ".local/.maw/app-runtime.yaml",
+      "root": "app_runtime",
+      "collection": "apps",
+      "kind": "keyed_mapping",
+      "fields": {
+        "app_key": {"type": "key", "label": "应用标识", "required": true, "scope": ["shared"], "risk": "medium"},
+        "enabled": {"type": "bool", "label": "启用", "required": true, "scope": ["shared"], "risk": "medium"},
+        "component_ref": {"type": "key", "label": "关联组件", "required": true, "scope": ["shared"], "risk": "medium"},
+        "code_path": {"type": "path_or_empty", "label": "代码目录", "required": false, "scope": ["shared"], "risk": "medium"},
+        "local_url": {"type": "url_or_empty", "label": "本机 URL", "required": false, "scope": ["shared", "local"], "risk": "medium"},
+        "local_test_entry": {"type": "url_or_path_or_empty", "label": "本机验证入口", "required": false, "scope": ["shared", "local"], "risk": "medium"},
+        "test_url": {"type": "url_or_empty", "label": "测试 URL", "required": false, "scope": ["shared"], "risk": "medium"},
+        "healthcheck_path": {"type": "url_path_or_empty", "label": "健康路径", "required": false, "scope": ["shared", "local"], "risk": "low"},
+        "api_base_path": {"type": "url_path_or_empty", "label": "API 基础路径", "required": false, "scope": ["shared", "local"], "risk": "low"},
+        "command_ref": {"type": "path_or_empty", "label": "命令来源", "required": false, "scope": ["shared"], "risk": "low"},
+        "database_ref": {"type": "secret_requirement_ref_or_empty", "label": "数据库引用", "required": false, "scope": ["shared", "local"], "risk": "high"},
+        "cache_ref": {"type": "secret_requirement_ref_or_empty", "label": "缓存引用", "required": false, "scope": ["shared", "local"], "risk": "high"},
+        "test_account_ref": {"type": "secret_requirement_ref_or_empty", "label": "测试账号引用", "required": false, "scope": ["shared", "local"], "risk": "high"},
+        "notes": {"type": "long_text_or_empty", "label": "说明", "required": false, "scope": ["shared", "local"], "risk": "low"}
+      }
+    },
+    "environment": {
+      "source": ".maw/environments.yaml",
+      "local_source": ".local/.maw/environments.yaml",
+      "root": "environments",
+      "kind": "keyed_mapping",
+      "fields": {
+        "role": {"type": "enum", "label": "环境角色", "options": ["local_development", "production_like_validation", "production", "compatibility"], "required": true, "scope": ["shared", "local"], "risk": "medium"},
+        "profile": {"type": "enum", "label": "Profile", "options": ["local", "dev", "pro"], "required": true, "scope": ["shared", "local"], "risk": "medium"},
+        "description": {"type": "long_text_or_empty", "label": "环境说明", "required": false, "scope": ["shared", "local"], "risk": "low"},
+        "docs": {"type": "path_or_empty", "label": "环境文档", "required": false, "scope": ["shared", "local"], "risk": "low"},
+        "remote_required": {"type": "bool", "label": "需要远端", "required": true, "scope": ["shared", "local"], "risk": "high"},
+        "runtime_mode": {"type": "enum", "label": "运行模式", "options": ["inherit", "container", "hybrid", "host", "external"], "required": true, "scope": ["shared", "local"], "risk": "medium"},
+        "deployment.mode": {"type": "enum", "label": "部署模式", "options": ["development", "compiled_package", "production_release", "compatibility"], "required": true, "scope": ["shared", "local"], "risk": "high"},
+        "deployment.build_artifact_required": {"type": "bool", "label": "需要构建产物", "required": true, "scope": ["shared", "local"], "risk": "medium"},
+        "deployment.approval_required": {"type": "bool", "label": "需要审批", "required": false, "scope": ["shared", "local"], "risk": "high"},
+        "deployment.backup_required": {"type": "bool", "label": "需要备份", "required": false, "scope": ["shared", "local"], "risk": "high"},
+        "deployment.rollback_required": {"type": "bool", "label": "需要回滚", "required": false, "scope": ["shared", "local"], "risk": "high"},
+        "deployment.downtime_assessment_required": {"type": "bool", "label": "需要停机评估", "required": false, "scope": ["shared", "local"], "risk": "high"},
+        "remote_server.port": {"type": "port_or_empty", "label": "远端端口", "required": false, "scope": ["shared", "local"], "risk": "high"},
+        "remote_server.healthcheck_url": {"type": "url_or_empty", "label": "远端健康 URL", "required": false, "scope": ["shared", "local"], "risk": "high"},
+        "remote_server.credential_ref": {"type": "credential_binding_ref_or_empty", "label": "远端凭据引用", "required": false, "scope": ["local"], "risk": "critical"},
+        "remote_server.branch": {"type": "git_ref_or_empty", "label": "远端分支", "required": false, "scope": ["shared", "local"], "risk": "high"}
+      }
+    },
+    "technology": {
+      "source": ".maw/technology.yaml",
+      "root": "technology",
+      "kind": "mapping_paths",
+      "fields": {
+        "runtime_mode": {"type": "enum", "label": "开发环境模式", "options": ["container", "hybrid", "host", "external"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "development_environment.standard": {"type": "enum", "label": "开发环境标准", "options": ["docker_compose", "devcontainer", "host_runtime", "external"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "development_environment.compose_files": {"type": "path_list", "label": "Compose 文件", "required": false, "scope": ["shared"], "risk": "medium"},
+        "development_environment.devcontainer": {"type": "enum", "label": "Dev Container", "options": ["required", "optional", "disabled"], "required": true, "scope": ["shared"], "risk": "medium"}
+      }
+    },
+    "technology_language": {
+      "source": ".maw/technology.yaml",
+      "root": "technology",
+      "collection": "languages",
+      "kind": "sequence",
+      "identity": "key",
+      "fields": {
+        "version": {"type": "text", "label": "版本约束", "required": false, "scope": ["shared"], "risk": "medium"},
+        "package_manager": {"type": "key_or_empty", "label": "包管理器", "required": false, "scope": ["shared"], "risk": "low"},
+        "role": {"type": "enum", "label": "技术角色", "options": ["client", "server", "shared", "tooling"], "required": false, "scope": ["shared"], "risk": "low"},
+        "required": {"type": "bool", "label": "必须满足", "required": true, "scope": ["shared"], "risk": "medium"}
+      }
+    },
+    "technology_framework": {
+      "source": ".maw/technology.yaml",
+      "root": "technology",
+      "collection": "frameworks",
+      "kind": "sequence",
+      "identity": "key",
+      "fields": {
+        "name": {"type": "text", "label": "框架名称", "required": true, "scope": ["shared"], "risk": "low"},
+        "version": {"type": "text", "label": "版本约束", "required": false, "scope": ["shared"], "risk": "medium"},
+        "language_ref": {"type": "key_or_empty", "label": "语言引用", "required": false, "scope": ["shared"], "risk": "medium"},
+        "required": {"type": "bool", "label": "必须满足", "required": true, "scope": ["shared"], "risk": "medium"}
+      }
+    },
+    "technology_service": {
+      "source": ".maw/technology.yaml",
+      "root": "technology",
+      "collection": "services",
+      "kind": "sequence",
+      "identity": "key",
+      "fields": {
+        "type": {"type": "enum", "label": "服务类型", "options": ["postgresql", "mysql", "mariadb", "redis", "external", "custom"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "version": {"type": "text", "label": "版本约束", "required": false, "scope": ["shared"], "risk": "medium"},
+        "provision": {"type": "enum", "label": "提供方式", "options": ["docker", "host", "external", "user_selectable"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "required": {"type": "bool", "label": "必须满足", "required": true, "scope": ["shared"], "risk": "medium"},
+        "credential_requirement_ref": {"type": "ref_or_empty", "label": "凭证需求引用", "required": false, "scope": ["shared"], "risk": "high"}
+      }
+    },
+    "credential_requirement": {
+      "source": ".maw/project.yaml",
+      "root": "credentials",
+      "collection": "requirements",
+      "kind": "sequence",
+      "identity": "key",
+      "fields": {
+        "name": {"type": "text", "label": "凭证名称", "required": true, "scope": ["shared"], "risk": "low"},
+        "credential_type": {"type": "key", "label": "凭证类型", "required": true, "scope": ["shared"], "risk": "medium"},
+        "required": {"type": "bool", "label": "必须配置", "required": true, "scope": ["shared"], "risk": "medium"},
+        "credential_class": {"type": "enum", "label": "凭证类别", "options": ["user", "project", "host", "service"], "required": true, "scope": ["shared"], "risk": "high"},
+        "subject_scope": {"type": "enum", "label": "主体范围", "options": ["user", "project", "host", "service"], "required": true, "scope": ["shared"], "risk": "high"},
+        "storage_location": {"type": "enum", "label": "存储位置", "options": ["host", "cloud", "either"], "required": true, "scope": ["shared"], "risk": "high"},
+        "environments": {"type": "key_list", "label": "适用环境", "required": false, "scope": ["shared"], "risk": "medium"},
+        "required_fields": {"type": "key_list", "label": "必需字段", "required": false, "scope": ["shared"], "risk": "high"},
+        "allowed_use_modes": {"type": "key_list", "label": "允许用途", "required": false, "scope": ["shared"], "risk": "high"},
+        "host_authorization_required": {"type": "bool", "label": "需要宿主机授权", "required": true, "scope": ["shared"], "risk": "high"}
+      }
+    },
+    "handbook_system": {
+      "source": "docs/handbooks/manifest.yaml",
+      "root": "handbook_system",
+      "kind": "mapping",
+      "fields": {
+        "index_path": {"type": "path", "label": "手册索引", "required": true, "scope": ["shared"], "risk": "low"},
+        "evidence_required": {"type": "bool", "label": "需要证据", "required": true, "scope": ["shared"], "risk": "medium"}
+      }
+    },
+    "handbook_volume": {
+      "source": "docs/handbooks/manifest.yaml",
+      "root": "handbook_system",
+      "collection": "volumes",
+      "kind": "sequence",
+      "identity": "key",
+      "fields": {
+        "title": {"type": "text", "label": "手册名称", "required": true, "scope": ["shared"], "risk": "low"},
+        "root": {"type": "path", "label": "手册目录", "required": true, "scope": ["shared"], "risk": "medium"},
+        "audience": {"type": "key_list", "label": "目标读者", "required": true, "scope": ["shared"], "risk": "low"},
+        "authority": {"type": "key", "label": "事实权威", "required": true, "scope": ["shared"], "risk": "medium"},
+        "required": {"type": "bool", "label": "必须维护", "required": true, "scope": ["shared"], "risk": "medium"}
+      }
+    },
+    "lifecycle": {
+      "source": ".maw/project-lifecycle.yaml",
+      "root": "project_lifecycle",
+      "kind": "mapping_paths",
+      "metadata_source": "project_lifecycle.configuration.field_metadata",
+      "fields": {}
+    }
+  },
+  "operations": [
+    {"key": "project.update", "target": "project", "modes": ["update"], "risk": "medium"},
+    {"key": "component.add", "target": "component", "modes": ["create"], "risk": "high"},
+    {"key": "component.update", "target": "component", "modes": ["update"], "risk": "medium"},
+    {"key": "component.disable", "target": "component", "modes": ["update"], "risk": "high"},
+    {"key": "component.remove", "target": "component", "modes": ["remove"], "risk": "critical"},
+    {"key": "module.add", "target": "module", "modes": ["create"], "risk": "medium"},
+    {"key": "module.update", "target": "module", "modes": ["update"], "risk": "medium"},
+    {"key": "module.confirm", "target": "module", "modes": ["update"], "risk": "medium"},
+    {"key": "technology.update", "target": "technology", "modes": ["update"], "risk": "high"},
+    {"key": "technology.language.add", "target": "technology_language", "modes": ["create"], "risk": "medium"},
+    {"key": "technology.language.update", "target": "technology_language", "modes": ["update"], "risk": "medium"},
+    {"key": "technology.framework.add", "target": "technology_framework", "modes": ["create"], "risk": "medium"},
+    {"key": "technology.framework.update", "target": "technology_framework", "modes": ["update"], "risk": "medium"},
+    {"key": "technology.service.add", "target": "technology_service", "modes": ["create"], "risk": "high"},
+    {"key": "technology.service.update", "target": "technology_service", "modes": ["update"], "risk": "high"},
+    {"key": "credential.requirement.add", "target": "credential_requirement", "modes": ["create"], "risk": "high"},
+    {"key": "credential.requirement.update", "target": "credential_requirement", "modes": ["update"], "risk": "high"},
+    {"key": "handbook.update", "target": "handbook_system", "modes": ["update"], "risk": "medium"},
+    {"key": "handbook.volume.add", "target": "handbook_volume", "modes": ["create"], "risk": "medium"},
+    {"key": "handbook.volume.update", "target": "handbook_volume", "modes": ["update"], "risk": "medium"},
+    {"key": "runtime.app.upsert", "target": "runtime_app", "modes": ["create", "update"], "risk": "high"},
+    {"key": "environment.upsert", "target": "environment", "modes": ["create", "update"], "risk": "high"},
+    {"key": "lifecycle.update", "target": "lifecycle", "modes": ["update"], "risk": "critical"}
+  ]
+}

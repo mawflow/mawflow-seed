@@ -1,0 +1,23 @@
+schema_version: 2
+project:
+  key: __PROJECT_KEY__
+  name: __PROJECT_NAME__
+  description: ""
+  owner: ""
+  type: business_project
+  classification:
+    delivery_mode: new_defined
+    requirement_maturity: clear
+    source_state: new_repository
+    onboarding_status: draft
+    selected_methodology: solo_lean_loop
+  objective:
+    value_statement: ""
+    primary_users: []
+    success_metrics: []
+  repository_mode: internal_only
+  default_branch: main
+  timezone: Asia/Shanghai
+credentials:
+  schema_version: 1
+  requirements: []

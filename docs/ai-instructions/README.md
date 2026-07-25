@@ -197,7 +197,7 @@ read_contract:
 - AI 执行中试错后找到正确方法时，先写入 [execution-lesson-candidates.md](execution-lesson-candidates.md)；多次适用或风险较高后，再升级到 `lessons/`、`solutions/`、`instructions/` 或 `docs/ai-coding/`。
 - 经验正文较大、包含完整排查过程、命令序列、替代方案或验收清单时，详情写入 `solutions/<category>/<topic>.md`，并只在 `experience-index.md` 中保留概述和触发关键词。
 - 新增或升级正式经验、解决方案详情时，必须同步更新 `experience-index.md`，确保后续会话先命中索引再读取详情。
-- 生成或重建 modules 时，先按 `TINST-010` 生成模块树和 group/leaf 判定；只有 leaf 才创建 `module.md` 与 `changelog.md`。
+- 生成或重建 modules 时，先按 `TINST-010` 生成模块树和 group/leaf 判定；只有 leaf 才创建 `module.md` 与 `docs/changelogs/<module_key>.md`。遇到旧格式时先自动迁移。
 - 初始化、检查、审计或规范改造已有项目 modules 时，按 `TINST-036` 建立模块地图；一级模块维护 `route-api-index.md`，二级模块维护 `module.md`、AI 边界指引、证据字段和按需 detail docs，缺失内容渐进补全，定期用 `module_map_score` 查漏补缺并标记 stale/deprecated 文档。
 - 项目方向、需求理解、业务流程、验收目标或 docs 口径需要人工评审时，按 `TINST-037` 执行 `#项目评审`；评审报告必须给出 `#项目审计：<评审报告路径>` 接续调用。基于评审成果核对实现程度、验收证据和后续推进建议时，使用 `#项目审计：<评审报告路径>`。
 - 需要记录或审计健康问题、需求事实、决策、普通健康待办、调研会话摘要和验收缺口时，按 `TINST-038` 执行 `#项目健康`；`.maw/health/` 是可导入健康上下文，不替代 `docs/planning/todos/`、`docs/project-review-audits/`、正式需求或验收文档。

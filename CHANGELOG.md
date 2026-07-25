@@ -1,13 +1,32 @@
 # 模板变更记录
 
-## Unreleased
+## v0.2.30 - 2026-07-25
 
-- 暂无。
+- 修正 Seed 2.1 公开分发清单：根 `PUBLIC_PAYLOAD_MANIFEST.json` 与 `.maw/seed.lock`、Kit 版本和契约指纹保持一致。
+- 公开 payload 改为要求 public-safe `.maw/template-source.example.yaml`，并纳入技术定义、六卷手册和 Seed Kit 2.1 完整协议源。
 
-## v0.2.28 - 2026-07-13
+## v0.2.29 - 2026-07-25
 
-- 派生项目模板漂移统一优先使用 Host Base 的 `mawflow project drift`，公开 Seed 不再依赖被公开 payload 裁剪或缺少 Python 依赖的仓库脚本。
-- 漂移结果直接生成当前会话的语义增量升级要求，明确保护 `README.md`、`code/`、app_key、发布配置、仓库映射、secrets、`.local` 和模块档案；源码开发环境仍可使用 `ops/scripts/plan-template-drift.py` 作为兼容入口。
+### Seed Kit 2.1.0
+
+- 在保持 `contract_version: 2` 的前提下扩展项目定义：新增项目分类与目标、模块依赖/并行/优先级、`.maw/technology.yaml`、local/staging/production 三层环境语义、凭证需求声明和六卷项目手册清单。
+- 三种初始化 profile 现在都会生成可编译的技术栈、开发环境和手册骨架；`web-api` / `service` 默认使用容器开发模式，`minimal` 保留宿主机运行模式。
+- ChangeSet v2 新增技术语言/框架/服务、凭证需求和手册元数据白名单操作；继续拒绝凭证值、任意路径和未忽略的本机覆盖文件。
+- 0.2.x / Seed 2.0 项目迁移现在会增量合并环境、生命周期和技术栈事实，保留旧环境别名与自定义字段，并生成带哈希的私有备份清单；新增显式确认、冲突检查和可验证 rollback API。
+- 新增模块依赖缺失、自依赖和循环检测，以及技术栈、凭证需求、六卷手册的编译校验和初始化/变更/迁移回滚回归测试。
+
+## v2.0.0
+
+- 将仓库重新定位为 Seed Contract、Seed Kit、profiles、默认模板与公开分发 BOM 的唯一开发源，不再把整仓复制视为项目升级机制。
+- 新增 `mawflow-seed-kit 2.0.0`，统一提供 Schema/UI/Operation Catalog、Project Definition 编译器、ChangeSet v2、一次性 0.2.x 迁移和 `web-api` / `service` / `minimal` 项目初始化 profile。
+- 新项目和迁移项目通过 `.maw/seed.lock` 固定 contract version、Seed Kit 版本与契约指纹；无有效 lock 的项目只读，不允许本地工作台直接写配置。
+- 本机覆盖统一写入被 Git 忽略的 `.local/.maw/`，共享 `.maw/` 和本机配置均由本地工作台按同一 Catalog 可视化维护。
+- 移除长期双写和整包覆盖兼容策略；0.2.x 只允许通过 preview/confirm/rollback 一次性迁移到 Contract v2。
+
+- 统一本机文件规范目录：配置 overlay 和安全示例收敛到 `.local/.maw/`，运行状态收敛到 `.local/maw/`；旧 `.maw/*.local.*` 只保留兼容读取。同步补齐 Git Access Profile/Commit Identity 引用 Schema、T3 迁移任务包和公开 Seed 的安全示例放行门禁。
+- 新增双端工作台与项目生命周期治理 V3：新项目使用 `main` / `dev`，生产来源检查要求 commit/tag 位于 `origin/main` 历史；新增 Schema 字段元数据、成员分支/worktree/租约边界、任务片段确定性聚合、证据化项目手册和 preview-first 幂等迁移工具。
+- 新增可选 Mawflow Agent Skills 集成协议、派生项目升级资产和兼容检查；Skill 只负责发现与 CLI/MCP 适配，不替代项目规则或成为运行依赖。
+- 加固无 Skill、兼容 Skill、卸载 Skill、旧版 Skill 四场景验收：兼容/旧版场景真实加载 bundle manifest 与四个最小 `SKILL.md`，正式分发候选可通过 `--skill-root` 接入同一检查器。
 
 ## v0.2.27 - 2026-07-11
 
