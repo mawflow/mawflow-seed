@@ -18,6 +18,7 @@ from mawflow_seed_kit import (  # noqa: E402
     compile_project_definition,
     materialize_project,
     plan_change_set,
+    plan_contract_repair,
     plan_migration,
     rollback_migration,
 )
@@ -50,6 +51,107 @@ def test_materialized_project_is_complete_and_editable(tmp_path: Path) -> None:
     assert len(projection["configs"]["docs/handbooks/manifest.yaml"]["handbook_system"]["volumes"]) == 6
     assert set(projection["configs"][".maw/app-runtime.yaml"]["app_runtime"]["apps"]) == {"server", "client"}
     assert public_catalog()["trust_boundary"]["arbitrary_paths_writable"] is False
+
+
+def test_current_seed_contract_repair_normalizes_legacy_technology(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "project"
+    materialize_project(
+        root, project_key="demo-project", name="演示项目", profile="web-api"
+    )
+    _git_init(root)
+    technology_path = root / ".maw/technology.yaml"
+    technology_path.write_text(
+        """schema_version: 2
+technology:
+  runtime_mode: container
+  languages:
+    - key: maven
+      role: build_tool
+      required: true
+  frameworks:
+    - key: spring-boot
+      version: "3.5"
+      required: true
+    - key: vue
+      version: "3"
+      required: true
+    - key: vite
+      version: "5"
+      required: true
+  services:
+    - key: redis
+      version: "7"
+      required: false
+    - key: mysql
+      version: "8"
+      required: false
+  development_environment:
+    standard: docker_compose
+    compose_files: []
+    devcontainer: optional
+  verification:
+    commands: []
+# keep-this-project-comment
+""",
+        encoding="utf-8",
+    )
+    invalid = compile_project_definition(root)
+
+    assert invalid["status"] == "needs_attention"
+    assert invalid["summary"]["errors"] == 8
+    public, private = plan_contract_repair(root)
+    result = apply_change_plan(
+        root,
+        private,
+        public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    assert public["repair"]["mode"] == "deterministic_current_version"
+    assert public["repair"]["issue_count"] == 8
+    assert len(public["operations"]) == 6
+    assert result["projection"]["status"] == "ready"
+    repaired_text = technology_path.read_text(encoding="utf-8")
+    assert "# keep-this-project-comment" in repaired_text
+    technology = yaml.safe_load(repaired_text)["technology"]
+    assert technology["languages"][0]["role"] == "tooling"
+    assert [item["name"] for item in technology["frameworks"]] == [
+        "spring-boot",
+        "vue",
+        "vite",
+    ]
+    assert [(item["type"], item["provision"]) for item in technology["services"]] == [
+        ("redis", "docker"),
+        ("mysql", "docker"),
+    ]
+
+
+def test_contract_repair_refuses_project_seed_version_mismatch(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "project"
+    materialize_project(root, project_key="demo", name="Demo", profile="web-api")
+    lock_path = root / ".maw/seed.lock"
+    lock = yaml.safe_load(lock_path.read_text(encoding="utf-8"))
+    lock["seed_version"] = "2.0.0"
+    lock_path.write_text(
+        yaml.safe_dump(lock, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+    technology_path = root / ".maw/technology.yaml"
+    technology = yaml.safe_load(technology_path.read_text(encoding="utf-8"))
+    technology["technology"]["frameworks"] = [
+        {"key": "demo-framework", "required": True}
+    ]
+    technology_path.write_text(
+        yaml.safe_dump(technology, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="seed_repair_version_mismatch"):
+        plan_contract_repair(root)
 
 
 def test_multi_file_change_set_adds_component_and_runtime_atomically(tmp_path: Path) -> None:
@@ -286,6 +388,33 @@ def test_migration_preserves_business_readme_private_docs_and_repairs_modules(
         + yaml.safe_dump(components_payload, allow_unicode=True, sort_keys=False)
     )
     components_path.write_text(components_original, encoding="utf-8")
+    technology_path = root / ".maw/technology.yaml"
+    technology_path.write_text(
+        """# 保留技术栈注释
+schema_version: 1
+technology:
+  runtime_mode: container
+  languages:
+    - key: maven
+      role: build_tool
+      required: true
+  frameworks:
+    - key: spring-boot
+      version: "3.5"
+      required: true
+  services:
+    - key: mysql
+      version: "8"
+      required: false
+  development_environment:
+    standard: docker_compose
+    compose_files: [compose.dev.yml]
+    devcontainer: optional
+  verification:
+    commands: []
+""",
+        encoding="utf-8",
+    )
     modules_path = root / ".maw/modules.yaml"
     modules_path.write_text(
         """# 真实模块事实
@@ -333,6 +462,14 @@ modules:
     assert migrated["modules"][0]["confidence"] == "low"
     assert migrated["modules"][0]["private_extension"] == {"owner": "learning-team"}
     assert migrated["modules"][1]["doc_status"] == "confirmed"
+    migrated_technology_text = technology_path.read_text(encoding="utf-8")
+    assert "# 保留技术栈注释" in migrated_technology_text
+    migrated_technology = yaml.safe_load(migrated_technology_text)["technology"]
+    assert migrated_technology["languages"][0]["role"] == "tooling"
+    assert migrated_technology["frameworks"][0]["name"] == "spring-boot"
+    assert migrated_technology["services"][0]["type"] == "mysql"
+    assert migrated_technology["services"][0]["provision"] == "docker"
+    assert public["migration_safety"]["technology_field_normalizations"]
 
 
 def test_compiler_rejects_catalog_value_drift(tmp_path: Path) -> None:

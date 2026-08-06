@@ -506,7 +506,7 @@ def _normalized_lifecycle(root: Path, fallback_text: str) -> str:
 def _normalized_technology(root: Path, fallback_text: str) -> str:
     path = root / ".maw/technology.yaml"
     if path.is_file() and not path.is_symlink():
-        return path.read_text(encoding="utf-8")
+        return _normalized_top_level_schema(path.read_text(encoding="utf-8"))
     existing = _read_mapping(root / ".maw/technology.yaml")
     fallback = yaml.safe_load(fallback_text)
     merged = _deep_merge(fallback, existing)
@@ -586,6 +586,24 @@ def plan_migration(root: Path | str, *, profile: str = "web-api") -> tuple[dict[
             desired[source_ref] = path.read_text(encoding="utf-8")
             protected_existing_paths.append(source_ref)
 
+    technology_field_normalizations: list[dict[str, Any]] = []
+    with tempfile.TemporaryDirectory(
+        prefix="mawflow-seed-migration-repair-"
+    ) as repair_temporary:
+        repair_root = Path(repair_temporary)
+        for source_ref, proposed in desired.items():
+            destination = repair_root / source_ref
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(proposed, encoding="utf-8")
+        repair_projection = compile_project_definition(repair_root)
+        if repair_projection["status"] != "ready":
+            from .changes import _deterministic_contract_file_repairs
+
+            repaired_texts, technology_field_normalizations = (
+                _deterministic_contract_file_repairs(repair_root)
+            )
+            desired.update(repaired_texts)
+
     writes: list[dict[str, Any]] = []
     private_writes: list[dict[str, Any]] = []
     for source_ref, proposed in sorted(desired.items()):
@@ -620,6 +638,7 @@ def plan_migration(root: Path | str, *, profile: str = "web-api") -> tuple[dict[
             ).is_file(),
             "protected_existing_paths": sorted(protected_existing_paths),
             "module_field_additions": module_field_additions,
+            "technology_field_normalizations": technology_field_normalizations,
             "module_facts_preserved": True,
             "project_owned_yaml_text_preserved": True,
         },

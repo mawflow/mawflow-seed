@@ -18,7 +18,7 @@ from urllib.parse import urlsplit
 import yaml
 from yaml.nodes import MappingNode, Node, ScalarNode, SequenceNode
 
-from .catalog import catalog, contract_fingerprint
+from .catalog import SEED_VERSION, catalog, contract_fingerprint
 from .compiler import compile_project_definition
 
 
@@ -556,10 +556,15 @@ def _assert_component_unreferenced(root: Path, texts: dict[str, str], key: str) 
         raise ValueError("seed_change_component_referenced_by_runtime")
 
 
-def plan_change_set(root: Path | str, payload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+def _plan_change_set(
+    root: Path | str,
+    payload: dict[str, Any],
+    *,
+    allow_invalid_base: bool = False,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     project_root = Path(root).expanduser().resolve(strict=True)
     projection = compile_project_definition(project_root)
-    if not projection["editable"]:
+    if not projection["editable"] and not allow_invalid_base:
         raise ValueError("seed_change_project_not_editable")
     if payload.get("schema") != "mawflow.seed_change_set.v2":
         raise ValueError("seed_change_schema_invalid")
@@ -611,6 +616,178 @@ def plan_change_set(root: Path | str, payload: dict[str, Any]) -> tuple[dict[str
         "trust_boundary": {"arbitrary_paths_writable": False, "credential_values_accepted": False, "full_configs_returned": False},
     }
     return public, {**public, "private_writes": private_writes}
+
+
+def plan_change_set(
+    root: Path | str, payload: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    return _plan_change_set(root, payload)
+
+
+def _technology_repair_operations(
+    projection: dict[str, Any],
+) -> list[dict[str, Any]]:
+    configs = projection.get("configs")
+    technology_config = (
+        configs.get(".maw/technology.yaml")
+        if isinstance(configs, dict)
+        else None
+    )
+    technology = (
+        technology_config.get("technology")
+        if isinstance(technology_config, dict)
+        else None
+    )
+    if not isinstance(technology, dict):
+        return []
+    targets = catalog()["targets"]
+    operations: list[dict[str, Any]] = []
+
+    language_roles = set(
+        targets["technology_language"]["fields"]["role"].get("options", [])
+    )
+    for item in technology.get("languages", []):
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key") or "").strip()
+        role = str(item.get("role") or "").strip()
+        if key and role and role not in language_roles and role == "build_tool":
+            operations.append(
+                {
+                    "op": "technology.language.update",
+                    "key": key,
+                    "scope": "shared",
+                    "values": {"role": "tooling"},
+                }
+            )
+
+    for item in technology.get("frameworks", []):
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key") or "").strip()
+        if key and not str(item.get("name") or "").strip():
+            operations.append(
+                {
+                    "op": "technology.framework.update",
+                    "key": key,
+                    "scope": "shared",
+                    "values": {"name": key},
+                }
+            )
+
+    service_fields = targets["technology_service"]["fields"]
+    service_types = set(service_fields["type"].get("options", []))
+    provisions = set(service_fields["provision"].get("options", []))
+    environment = technology.get("development_environment")
+    standard = str(
+        environment.get("standard")
+        if isinstance(environment, dict)
+        else ""
+    ).strip()
+    default_provision = {
+        "docker_compose": "docker",
+        "devcontainer": "docker",
+        "host_runtime": "host",
+        "external": "external",
+    }.get(standard, "user_selectable")
+    for item in technology.get("services", []):
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key") or "").strip()
+        if not key:
+            continue
+        values: dict[str, str] = {}
+        service_type = str(item.get("type") or "").strip()
+        if not service_type:
+            values["type"] = key if key in service_types else "custom"
+        elif service_type not in service_types and key in service_types:
+            values["type"] = key
+        provision = str(item.get("provision") or "").strip()
+        if not provision or provision not in provisions:
+            values["provision"] = default_provision
+        if values:
+            operations.append(
+                {
+                    "op": "technology.service.update",
+                    "key": key,
+                    "scope": "shared",
+                    "values": values,
+                }
+            )
+    return operations
+
+
+def _deterministic_contract_file_repairs(
+    root: Path | str,
+) -> tuple[dict[str, str], list[dict[str, Any]]]:
+    """Build text-preserving deterministic repairs without requiring other files ready."""
+
+    project_root = Path(root).expanduser().resolve(strict=True)
+    projection = compile_project_definition(project_root)
+    operations = _technology_repair_operations(projection)
+    texts: dict[str, str] = {}
+    summaries: list[dict[str, Any]] = []
+    for operation in operations:
+        source_ref, target, mode, changes = _apply_operation(
+            project_root, texts, operation
+        )
+        summaries.append(
+            {
+                "target": target,
+                "key": str(operation.get("key") or ""),
+                "mode": mode,
+                "source_ref": source_ref,
+                "changes": changes,
+            }
+        )
+    return texts, summaries
+
+
+def plan_contract_repair(
+    root: Path | str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Plan only deterministic repairs for a current-version invalid contract."""
+
+    project_root = Path(root).expanduser().resolve(strict=True)
+    projection = compile_project_definition(project_root)
+    if projection.get("migration_required"):
+        raise ValueError("seed_repair_migration_required")
+    configs = projection.get("configs")
+    lock = configs.get(".maw/seed.lock") if isinstance(configs, dict) else None
+    seed_version = str(lock.get("seed_version") or "") if isinstance(lock, dict) else ""
+    if seed_version != SEED_VERSION:
+        raise ValueError("seed_repair_version_mismatch")
+    if projection.get("status") == "ready":
+        raise ValueError("seed_repair_not_required")
+    operations = _technology_repair_operations(projection)
+    if not operations:
+        raise ValueError("seed_repair_manual_resolution_required")
+    try:
+        public, private = _plan_change_set(
+            project_root,
+            {
+                "schema": "mawflow.seed_change_set.v2",
+                "base_projection_fingerprint": projection["fingerprint"],
+                "base_contract_fingerprint": contract_fingerprint(),
+                "reason": "本地工作台按当前 Seed 契约修复可确定的结构字段",
+                "operations": operations,
+            },
+            allow_invalid_base=True,
+        )
+    except ValueError as exc:
+        if str(exc).startswith("seed_change_proposed_projection_invalid"):
+            raise ValueError("seed_repair_manual_resolution_required") from exc
+        raise
+    repair = {
+        "schema": "mawflow.seed_contract_repair.v1",
+        "mode": "deterministic_current_version",
+        "issue_count": int(projection.get("summary", {}).get("errors") or 0),
+        "operation_count": len(operations),
+        "manual_resolution_required": False,
+    }
+    public["repair"] = repair
+    private["repair"] = repair
+    return public, private
 
 
 def apply_change_plan(root: Path | str, plan: dict[str, Any], confirmation: str, *, backup_root: Path | str) -> dict[str, Any]:
@@ -683,4 +860,4 @@ def apply_change_plan(root: Path | str, plan: dict[str, Any], confirmation: str,
     }
 
 
-__all__ = ["apply_change_plan", "plan_change_set"]
+__all__ = ["apply_change_plan", "plan_change_set", "plan_contract_repair"]
