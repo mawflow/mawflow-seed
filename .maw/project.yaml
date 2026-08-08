@@ -72,7 +72,7 @@ collaboration_boundary:
 # 项目只声明“需要什么凭证”，不在本文件保存凭证值或具体绑定。
 # 具体机器的绑定写入被 Git 忽略的 `.local/.maw/project.yaml`，并且只能保存 mawsec/mawlocal/mawproxy 引用。
 credentials:
-  schema_version: 1
+  schema_version: 2
   requirements: []
   # 示例（按项目事实增量添加，不要把占位项当成真实需求）：
   # - key: source-repository-read
@@ -86,6 +86,24 @@ credentials:
   #   required_fields: [token]
   #   allowed_use_modes: [git-fetch]
   #   host_authorization_required: true
+  #   resource:
+  #     required: false
+  #     target_types: [external_platform]
+  #     target_roles: [source_repository]
+  #     allowed_service_types: []
+  #     health_policy: optional
+  #     max_health_age_seconds: 900
+  #     require_same_target: false
+  #   lease:
+  #     required: true
+  #     max_ttl_seconds: 300
+  #     bind_resource_snapshot: true
+  #     require_fresh_health: false
+  #   runtime:
+  #     inject:
+  #       - source_field: token
+  #         target: git_askpass
+  #         name: GIT_HTTPS_TOKEN
 
 documentation_path_policy:
   # 输入资料整理、提示词、报告、交付说明和最终输出中，凡指向本项目目录或文件的路径，一律使用项目根相对路径。

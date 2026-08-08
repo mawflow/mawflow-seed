@@ -1,10 +1,10 @@
 {
   "schema": "mawflow.seed_public_payload.v2",
-  "seed_version": "2.1.2",
+  "seed_version": "2.2.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:cb39aee086a342e144b6d65229dbabe1f24adfd847998787e071db10ab6abeee",
+  "contract_fingerprint": "sha256:551257c31832b0de595e9b82eb0032e983fdb8d8a8d8bff9cf5bdd97baf3e8dd",
   "bom": {
-    "kit": "mawflow-seed-kit==2.1.2",
+    "kit": "mawflow-seed-kit==2.2.0",
     "contract": "seed-contract-v2"
   },
   "required_paths": [

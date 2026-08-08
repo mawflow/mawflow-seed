@@ -1,5 +1,14 @@
 # 模板变更记录
 
+## v0.2.33 - 2026-08-08
+
+### Seed Kit 2.2.0
+
+- 发布 Credential Governance Contract：项目 Requirement 升级到 v2，本机 Binding 升级到 v3，并把资源、租约和 runtime injection 纳入机器可读契约。
+- 修复可信私有仓明文兼容漂移：tracked plaintext 在所有上下文默认阻断，旧明文仅允许通过 migration-only 路径进入 SecretStore 或 `.local/**`。
+- 新增 `doctor credentials`，默认只扫描受控配置范围，输出脱敏 finding、重复组、资源候选、历史暴露与事务治理建议；源码扫描必须显式开启。
+- 旧项目迁移保留业务事实并补齐 v2/v3 结构，应用保持哈希冲突检查、私有备份、校验失败回滚和精确确认串。
+
 ## v0.2.32 - 2026-08-06
 
 ### Seed Kit 2.1.2

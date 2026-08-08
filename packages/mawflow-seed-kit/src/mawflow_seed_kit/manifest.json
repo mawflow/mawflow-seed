@@ -1,11 +1,11 @@
 {
   "schema": "mawflow.seed_kit.manifest.v2",
   "name": "mawflow-seed-kit",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:cb39aee086a342e144b6d65229dbabe1f24adfd847998787e071db10ab6abeee",
+  "contract_fingerprint": "sha256:551257c31832b0de595e9b82eb0032e983fdb8d8a8d8bff9cf5bdd97baf3e8dd",
   "template_root": "template",
   "profiles": ["web-api", "service", "minimal"],
   "required_paths": [".maw/seed.lock", ".maw/project.yaml", ".maw/technology.yaml", ".maw/components.yaml", ".maw/modules.yaml", ".maw/app-runtime.yaml", ".maw/environments.yaml", ".maw/project-lifecycle.yaml", ".maw/project-doctor.yaml", ".maw/template-source.yaml", ".maw/upgrade-policy.yaml", ".maw/agent-entry.yaml", "AI_START_HERE.md", "docs/handbooks/manifest.yaml"],
-  "quick_check": ["python3", "-m", "mawflow_seed_kit.cli", "doctor", "."]
+  "quick_check": ["python3", "-m", "mawflow_seed_kit.cli", "doctor", "credentials", ".", "--fail-on-plaintext"]
 }

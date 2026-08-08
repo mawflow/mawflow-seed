@@ -19,5 +19,5 @@ project:
   default_branch: main
   timezone: Asia/Shanghai
 credentials:
-  schema_version: 1
+  schema_version: 2
   requirements: []

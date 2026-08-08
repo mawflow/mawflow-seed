@@ -107,8 +107,47 @@ def _normalized_project(root: Path, project_key: str, name: str) -> str:
     result["schema_version"] = 2
     result["project"] = normalized
     credentials = result.get("credentials") if isinstance(result.get("credentials"), dict) else {}
-    credentials.setdefault("schema_version", 1)
+    credentials["schema_version"] = 2
     credentials.setdefault("requirements", [])
+    for requirement in credentials["requirements"]:
+        if not isinstance(requirement, dict):
+            continue
+        required_fields = [str(item) for item in requirement.get("required_fields") or []]
+        requirement.setdefault(
+            "resource",
+            {
+                "required": False,
+                "target_types": [],
+                "target_roles": [],
+                "allowed_service_types": [],
+                "health_policy": "optional",
+                "max_health_age_seconds": 900,
+                "require_same_target": False,
+            },
+        )
+        requirement.setdefault(
+            "lease",
+            {
+                "required": bool(requirement.get("host_authorization_required", True)),
+                "max_ttl_seconds": int(requirement.pop("lease_ttl_seconds", 300) or 300),
+                "bind_resource_snapshot": True,
+                "require_fresh_health": False,
+            },
+        )
+        requirement.setdefault(
+            "runtime",
+            {
+                "inject": [
+                    {
+                        "source_field": field,
+                        "target": "env",
+                        "name": "MAW_CREDENTIAL_"
+                        + re.sub(r"[^A-Z0-9]+", "_", f"{requirement.get('key', 'SECRET')}_{field}".upper()).strip("_"),
+                    }
+                    for field in required_fields
+                ]
+            },
+        )
     result["credentials"] = credentials
     rendered = _render(result)
     return ("\n".join(comments) + "\n" if comments else "") + rendered
@@ -204,7 +243,7 @@ def _append_missing_mapping_fields(
 
 
 def _replace_mapping_scalar(
-    text: str, path: tuple[str, ...], key: str, value: str
+    text: str, path: tuple[str, ...], key: str, value: Any
 ) -> str:
     root = yaml.compose(text)
     payload = yaml.safe_load(text)
@@ -293,16 +332,110 @@ def _normalized_project_contract_text(
             "success_metrics": [],
         },
     )
-    return _append_missing_mapping_fields(
+    normalized = _append_missing_mapping_fields(
         normalized,
         (),
         {
             "credentials": {
-                "schema_version": 1,
+                "schema_version": 2,
                 "requirements": [],
             }
         },
     )
+    normalized = _replace_mapping_scalar(
+        normalized, ("credentials",), "schema_version", 2
+    )
+    return _normalized_credential_requirements(normalized)
+
+
+def _normalized_credential_requirements(text: str) -> str:
+    document = yaml.compose(text)
+    payload = yaml.safe_load(text)
+    if not isinstance(document, MappingNode) or not isinstance(payload, dict):
+        raise ValueError("seed_migration_existing_yaml_mapping_required")
+    credentials_node = _mapping_value(document, "credentials")
+    credentials = payload.get("credentials")
+    if not isinstance(credentials_node, MappingNode) or not isinstance(credentials, dict):
+        return text
+    requirements_node = _mapping_value(credentials_node, "requirements")
+    requirements = credentials.get("requirements")
+    if not isinstance(requirements_node, SequenceNode) or not isinstance(requirements, list):
+        return text
+    lines = text.splitlines(keepends=True)
+    inserts: list[tuple[int, list[str]]] = []
+    for node, requirement in zip(requirements_node.value, requirements, strict=False):
+        if not isinstance(node, MappingNode) or not isinstance(requirement, dict):
+            continue
+        required_fields = [str(item) for item in requirement.get("required_fields") or []]
+        ttl = requirement.get("lease_ttl_seconds", 300)
+        additions: dict[str, Any] = {}
+        if "resource" not in requirement:
+            additions["resource"] = {
+                "required": False,
+                "target_types": [],
+                "target_roles": [],
+                "allowed_service_types": [],
+                "health_policy": "optional",
+                "max_health_age_seconds": 900,
+                "require_same_target": False,
+            }
+        if "lease" not in requirement:
+            additions["lease"] = {
+                "required": bool(requirement.get("host_authorization_required", True)),
+                "max_ttl_seconds": int(ttl) if isinstance(ttl, int) else 300,
+                "bind_resource_snapshot": True,
+                "require_fresh_health": False,
+            }
+        if "runtime" not in requirement:
+            additions["runtime"] = {
+                "inject": [
+                    {
+                        "source_field": field,
+                        "target": "env",
+                        "name": "MAW_CREDENTIAL_"
+                        + re.sub(r"[^A-Z0-9]+", "_", f"{requirement.get('key', 'SECRET')}_{field}".upper()).strip("_"),
+                    }
+                    for field in required_fields
+                ]
+            }
+        if not additions:
+            continue
+        indent = (
+            node.value[0][0].start_mark.column
+            if node.value and isinstance(node.value[0][0], ScalarNode)
+            else node.start_mark.column + 2
+        )
+        rendered = yaml.safe_dump(additions, allow_unicode=True, sort_keys=False).splitlines(keepends=True)
+        inserts.append((node.end_mark.line, [" " * indent + line if line.strip() else line for line in rendered]))
+    for line_number, insertion in sorted(inserts, reverse=True):
+        lines[line_number:line_number] = insertion
+    return "".join(lines)
+
+
+def _normalized_local_credential_runtime(path: Path) -> str:
+    payload = _read_mapping(path)
+    credentials = payload.get("credentials") if isinstance(payload.get("credentials"), dict) else {}
+    credentials.pop("schema_version", None)
+    bindings = credentials.get("bindings") if isinstance(credentials.get("bindings"), list) else []
+    for item in bindings:
+        if not isinstance(item, dict):
+            continue
+        item.setdefault("version_selector", "current")
+        item.setdefault("environment", "dev")
+    credentials["bindings"] = bindings
+    result = {
+        "schema": "mawflow.local_project_runtime.v3",
+        "schema_version": 3,
+        "credentials": credentials,
+        "credential_runtime_mappings": (
+            payload.get("credential_runtime_mappings")
+            if isinstance(payload.get("credential_runtime_mappings"), dict)
+            else {}
+        ),
+    }
+    if isinstance(payload.get("git"), dict):
+        result["git"] = payload["git"]
+    return _render(result)
 
 
 def _normalized_modules(root: Path, fallback_text: str) -> tuple[str, list[dict[str, str]]]:
@@ -562,6 +695,11 @@ def plan_migration(root: Path | str, *, profile: str = "web-api") -> tuple[dict[
         old_path = project_root / old_ref
         if old_path.is_file() and not old_path.is_symlink():
             desired[new_ref] = old_path.read_text(encoding="utf-8")
+    local_credential_path = project_root / ".local/.maw/project.yaml"
+    if local_credential_path.is_file() and not local_credential_path.is_symlink():
+        desired[".local/.maw/project.yaml"] = _normalized_local_credential_runtime(
+            local_credential_path
+        )
 
     mutable_existing_refs = {
         ".gitignore",
@@ -574,6 +712,7 @@ def plan_migration(root: Path | str, *, profile: str = "web-api") -> tuple[dict[
         ".maw/seed.lock",
         ".local/.maw/app-runtime.yaml",
         ".local/.maw/environments.yaml",
+        ".local/.maw/project.yaml",
     }
     protected_existing_paths: list[str] = []
     for source_ref in list(desired):
