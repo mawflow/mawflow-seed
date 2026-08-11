@@ -30,7 +30,7 @@
 - 本仓库是 MAW 新项目种子模板仓库，不是已有项目整包覆盖工具。
 - Mawflow Seed 的公开定位是 AI 工作目录辅助系统：给本地 AI coding tools 提供项目事实、模块边界、行为约束、任务协议、验证入口和收口方式，而不是替代 IDE、项目管理系统或云端平台。
 - “种子仓库”和“模板仓库”统一指本项目仓库 `maw-project-template`；派生项目应知道自己来自本仓库，并尽量区分能力来源是种子仓库、项目自定义还是建议回流种子仓库。
-- 模板默认组件口径是 `server` / `client`；派生项目已有 `admin`、`mobile`、`worker` 或其它 app_key 时，必须以目标项目事实为准。
+- 种子仓默认组件清单为空；新组件只能通过 `mawflow component init/adopt` 或等价受控流程显式建立，派生项目已有 app_key 必须以目标项目事实为准。
 - 同步模板能力到派生项目时，只做增量语义合并；不得覆盖目标项目 `README.md`、`code/`、真实 app_key、发布配置、仓库映射、secrets、`.local/` 或模块档案。
 - 开发过程中发现适合回流到种子仓库的优化或新增能力时，最终说明必须明确指出，并记录到 `docs/seed-repository-upgrade-candidates.md`，写清使用场景、优化/新增理由和向下兼容要求。
 

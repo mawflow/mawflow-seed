@@ -14,10 +14,14 @@ if str(KIT_SRC) not in sys.path:
 
 from mawflow_seed_kit import (  # noqa: E402
     apply_change_plan,
+    apply_component_plan,
     apply_migration_plan,
     compile_project_definition,
     materialize_project,
     plan_change_set,
+    plan_component_init,
+    plan_component_state,
+    inspect_components,
     plan_contract_repair,
     plan_migration,
     rollback_migration,
@@ -31,7 +35,7 @@ def _git_init(root: Path) -> None:
 
 def test_materialized_project_is_complete_and_editable(tmp_path: Path) -> None:
     root = tmp_path / "project"
-    result = materialize_project(root, project_key="demo-project", name="演示项目", profile="web-api")
+    result = materialize_project(root, project_key="demo-project", name="演示项目", profile="blank")
     _git_init(root)
 
     projection = compile_project_definition(root)
@@ -47,10 +51,86 @@ def test_materialized_project_is_complete_and_editable(tmp_path: Path) -> None:
         "staging",
         "production",
     }
-    assert projection["configs"][".maw/technology.yaml"]["technology"]["runtime_mode"] == "container"
+    assert projection["configs"][".maw/technology.yaml"]["technology"]["runtime_mode"] == "host"
     assert len(projection["configs"]["docs/handbooks/manifest.yaml"]["handbook_system"]["volumes"]) == 6
-    assert set(projection["configs"][".maw/app-runtime.yaml"]["app_runtime"]["apps"]) == {"server", "client"}
+    assert projection["configs"][".maw/app-runtime.yaml"]["app_runtime"]["apps"] == {}
+    assert projection["configs"][".maw/components.yaml"]["components"] == []
+    for source_ref in ("code/README.md", "docs/README.md", "MAWFLOW_CLI.md", "PROJECT_COMMANDS.md", "CHATGPT_TO_AI.md"):
+        assert (root / source_ref).is_file()
     assert public_catalog()["trust_boundary"]["arbitrary_paths_writable"] is False
+
+
+def test_component_init_enable_disable_and_inspect(tmp_path: Path) -> None:
+    root = tmp_path / "project"
+    materialize_project(root, project_key="demo", name="Demo", profile="blank")
+    _git_init(root)
+
+    public, private = plan_component_init(
+        root,
+        key="api",
+        component_type="backend",
+        name="业务 API",
+    )
+    result = apply_component_plan(
+        root,
+        private,
+        public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    assert result["status"] == "applied"
+    assert (root / "code/api/README.md").is_file()
+    descriptor = yaml.safe_load((root / "code/api/.maw.component.yaml").read_text(encoding="utf-8"))
+    assert descriptor["component"]["key"] == "api"
+    inspection = inspect_components(root, "api")
+    assert inspection["status"] == "ready"
+    components = yaml.safe_load((root / ".maw/components.yaml").read_text(encoding="utf-8"))["components"]
+    assert components[0]["enabled"] is False
+
+    public, private = plan_component_state(root, key="api", enabled=True)
+    apply_component_plan(root, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+    components = yaml.safe_load((root / ".maw/components.yaml").read_text(encoding="utf-8"))["components"]
+    assert components[0]["enabled"] is True
+
+    public, private = plan_component_state(root, key="api", enabled=False)
+    apply_component_plan(root, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+    components = yaml.safe_load((root / ".maw/components.yaml").read_text(encoding="utf-8"))["components"]
+    assert components[0]["enabled"] is False
+    assert (root / "code/api").is_dir()
+
+
+def test_component_adopt_preserves_existing_source(tmp_path: Path) -> None:
+    root = tmp_path / "project"
+    materialize_project(root, project_key="demo", name="Demo", profile="blank")
+    _git_init(root)
+    legacy = root / "code/legacy"
+    legacy.mkdir()
+    readme = legacy / "README.md"
+    readme.write_text("# existing\n", encoding="utf-8")
+    source = legacy / "main.py"
+    source.write_text("print('existing')\n", encoding="utf-8")
+
+    public, private = plan_component_init(
+        root,
+        key="legacy",
+        component_type="custom",
+        path="code/legacy",
+        adopt=True,
+    )
+    apply_component_plan(root, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+
+    assert readme.read_text(encoding="utf-8") == "# existing\n"
+    assert source.read_text(encoding="utf-8") == "print('existing')\n"
+    assert (legacy / ".maw.component.yaml").is_file()
+
+
+@pytest.mark.parametrize("path", ["server", "../server", "/tmp/server", "code"])
+def test_component_init_rejects_paths_outside_component_boundary(tmp_path: Path, path: str) -> None:
+    root = tmp_path / "project"
+    materialize_project(root, project_key="demo", name="Demo", profile="blank")
+
+    with pytest.raises(ValueError, match="seed_component_path_must_be_under_code"):
+        plan_component_init(root, key="api", component_type="backend", path=path)
 
 
 def test_current_seed_contract_repair_normalizes_legacy_technology(
@@ -267,14 +347,14 @@ modules:
     status: active
     doc_status: pending_confirm
     confidence: low
-    component_refs: [server]
+    component_refs: []
   - key: client-module
     name: 客户端
     type: component
     status: active
     doc_status: pending_confirm
     confidence: low
-    component_refs: [client]
+    component_refs: []
 """,
         encoding="utf-8",
     )
@@ -325,6 +405,40 @@ def test_local_scope_requires_ignored_canonical_overlay(tmp_path: Path) -> None:
     root = tmp_path / "project"
     materialize_project(root, project_key="demo", name="Demo", profile="service")
     _git_init(root)
+    component_public, component_private = plan_component_init(
+        root, key="server", component_type="backend"
+    )
+    apply_component_plan(
+        root,
+        component_private,
+        component_public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+    projection = compile_project_definition(root)
+    runtime_public, runtime_private = plan_change_set(
+        root,
+        {
+            "schema": "mawflow.seed_change_set.v2",
+            "base_projection_fingerprint": projection["fingerprint"],
+            "operations": [{
+                "op": "runtime.app.upsert",
+                "key": "server",
+                "scope": "shared",
+                "values": {
+                    "app_key": "server",
+                    "enabled": False,
+                    "component_ref": "server",
+                    "code_path": "code/server",
+                },
+            }],
+        },
+    )
+    apply_change_plan(
+        root,
+        runtime_private,
+        runtime_public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
     projection = compile_project_definition(root)
     payload = {
         "schema": "mawflow.seed_change_set.v2",
@@ -361,6 +475,42 @@ def test_migration_normalizes_legacy_project_and_moves_local_overlay(tmp_path: P
     assert not (root / ".maw/app-runtime.local.yaml").exists()
     assert (root / ".local/.maw/app-runtime.yaml").is_file()
     assert ".local/" in (root / ".gitignore").read_text(encoding="utf-8").splitlines()
+
+
+@pytest.mark.parametrize("directory_name", ["empty-project", "新 项目"])
+def test_migration_bootstraps_repository_without_existing_project_contract(
+    tmp_path: Path, directory_name: str
+) -> None:
+    root = tmp_path / directory_name
+    root.mkdir()
+    _git_init(root)
+
+    public, private = plan_migration(
+        root, profile="minimal", initialization_mode="empty_repository"
+    )
+    result = apply_migration_plan(
+        root,
+        private,
+        public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    assert result["projection"]["status"] == "ready"
+    assert result["projection"]["project"]["key"] in {
+        "empty-project",
+        "mawflow-project",
+    }
+    assert (
+        result["projection"]["project"]["classification"]["delivery_mode"]
+        == "new_defined"
+    )
+    assert public["initialization_mode"] == "empty_repository"
+    lock = yaml.safe_load((root / ".maw" / "seed.lock").read_text(encoding="utf-8"))
+    assert lock["source"] == {
+        "kind": "project_init",
+        "from": "empty_repository",
+    }
+    assert (root / ".maw" / "seed.lock").is_file()
 
 
 def test_migration_preserves_business_readme_private_docs_and_repairs_modules(
@@ -555,12 +705,13 @@ def test_multi_file_change_conflict_leaves_zero_partial_writes(tmp_path: Path) -
 @pytest.mark.parametrize(
     ("profile", "runtime_mode", "component_keys"),
     [
+        ("blank", "host", set()),
         ("minimal", "host", set()),
-        ("service", "container", {"server"}),
-        ("web-api", "container", {"server", "client"}),
+        ("service", "host", set()),
+        ("web-api", "host", set()),
     ],
 )
-def test_seed_21_profiles_compile(
+def test_seed_23_profiles_compile_without_implicit_components(
     tmp_path: Path,
     profile: str,
     runtime_mode: str,
@@ -684,11 +835,7 @@ def test_change_set_appends_to_existing_indentless_technology_sequence(
     technology = yaml.safe_load(
         (root / ".maw/technology.yaml").read_text(encoding="utf-8")
     )["technology"]
-    assert [item["key"] for item in technology["languages"]] == [
-        "client-runtime",
-        "server-runtime",
-        "python",
-    ]
+    assert [item["key"] for item in technology["languages"]] == ["python"]
 
 
 def test_migration_round_trip_preserves_existing_project_facts(tmp_path: Path) -> None:

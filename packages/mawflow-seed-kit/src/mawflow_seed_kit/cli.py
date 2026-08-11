@@ -23,7 +23,7 @@ def _parser() -> argparse.ArgumentParser:
     build.add_argument("root")
     build.add_argument("--project-key", required=True)
     build.add_argument("--name", required=True)
-    build.add_argument("--profile", choices=["web-api", "service", "minimal"], default="web-api")
+    build.add_argument("--profile", choices=["blank", "minimal", "service", "web-api"], default="blank")
     return parser
 
 

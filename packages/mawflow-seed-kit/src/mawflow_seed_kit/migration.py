@@ -646,15 +646,30 @@ def _normalized_technology(root: Path, fallback_text: str) -> str:
     return _render(merged if isinstance(merged, dict) else fallback)
 
 
-def plan_migration(root: Path | str, *, profile: str = "web-api") -> tuple[dict[str, Any], dict[str, Any]]:
+def plan_migration(
+    root: Path | str,
+    *,
+    profile: str = "web-api",
+    initialization_mode: str = "existing_repository",
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    if initialization_mode not in {"existing_repository", "empty_repository"}:
+        raise ValueError("seed_migration_initialization_mode_invalid")
     project_root = Path(root).expanduser().resolve(strict=True)
     existing_project = _read_mapping(project_root / ".maw/project.yaml").get("project", {})
     legacy = existing_project.get("project", {}) if isinstance(existing_project, dict) else {}
-    project_key = str(
-        (existing_project.get("key") or existing_project.get("project_key") or legacy.get("project_key"))
+    raw_project_key = (
+        existing_project.get("key")
+        or existing_project.get("project_key")
+        or legacy.get("project_key")
+        or ""
         if isinstance(existing_project, dict)
         else ""
-    ).strip() or project_root.name.lower().replace("_", "-")
+    )
+    project_key = str(raw_project_key).strip()
+    if not project_key:
+        project_key = re.sub(
+            r"[^a-z0-9._-]+", "-", project_root.name.lower()
+        ).strip("-._") or "mawflow-project"
     name = str(existing_project.get("name") or legacy.get("name") or project_key) if isinstance(existing_project, dict) else project_key
     with tempfile.TemporaryDirectory(prefix="mawflow-seed-migration-") as temporary:
         template_root = Path(temporary) / "project"
@@ -665,7 +680,10 @@ def plan_migration(root: Path | str, *, profile: str = "web-api") -> tuple[dict[
                 source_ref = path.relative_to(template_root).as_posix()
                 desired[source_ref] = path.read_text(encoding="utf-8")
 
-    desired[".maw/project.yaml"] = _normalized_project(project_root, project_key, name)
+    if initialization_mode == "existing_repository":
+        desired[".maw/project.yaml"] = _normalized_project(
+            project_root, project_key, name
+        )
     desired[".maw/components.yaml"] = _normalized_components(project_root, desired[".maw/components.yaml"])
     desired[".maw/modules.yaml"], module_field_additions = _normalized_modules(
         project_root, desired[".maw/modules.yaml"]
@@ -684,7 +702,11 @@ def plan_migration(root: Path | str, *, profile: str = "web-api") -> tuple[dict[
         "contract_fingerprint": contract_fingerprint(),
         "seed_version": SEED_VERSION,
         "profile": profile,
-        "source": {"kind": "migration", "from": "0.2.x"},
+        "source": (
+            {"kind": "project_init", "from": "empty_repository"}
+            if initialization_mode == "empty_repository"
+            else {"kind": "migration", "from": "0.2.x"}
+        ),
         "bom": {"kit": f"mawflow-seed-kit=={SEED_VERSION}", "contract": "seed-contract-v2"},
     })
     legacy_local = {
@@ -765,6 +787,7 @@ def plan_migration(root: Path | str, *, profile: str = "web-api") -> tuple[dict[
         "from_contract_version": int(_read_mapping(project_root / ".maw/seed.lock").get("contract_version") or 0),
         "to_contract_version": CONTRACT_VERSION,
         "profile": profile,
+        "initialization_mode": initialization_mode,
         "writes": writes,
         "deletes": deletes,
         "confirmation_required": f"MIGRATE {plan_key[-8:].upper()}",

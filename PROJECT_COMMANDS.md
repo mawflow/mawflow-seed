@@ -1,6 +1,19 @@
-# 项目常用指令目录
+# AI 项目指令目录
 
-本文件给人阅读，用来快速找到可以对 AI/Codex 说的触发词。完整执行规则在 `docs/ai-instructions/` 中维护。
+本文件记录可以对 AI 说的意图指令；可直接在终端运行的确定性命令单独记录在 `MAWFLOW_CLI.md`。完整执行规则在 `docs/ai-instructions/` 中维护。
+
+## CLI 与 AI 指令边界
+
+- CLI：`mawflow project ...`、`mawflow component ...`，适合终端、脚本和高频操作。
+- AI 指令：`初始化项目`、`初始化组件 api，类型 backend`、`启用组件 api`，适合用自然语言补充上下文、审计与验收目标。
+- AI 可以调用 CLI，但必须回报实际命令、验证证据和状态；对话指令本身不是 Shell 命令。
+
+常见组件意图：
+
+- `初始化组件 <key>，类型 <type>`：映射为 `mawflow component init`，默认禁用。
+- `采纳组件 <path>，标识 <key>`：映射为 `mawflow component adopt`，不覆盖现有源码。
+- `启用组件 <key>` / `禁用组件 <key>`：显式切换状态，禁用不删除目录。
+- `检查组件 <key>`：映射为 `mawflow component doctor`。
 
 ## 快捷调用格式
 
@@ -13,6 +26,7 @@
 - `#模板设计：查看用户版完整设计`
 - `#AI设计：查看 AI 版完整设计与执行协议`
 - `#生成交付文档：生成用户手册、概要设计、部署手册的 Markdown 事实稿`
+- `#UAT交付 <模块或业务范围>：生成业务自述优先的测试与审计版验收说明`
 - `#提主：把 dev 合并到 main，并按开关同步仓库镜像`
 - `#发布公开镜像：把私有开发仓的定版版本发布到公开仓`
 - `#客户仓库同步：判断 <component> 的客户仓分支角色`
@@ -53,7 +67,7 @@
 
 - `#关键字` 是推荐给人使用的调用方式，AI 按下表、`docs/ai-instructions/README.md` 和触发词匹配最贴近的指令。
 - `#+指令`、`# 关键字`、`#关键字：补充`、`#关键字/补充`、`#T001`、`#P001` 和完整 ID 都要识别；解析时先去掉 `#` 后的空格，统一全角/半角冒号，并把 `模板/模版` 这类稳定同义写法合并判断。
-- 没有 `#` 的习惯用语也要按项目指令候选处理，例如“提主”“合主”“跑包/跑任务包”“交接任务”“客入/客主/客出/客户合主”“上线/发布”“同步镜像”“发布公开镜像”“收口”“查历史坑”“模板漂移”“生成交付文档”“新增待办/完成待办/取消待办/待办影响”。
+- 没有 `#` 的习惯用语也要按项目指令候选处理，例如“提主”“合主”“跑包/跑任务包”“交接任务”“客入/客主/客出/客户合主”“上线/发布”“同步镜像”“发布公开镜像”“收口”“查历史坑”“模板漂移”“生成交付文档”“UAT 交付”“新增待办/完成待办/取消待办/待办影响”。
 - 需要稳定精确调用或避免歧义时，模板内置指令使用 `#T001` 或 `#T001/关键字`，业务项目特有指令使用 `#P001` 或 `#P001/关键字`。
 - 如果 `#关键字` 或自然语言触发词命中多条指令、关键词含义不清，或精确编号和关键字含义冲突，AI 必须先向用户确认，不得自行猜测。
 - 兼容识别完整 ID 格式 `#TINST-001/...` 和 `#PINST-001/...`，但新增文档和日常调用统一推荐 `#关键字`，精确调用使用 `#T001` 或 `#P001`。
@@ -217,6 +231,14 @@
 ```
 
 ```text
+#UAT交付 <模块或业务范围>
+```
+
+```text
+#UAT交付 <模块>，重点验证 <角色、场景或业务分支>
+```
+
+```text
 #提主：把 origin/dev 合并到 main，推送 origin/main，并按 repository_mirrors 开关同步仓库级镜像
 ```
 
@@ -356,7 +378,7 @@
 | `#项目健康` | `#T038` | 项目健康、健康上下文、记录项目健康问题、记录这个缺口、审计项目健康、生成健康关注建议、把缺口变成调研问题、.maw/health | 维护 `.maw/health/` 项目健康上下文，记录健康问题、需求事实、决策、普通健康待办、审计缺口、调研摘要和验收缺口，并为 Mawflow 主项目导入和 AI 健康关注预留结构 | `docs/ai-instructions/instructions/project-health-context.md` |
 | `#模板特性提示词` | `#T011` | 生成模板新特性升级提示词、生成轻量升级提示词、把这条变动生成升级提示词 | 在源模板仓库中为单项模板能力生成可复制到派生项目的轻量升级提示词 | `docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md` |
 | `#模板升级` | `#T024/#T026` | 模板升级资产、派生项目模板升级、模板漂移升级、source_channel | 在源模板仓库中生成升级资产；在派生项目中先识别 Seed 来源通道，再计算模板漂移并当前会话执行升级 | `docs/ai-instructions/instructions/template-upgrade-strategy.md` / `docs/ai-instructions/instructions/derived-template-drift-upgrade.md` |
-| `#交接任务` | `#T012` | ChatGPT 生成 Codex 任务、外部 AI 任务交接、方案转任务包、生成 Codex 任务 Markdown、生成 Codex 任务 zip | 把外部 AI 已确定方案整理成可下载、可复制 Markdown；小任务是一段任务提示词，大任务必须写出任务包每个文件完整内容、让 Codex 落任务提示词工程后继续执行，并在末尾给出用法；明确要求 zip 时才生成 zip | `docs/ai-instructions/instructions/external-ai-to-codex-task-handoff.md` |
+| `#交接任务` | `#T012` | ChatGPT 生成 AI 任务、外部 AI 任务交接、方案转任务 Markdown | 按通用协议整理目标、范围、禁止项、事实、验证和交付状态；接收方工具与任务包形式服从目标项目规则 | `docs/ai-instructions/instructions/external-ai-task-handoff.md` |
 | `#提主` | `#T013` | 合并dev到main、dev 合并 main、合并主分支、内部提主合并、同步 main 镜像、多镜像仓库 | 把项目内部源分支合并到主分支，推送 `origin/main`，并按 `repository_mirrors.auto_sync_after_project_push`、`default_targets` 和目标级开关同步一个或多个仓库级镜像 | `docs/ai-instructions/instructions/dev-to-main-merge.md` |
 | `#发布` | `#T014` | 发布组件、更新发布、立即发布生效、执行SQL、上线、部署、FTP 部署、覆盖部署、发布测试、发布上线、发布生产、发布生成、发布版本状态、发布名单、本地代码最新 | 发布指定 app_key；未写环境时使用配置默认环境，也可指定 test、staging、production 或项目自定义环境；中文口令中，`发布测试` 是本地调试版本并需给可访问调试地址，`发布上线` 部署编译包到 `remote_staging_server` 且仍属于测试，需要给线上可访问地址，两者都允许当前工作区未提交改动参与测试发布并记录 dirty snapshot；`发布生产` 部署到 `remote_production_server`，生产环境安装/生产版本上线必须人工审计，且执行前必须确认本地候选 commit 等于发布来源远端分支、工作区干净；`发布生成` 兼容为生产发布；未写组件时读取对应 `remote_server.default_release_components` 并用 `artifacts/release-state/<env>/<app_key>.json` 的 commit 记录按组件路径差异筛选发布名单；配置 FTP/FTPS 覆盖部署时先运行 `deploy-via-ftp.py` 计划，确认后才 `--execute` | `docs/ai-instructions/instructions/release-component.md` |
 | `#发布公开镜像` | `#T039` | 发布公开镜像、发布开源镜像、发布镜像、公开发布镜像、私有仓发布到公开仓、开发完成一个版本后发布到公开仓 | 把私有开发仓库中已定版的版本人工发布到公开仓；先运行 `publish-repository-mirror.sh plan`，通过版本、tag、开源和脱敏闸门后才 `publish --execute`；支持同历史发布和脱敏导出发布 | `docs/ai-instructions/instructions/publish-repository-mirror.md` |
@@ -380,6 +402,7 @@
 | `#模板设计` | 文档入口 | 模板设计、用户版设计、模板仓库设计 | 查看面向人类用户的模板仓库完整设计说明 | `docs/template-repository-design.md` |
 | `#AI设计` | 文档入口 | AI设计、AI 版设计、Agent 执行协议、模板执行协议 | 查看面向 Codex/Agent/Reviewer 的完整设计与执行协议 | `docs/template-repository-ai-design.md` |
 | `#生成交付文档` | `#T025` | 交付文档、生成用户手册、生成概要设计、生成部署手册、生成文档事实稿 | 按 modules 生成用户手册事实稿、按 design 生成概要设计事实稿、按 ops 生成部署手册事实稿；只生成 Markdown 事实稿，格式由用户模板或专门文档 AI 处理 | `docs/ai-instructions/instructions/generate-delivery-docs.md` |
+| `#UAT交付 <范围>` | `#T041/<范围>` | UAT 交付、模块验收说明、业务验收文档、测试与审计版、逐模块交付测试 | 从正式模块事实和真实证据生成不可变的业务验收说明；业务自述为主、测试引导为辅，进入质量手册供本地阅读和受控云端分享 | `docs/ai-instructions/instructions/uat-business-handoff.md` |
 
 ## 常用任务包
 
@@ -414,11 +437,12 @@ bash ops/scripts/export-code-only.sh --mode customer --zip --dry-run
 - `#模板升级/#模版升级` 未指定 commit 时，不以“有没有 commit”决定源仓库或派生仓库；先按当前仓库角色路由。源模板仓库走 `TINST-024` 生成迁移说明、提示词或任务包；派生项目走 `TINST-026`，用 `.maw/template-source.yaml` 的 `template_source.version`（默认 `main`）解析目标模板 commit，再和 `applied_version` 比较并执行。
 - “种子仓库”和“模板仓库”统一指 `maw-project-template`。派生项目开发过程中发现适合回流到种子仓库的优化或新增能力时，使用 `#种子仓库升级`：先记录到 `docs/seed-repository-upgrade-candidates.md`，再按 S0-S4 分级，并把可落库提示词写入 `prompts/codex/seed-repository-upgrade-prompts/`；该流程只做增项和兼容增强，不覆盖历史派生项目事实。
 - 执行“模板派生项目升级”或“任意项目模板化改造”时，使用 `GETTING_STARTED.md` 中的完整 Codex 提示词，必须带源模板来源和版本；本机路径只作为当次输入或 `.local` 配置，不写入长期文档。
-- 在源模板仓库里，想把某个新特性同步给派生项目时说 `#模板升级/#模版升级`，AI 会生成迁移说明、提示词或任务包。在派生项目里，同样的触发词用于按 `template_source.applied_version` 计算落后源模板多少提交，生成当前会话执行提示词并执行。种子仓库默认组件只有 `server` / `client`，已有项目中的 `admin`、移动端、任务进程或其它 app_key 必须按项目事实保护。
-- 已经在 ChatGPT 或其它外部 AI 中讨论完方案时，优先按 `CHATGPT_TO_CODEX.md` 或 `#交接任务` 生成可下载、可复制 Markdown；小任务复制提示词到 Codex，大任务复制 Markdown 内的“任务提示词工程落地 + 执行”提示词。只有明确要求 zip 时，才生成任务包 zip。
+- 在源模板仓库里，想把某个新特性同步给派生项目时说 `#模板升级/#模版升级`，AI 会生成迁移说明、提示词或任务包。在派生项目里，同样的触发词用于按 `template_source.applied_version` 计算落后源模板多少提交，生成当前会话执行提示词并执行。种子仓库默认组件为空，已有项目中的任何 app_key 都必须按项目事实保护。
+- 已经在 ChatGPT 或其它外部 AI 中讨论完方案时，优先按 `CHATGPT_TO_AI.md` 或 `#交接任务` 生成可下载、可复制 Markdown；接收方 AI 再按目标项目规则决定是否建立任务包。只有明确要求 zip 时才生成压缩包。
 - `#跑任务包` 可以接收仓库内任务包目录、外部 AI 纯文本 Markdown、本机任务包 zip、远程 zip 直链，或包含下载方式的分享页 URL。纯文本 Markdown 先落任务包文件再执行；远程分享页会先按 TINST-007 下载到临时工作区、解压和校验，通过后再导入 `prompts/codex/task-packs/`；可道云/Kodbox 等分享页按分享页处理，提取码或访问密码只用于当次会话，不写入可提交文件。
 - 需要理解模板整体设计时，使用 `#模板设计` 查看用户版完整设计；需要审查 AI 执行协议、升级策略、模块发现、`.local`、项目记忆、中文收口、code-only 交付或交付文档事实稿规则时，使用 `#AI设计`。
 - 需要生成用户手册、概要设计或部署手册初稿时，使用 `#生成交付文档`。用户手册事实来自 `.maw/modules.yaml` 和 `docs/modules/`，概要设计事实来自 `docs/design/`，部署手册事实来自 `ops/`；未指定输出位置时默认在会话中输出 Markdown 事实稿，最终格式由用户模板、人工或专门文档 AI 处理。
+- 需要逐模块交付测试人员和审计者时，使用 `#UAT交付 <范围>`。它生成不可变的业务验收说明，实际执行结果继续进入 TestRun/Bug/Evidence，云端分享由有权用户人工触发。
 - 内部 `dev -> main` 收口优先使用 `#提主`；它只处理本项目仓库分支合并和 `repository_mirrors` 仓库级镜像同步，不处理客户仓库同步、组件镜像同步、公开发布镜像或应用发布部署。仓库级镜像可配置多个 target：默认按 `repository_mirrors.default_targets` 同步，临时全量查看或同步可用 `ops/scripts/sync-repository-mirror.sh plan --all` / `push --all --execute`。
 - 私有开发仓定版后发布到公开仓使用 `#发布公开镜像`；它读取 `repository_publish_mirrors`，只在人工显式 `publish --execute` 时写公开远端，不参与普通 push 后镜像同步。
 - 客户仓库 `external_mapped` 流程按方向选择 `#客入`、`#客主`、`#客出`、`#客户合主`；它不是 `component_mirrors` 或 `repository_mirrors` 镜像同步。

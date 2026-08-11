@@ -20,7 +20,7 @@
 - 模板使用说明：`TEMPLATE_OVERVIEW.md`
 - 新手指南：`GETTING_STARTED.md`
 - 人类常用指令目录：`PROJECT_COMMANDS.md`
-- ChatGPT 到 Codex 任务交接协议：`CHATGPT_TO_CODEX.md`
+- ChatGPT 到 AI 通用任务交接协议：`CHATGPT_TO_AI.md`
 - AI 协作上下文：`.maw/codex-context.md`
 - 项目文档入口：`docs/README.md`
 - 代码目录入口：`code/README.md`

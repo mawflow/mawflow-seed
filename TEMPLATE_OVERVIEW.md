@@ -30,7 +30,7 @@ Mawflow v1.1 对外口径中，本仓库承接 **Mawflow Seed 开源版**：一�
 - AI 版设计协议：`docs/template-repository-ai-design.md`，面向 Codex/Agent/Reviewer 按需读取完整执行协议。
 - 设计同步清单：`docs/template-repository-design-sync.md`，用于判断用户版设计和 AI 版设计何时需要同步。
 - 种子仓库升级候选记录：`docs/seed-repository-upgrade-candidates.md`，用于派生项目记录可回流到本仓库的优化或新增能力。
-- ChatGPT 到 Codex 任务交接协议：`CHATGPT_TO_CODEX.md`，面向网页端 ChatGPT、其它外部 AI 和人类，用于把已确定方案整理成 Codex 可执行任务或任务提示词工程 zip。
+- ChatGPT 到 AI 通用任务交接协议：`CHATGPT_TO_AI.md`，用于把已确定方案整理为不绑定具体执行工具的 Markdown 任务。
 
 ## 给 Codex 的第一条规则
 
@@ -54,7 +54,7 @@ Mawflow v1.1 对外口径中，本仓库承接 **Mawflow Seed 开源版**：一�
 - `.maw/`：AI/人工协作用控制配置目录，支持 base、dev/pro、local 三层配置自动聚合，并按 app_key 记录 AI 调试索引。
 - `.maw/health/`：项目健康上下文目录，保存可被主项目和 AI 导入的健康问题、事实、决策、调研摘要和验收缺口；示例在 `examples/`，不代表当前项目事实。
 - `.ssh/`：可选的仓库本地 SSH key 存放目录；真实 key 文件被忽略，只提交说明文件。
-- `code/`：业务代码根目录，默认以 `server` 和 `client` 表示后端与前端；模板不内置 `admin`，如项目确实需要独立后台前端，应按项目实际新增 app_key。
+- `code/`：业务组件根目录；新种子只保留 `code/README.md`，不预设任何端或技术栈，组件通过 CLI 按项目事实创建或采纳。
 - `.local/`：本机资料、本机配置 overlay 和维护者本机记录目录，默认只提交 README 说明；其中 `.local/.maw/` 可覆盖同名 `.maw` 配置，`.local/docs/requirements/raw/` 存放用户原始大文件资料，`.local/maintenance/` 可存放模板仓库自身 mirror remote 等本机维护记录。
 - `docs/`：需求、AI 编码边界、功能模块档案、设计、计划、验收、交付文档，其中 `docs/requirements/raw/` 存放原始资料分析结果 Markdown。
 - `docs/modules/`：功能模块档案目录，配合 `.maw/modules.yaml` 维护当前模块边界、实现程度、页面/API/数据表、证据字段和过期状态；`docs/modules/_audits/` 记录模块地图审计。
@@ -144,11 +144,11 @@ Mawflow v1.1 对外口径中，本仓库承接 **Mawflow Seed 开源版**：一�
 - `docs/modules/<...>/<leaf>/module.md`，为每个核心功能 leaf 补齐模块档案。
 - `.maw/releases.yaml` 和每个 `code/<app_key>/.maw.component.yaml` 的 `release`，为每个启用组件配置默认发布环境、可选发布环境、按环境发布快捷指令和版本状态策略；发布成功后按 `artifacts/release-state/<env>/<app_key>.json` 记录已发布 commit。
 
-默认组件按前后端两类理解：`server` 是后端/API，`client` 是前端或用户侧应用。`admin`、`mobile`、`worker` 等只能由创建向导或项目事实按需启用；模板不把它们作为默认必启组件。如果项目确实存在独立后台代码、构建或发布目标，应按项目实际新增前端 app_key。模块档案不要停留在 `server`、`client` 这种 component 粒度，应按业务域继续拆成 group 和 leaf。
+默认组件清单为空。运行 `mawflow component init <key> --type <type>` 创建新组件，或用 `mawflow component adopt <path> ...` 采纳存量目录；组件默认禁用，确认边界和验证方式后再启用。技术组件不是业务模块，模块档案仍应按业务域拆成 group 和 leaf。
 
 本模板默认信任受控开发节点、AI 节点和私有 git 仓库，继续兼容把项目协作必需的真实密钥提交到 `.maw/secrets.yaml`、`.maw/secrets.dev.yaml`、`.maw/secrets.pro.yaml`；新项目推荐优先使用 `mawsec://`、`mawlocal://`、`mawproxy://` 或宿主机本地 SecretStore。可信私有仓库中的明文检查默认 warning，不阻断协作；公开仓库、发布包、日志、诊断包、外部交付、客户仓库同步或显式严格模式必须 block 或先脱敏。本地机器差异统一写入 `.local/.maw/`，不提交 git；旧 `.maw/*.local.yaml` 仅兼容读取。种子仓若准备公开开源，先运行 `bash ops/scripts/check-seed-open-source-readiness.sh --strict`，确认 `LICENSE`、`docs/public-seed/open-source-release.md` 和公开 Git remote 均满足 gate；开源种子仓只是公开装备包，主仓中枢和 MCP/HostCommand/Approval 链路仍负责 loop 控制。
 
-业务代码相关配置以 `code/<app_key>/` 内部工程文件为权威来源，例如 `.env.example`、框架配置、构建配置和路由配置。为了方便 Codex 或其它 AI 调试，`.maw/app-runtime.yaml` 会按 `server`、`client` 和项目实际新增 app_key 显式记录调试 URL、数据库引用、API 地址引用和测试账号引用。
+业务代码相关配置以 `code/<app_key>/` 内部工程文件为权威来源。`.maw/app-runtime.yaml` 只登记项目实际存在且需要运行的 app_key，不根据组件类型猜测端口或运行方式。
 
 如需仓库级镜像，在 `.maw/repositories.yaml` 的 `repository_mirrors.targets.default` 填写 mirror remote 或 URL，并确认 `repository_mirrors.enabled`、目标 `enabled` 和自动同步开关均已打开，才会让 AI 在项目仓库 push 成功后自动同步整仓 mirror。需要关闭自动同步时，把全局或目标级 `auto_sync_after_project_push` 改为 `false`。
 

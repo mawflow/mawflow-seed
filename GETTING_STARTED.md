@@ -117,7 +117,7 @@
 ```
 
 4. Codex 会先盘点项目事实，再设计采纳方案，然后增量加入 AI 协作控制面。
-5. 改造时默认从 `server` / `client` 口径起步，但必须以目标项目真实端工程为准；没有独立后台时不创建后台占位，已有独立后台时按事实登记 app_key。
+5. 初始化不创建任何默认组件；使用 `mawflow component init/adopt` 按目标项目事实登记 app_key，已有组件不得因模板升级被删除或重命名。
 6. 目标项目已有 `README.md` 时只做最小段落合并；缺失时才创建业务项目 README 占位，模板说明放入 `TEMPLATE_OVERVIEW.md` 或等价文件。
 
 ## 5. 快速验证
@@ -144,7 +144,7 @@ PY
 - Mawflow Seed 公开入口：`MAWFLOW_SEED.md`
 - Mawflow Seed 公开说明：`docs/public-seed/README.md`
 - Mawflow Pack 示例：`examples/mawflow-packs/README.md`
-- 外部 AI 到 Codex 任务交接：`CHATGPT_TO_CODEX.md`，常用口令 `#交接任务`
+- 外部 AI 通用任务交接：`CHATGPT_TO_AI.md`，常用口令 `#交接任务`
 - 模板仓库说明：`TEMPLATE_OVERVIEW.md`
 - 模板使用说明：`docs/template-usage-guide.md`
 - 配置读取说明：`docs/configuration-guide.md`

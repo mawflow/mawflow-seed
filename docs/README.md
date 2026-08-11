@@ -24,6 +24,8 @@ read_contract:
 
 用于沉淀需求、设计、计划、验收和交付文档。
 
+终端命令统一从根目录 `MAWFLOW_CLI.md` 查询；面向 AI 的自然语言指令从 `PROJECT_COMMANDS.md` 查询；跨 AI 交接使用 `CHATGPT_TO_AI.md`。
+
 ## 会话读取约束
 
 AI/Codex 不应在任务开始时全量读取 `docs/**`。本目录采用“总索引 -> 子目录 README -> 任务相关文档 -> 必要片段”的按需读取方式。

@@ -44,7 +44,7 @@ def materialize_project(
     *,
     project_key: str,
     name: str,
-    profile: str = "web-api",
+    profile: str = "blank",
     source: dict[str, Any] | None = None,
     classification: dict[str, Any] | None = None,
     technology: dict[str, Any] | None = None,

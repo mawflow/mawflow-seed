@@ -92,6 +92,7 @@ read_contract:
 #会话概要：检索最近几次 AI 会话任务概要，命中相关再细读；任务结束时写入可跨设备同步的轻量概要
 #项目指令
 #生成交付文档：生成用户手册、概要设计、部署手册的 Markdown 事实稿
+#UAT交付 <模块或业务范围>：生成业务自述优先、供测试人员和审计者使用的不可变验收说明
 ```
 
 - `#关键字`：推荐给人使用，按本总纲和 `PROJECT_COMMANDS.md` 匹配指令；`#+指令` 视作“# + 指令关键字”的泛称，不要求字面包含加号。
@@ -125,7 +126,7 @@ read_contract:
 | TINST-009 | 使用内置模板任务提示词工程 | #模板化、内置任务提示词工程、改造成模板仓库、接入 MAW 模板、任意项目改造成模板仓库、模板化改造 | [instructions/use-builtin-template-task-packs.md](instructions/use-builtin-template-task-packs.md) |
 | TINST-010 | 模块树拆分与模块档案生成 | #模块、生成 modules、拆分模块、模块树、模块拆细、modules 拆分、模块太大、自动生成模块档案、重建模块索引、按业务拆 modules、不要只拆二级目录、AI 模块上下文、ai-context、ai_doc、_ai 模块副本 | [instructions/split-module-tree.md](instructions/split-module-tree.md) |
 | TINST-011 | 生成模板新特性轻量升级提示词 | #模版升级、模版升级、生成模板新特性升级提示词、生成轻量升级提示词、模板特性升级提示词、把这条变动生成升级提示词、把这个新特性同步给派生项目、给派生项目的升级提示词、轻量化升级模板 | [instructions/generate-template-feature-upgrade-prompt.md](instructions/generate-template-feature-upgrade-prompt.md) |
-| TINST-012 | 外部 AI 方案转 Codex 任务 | #交接任务、ChatGPT 生成 Codex 任务、外部 AI 任务交接、把方案生成 Codex 任务、生成 Codex 任务纯文本、生成 Codex 任务 Markdown、生成 Codex 任务 zip、ChatGPT 到 Codex、方案转任务包、任务交接协议、完整任务包文件内容、Codex 使用方式 | [instructions/external-ai-to-codex-task-handoff.md](instructions/external-ai-to-codex-task-handoff.md) |
+| TINST-012 | 外部 AI 通用任务交接 | #交接任务、ChatGPT 生成 AI 任务、外部 AI 任务交接、方案转任务 Markdown、ChatGPT 到 AI、任务交接协议 | [instructions/external-ai-task-handoff.md](instructions/external-ai-task-handoff.md) |
 | TINST-013 | dev 合并到 main 并按开关同步仓库镜像 | #提主、#合并主分支、#合并dev到main、合并dev到main、dev合并到main、内部提主合并、同步 main 镜像、仓库级镜像、repository_mirrors | [instructions/dev-to-main-merge.md](instructions/dev-to-main-merge.md) |
 | TINST-014 | 发布组件应用并执行上线操作 | #发布、#立即发布、#发布生效、发布组件、更新发布、执行SQL、上线、部署、发布测试、发布上线、发布生产、发布生成、发布 server、发布 client、发布到 test、发布到 production、发布版本状态、发布名单、本地代码最新 | [instructions/release-component.md](instructions/release-component.md) |
 | TINST-015 | 客户仓库分支角色与同步总览 | #客户仓库同步、客户仓库同步、external_mapped、分支流向、客户分支角色、客户单分支、客户交付分支 | [instructions/customer-repository-branch-flow.md](instructions/customer-repository-branch-flow.md) |
@@ -154,6 +155,7 @@ read_contract:
 | TINST-038 | 项目健康上下文 | #项目健康、项目健康、健康上下文、记录项目健康问题、记录这个缺口、审计项目健康、摸一下项目健康问题、生成健康关注建议、把缺口变成调研问题、.maw/health | [instructions/project-health-context.md](instructions/project-health-context.md) |
 | TINST-039 | 发布公开镜像 | #发布公开镜像、#发布开源镜像、#发布镜像、公开发布镜像、发布 public mirror、私有仓发布到公开仓、开发完成一个版本后发布到公开仓、种子仓发布公开仓 | [instructions/publish-repository-mirror.md](instructions/publish-repository-mirror.md) |
 | TINST-040 | MCP Knowledge Runtime | #MCP知识库、#MCP安装、#MCP更新、#MCP同步、#MCP审计、#技术选型、#框架包、#风格包、#项目蓝图、#提示词包、Framework Pack、Style Pack、Blueprint Pack、Prompt Pack、Pack Registry、Project Override | [instructions/mcp-knowledge-runtime.md](instructions/mcp-knowledge-runtime.md) |
+| TINST-041 | UAT 业务交付 | #UAT交付、UAT 交付、模块验收说明、业务验收文档、测试与审计版、逐模块交付测试 | [instructions/uat-business-handoff.md](instructions/uat-business-handoff.md) |
 
 ## 当前术语列表
 
@@ -202,6 +204,7 @@ read_contract:
 - 项目方向、需求理解、业务流程、验收目标或 docs 口径需要人工评审时，按 `TINST-037` 执行 `#项目评审`；评审报告必须给出 `#项目审计：<评审报告路径>` 接续调用。基于评审成果核对实现程度、验收证据和后续推进建议时，使用 `#项目审计：<评审报告路径>`。
 - 需要记录或审计健康问题、需求事实、决策、普通健康待办、调研会话摘要和验收缺口时，按 `TINST-038` 执行 `#项目健康`；`.maw/health/` 是可导入健康上下文，不替代 `docs/planning/todos/`、`docs/project-review-audits/`、正式需求或验收文档。
 - 私有开发仓库完成版本后需要发布到公开仓时，按 `TINST-039` 执行 `#发布公开镜像`；普通仓库级 mirror 同步仍走 `TINST-013`，应用部署仍走 `TINST-014`。
+- 逐模块向测试人员交付业务验收说明时，按 `TINST-041` 执行 `#UAT交付`；业务自述优先，状态晋级 fail closed，实际结果进入 TestRun/Bug/Evidence，云端分享必须人工触发。
 - 文件名使用英文小写短横线，例如 `customer-cloud-release.md`。
 - 每次新增、改名或废弃条目，都必须同步更新本总纲中的对应列表。
 - 每次新增、改名、废弃指令，或调整推荐关键字、内部指令 ID、短编号、触发词、适用范围，都必须同步更新根目录 `PROJECT_COMMANDS.md`，保证人类优先可用 `#关键字` 快速调用，必要时模板指令可用 `#T001` 精确调用，业务项目指令可用 `#P001` 精确调用，并能复制调用示例后只改参数就使用。

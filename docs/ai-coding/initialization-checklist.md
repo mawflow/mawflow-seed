@@ -16,7 +16,7 @@
 | TODO | AIC-08 | 明确测试最低要求：单元测试、集成测试、冒烟测试或人工验证方式 | `coding-style.md` |
 | TODO | AIC-09 | 明确新增或调整内容后的文档同步判断规则 | `coding-style.md` |
 | TODO | AIC-10 | 建立待确认问题清单，无法确认的规则不得隐式假设 | `docs/requirements/pending-questions.md` |
-| TODO | AIC-11 | 按 app_key 补齐 AI 调试索引，默认明确 server/client；如项目新增独立前端或后台 app_key，再补齐对应 URL、数据库引用、API 引用和测试账号引用 | `.maw/app-runtime.yaml` / `.maw/secrets.yaml` |
+| TODO | AIC-11 | 按项目实际 app_key 补齐 AI 调试索引；没有组件时保持空。显式初始化或采纳组件后，再补齐对应 URL、数据库引用、API 引用和测试账号引用 | `.maw/app-runtime.yaml` / `.maw/secrets.yaml` |
 | TODO | AIC-12 | 确认 test 的实际运行方式：默认优先本机 Docker 开发/测试，但已有远端测试机、共用数据库联调环境或用户特别说明时按事实补齐服务器工作目录、健康检查地址和部署凭证；缺少 Docker、Host Manager 或 Node Runner 等宿主机能力时记录 warning | `.maw/environments.dev.yaml` / `.maw/environments.yaml` / `.maw/secrets.yaml` |
 | TODO | AIC-13 | 确认 git 使用策略：默认可使用本机 git 环境；如显式配置 deploy key 或 token，确认 key 存放在 `.ssh/` 或公共目录且不提交 git | `.maw/repositories.yaml` / `docs/git-credentials-guide.md` |
 | TODO | AIC-14 | 如果启用 `repository_mode: external_mapped`，按 app_key 补齐组件客户仓库映射，并确认组件目录不保存客户仓库 `.git`，同步流程为人工显式先拉客户仓库、解决冲突并提交本仓库、再通过临时客户仓库工作副本推客户仓库 | `.maw/repositories.yaml` / `docs/customer-repository-sync-guide.md` |

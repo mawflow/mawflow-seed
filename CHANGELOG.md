@@ -1,5 +1,14 @@
 # 模板变更记录
 
+## v0.2.34 - 2026-08-12
+
+### Seed Kit 2.3.0
+
+- 新项目初始化收敛为空组件基线，所有 profile 不再隐式创建 `server/client`，只保留 `code/README.md` 和项目治理骨架。
+- 新增组件初始化、存量目录采纳、启用、禁用和目录一致性检查的原子 Seed 能力，默认禁用且禁用不删除源码。
+- 初始化产物新增 `MAWFLOW_CLI.md`、`PROJECT_COMMANDS.md` 和 `CHATGPT_TO_AI.md`，明确终端命令、AI 对话指令与跨 AI 交接边界。
+- 保留旧 profile 与旧 ChatGPT-to-Codex 文件名的兼容入口；派生项目升级严格保留已有组件事实。
+
 ## v0.2.33 - 2026-08-08
 
 ### Seed Kit 2.2.0

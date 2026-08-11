@@ -735,7 +735,7 @@ environments:
       fallback_when_missing_or_blank: true
       # 未指定组件时的默认发布组件范围；逗号分隔 app_key。
       # 模板默认只有 server/client；派生项目有 admin 时可按项目事实改为 "client,admin"。
-      default_release_components: "server,client"
+      default_release_components: []
 
   # staging 环境可选；通常是中枢服务所在服务器，或另一套宿主机维护且具备公开访问地址的 Docker 环境。
   staging:
@@ -767,7 +767,7 @@ environments:
       healthcheck_url: ""
       # `发布上线` 未指定组件时的默认发布组件范围；逗号分隔 app_key。
       # 例如派生项目预发只发 client/admin 时，可改为 "client,admin"。
-      default_release_components: "server,client"
+      default_release_components: []
 
   # production 环境代表真实生产运行环境，通常是客户服务器。
   production:
@@ -800,7 +800,7 @@ environments:
       credential_env: MAW_SERVER_SSH_REF
       healthcheck_url: ""
       # `发布生产` 或兼容口令 `发布生成` 未指定组件时的默认发布组件范围；逗号分隔 app_key。
-      default_release_components: "server,client"
+      default_release_components: []
 
 rules:
   # Seed 2.1 新项目只提交 Requirement/Ref，不允许在 Git 中保存真实值。

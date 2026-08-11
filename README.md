@@ -10,7 +10,7 @@ MAWflow Seed 是安装在 AI 编程工作目录中的开源 AI Coding 项目导�
 
 MAWflow Seed 不只是一个项目模板，也不只是一个演示仓库。
 
-从 v2.0.0 起，它同时是 MAWflow 项目定义协议的唯一开发源；当前 Seed Kit 版本为 v2.2.0：`mawflow-seed-kit`、Seed Contract、Schema/UI/Operation Catalog、初始化 profiles 和公开 Seed 产物必须共享同一 BOM 与契约指纹。项目仓只保存事实，Project OS 是本地工作台随时可重建的投影。
+从 v2.0.0 起，它同时是 MAWflow 项目定义协议的唯一开发源；当前 Seed Kit 版本为 v2.3.0：`mawflow-seed-kit`、Seed Contract、Schema/UI/Operation Catalog、初始化 profiles 和公开 Seed 产物必须共享同一 BOM 与契约指纹。项目仓只保存事实，Project OS 是本地工作台随时可重建的投影。
 
 它是面向 AI 编程项目的仓库级导航层，用于帮助 AI 工具在修改文件前回答这些问题：
 
@@ -115,8 +115,7 @@ packages/mawflow-seed-kit/
 docs/
 prompts/
 ops/
-code/server/
-code/client/
+code/README.md
 LICENSE
 ```
 
@@ -144,11 +143,12 @@ git clone https://github.com/mawflow/mawflow-seed.git my-project
 cd my-project
 ```
 
-如果已经安装 MAWflow CLI，推荐使用项目初始化命令：
+如果已经安装 MAWflow CLI，推荐直接在新建或已有 Git 仓库中初始化：
 
 ```bash
-mawflow project init my-project
-cd my-project
+mkdir my-project && cd my-project
+git init
+mawflow project init .
 mawflow project doctor --root .
 ```
 
@@ -158,9 +158,12 @@ mawflow project doctor --root .
 README.md
 AI_START_HERE.md
 .maw/project.yaml
-.maw/components.yaml
+.maw/components.yaml（初始为空）
 .maw/modules.yaml
 .maw/app-runtime.yaml
+MAWFLOW_CLI.md
+PROJECT_COMMANDS.md
+CHATGPT_TO_AI.md
 ```
 
 如果要在已有 0.2.x 仓库中引入 Seed，不要复制文件或保留长期双写，必须使用一次性迁移事务：
@@ -174,7 +177,7 @@ AI_START_HERE.md
 
 当 Seed 被用于创建真实项目后，应根据实际产品或服务重写项目 `README.md`。维护者可以通过 `TEMPLATE_OVERVIEW.md` 了解 Seed 仓库自身的内部结构。
 
-完整安装步骤请阅读 `GETTING_STARTED.md`，常用项目命令和维护入口请阅读 `PROJECT_COMMANDS.md`，从外部 AI 向 Codex 交接任务请阅读 `CHATGPT_TO_CODEX.md`。
+完整安装步骤请阅读 `GETTING_STARTED.md`；终端命令见 `MAWFLOW_CLI.md`，AI 对话指令见 `PROJECT_COMMANDS.md`，跨 AI 交接见 `CHATGPT_TO_AI.md`。
 
 ## 仓库结构
 

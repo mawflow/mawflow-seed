@@ -51,6 +51,10 @@ read_contract:
 
 - [项目生命周期与双端工作台治理](project-lifecycle-governance.md)：定义 main/dev、正式发布来源、配置字段元数据、成员分支/worktree/租约、变更片段、项目手册和 preview-first 迁移边界。
 
+## 测试与验收
+
+- [UAT 业务交付](uat-business-handoff.md)：生成业务自述优先、面向测试人员与审计者的不可变验收说明，并复用质量手册和受控云端分享。
+
 ## 维护规则
 
 - `.maw/capabilities.yaml` 是 AI 和工具优先读取的能力索引。

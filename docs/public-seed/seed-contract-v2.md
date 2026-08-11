@@ -6,7 +6,7 @@ Seed Contract v2 是 MAWflow CLI、Host、本地工作台和项目仓库共同�
 
 ```text
 maw-project-template
-  └─ mawflow-seed-kit 2.2.0
+  └─ mawflow-seed-kit 2.3.0
        ├─ Contract / JSON Schema
        ├─ UI + Operation Catalog
        ├─ profiles / project template
@@ -39,6 +39,10 @@ project .maw/ + .local/.maw/
 - `.maw/upgrade-policy.yaml`
 - `.maw/agent-entry.yaml`
 - `AI_START_HERE.md`
+- `MAWFLOW_CLI.md`
+- `PROJECT_COMMANDS.md`
+- `CHATGPT_TO_AI.md`
+- `code/README.md`
 - `docs/handbooks/manifest.yaml`
 
 `.maw/seed.lock` 固定 `seed_version`、`contract_version`、`contract_fingerprint`、profile、来源和 BOM。lock 缺失或指纹漂移时，编译器可以诊断，但本地工作台不得写入。
@@ -74,13 +78,17 @@ project .maw/ + .local/.maw/
 
 ## 初始化与迁移
 
-新项目选择 `web-api`、`service` 或 `minimal` profile：
+新项目默认使用 `blank` profile，不内置 server/client 或示例组件：
 
 ```bash
-mawflow project init my-project --profile web-api
+mawflow project init my-project
 cd my-project
 mawflow project doctor --root .
+mawflow component init api
+mawflow component enable api
 ```
+
+旧 `web-api`、`service` 和 `minimal` 参数仅保留调用兼容，与 `blank` 一样不再隐式创建组件。
 
 已有 0.2.x 项目只允许一次性迁移：
 

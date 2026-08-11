@@ -1,5 +1,5 @@
 schema: mawflow.seed_profile.v2
-key: web-api
+key: blank
 components: []
 modules: []
 apps: {}

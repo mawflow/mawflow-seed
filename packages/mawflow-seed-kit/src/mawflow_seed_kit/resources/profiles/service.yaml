@@ -1,36 +1,16 @@
 schema: mawflow.seed_profile.v2
 key: service
-components:
-  - key: server
-    app_key: server
-    name: 服务端
-    type: backend
-    path: code/server
-    source_root: src
-    enabled: true
-    guide: docs/components/server.md
+components: []
 modules: []
-apps:
-  server:
-    enabled: true
-    component_ref: server
-    code_path: code/server
-    local_url: http://127.0.0.1:8080
-    healthcheck_path: /health
-    api_base_path: /api
+apps: {}
 technology:
-  runtime_mode: container
-  languages:
-    - key: server-runtime
-      version: ""
-      package_manager: ""
-      role: server
-      required: false
+  runtime_mode: host
+  languages: []
   frameworks: []
   services: []
   development_environment:
-    standard: docker_compose
-    compose_files: [compose.dev.yml]
+    standard: host_runtime
+    compose_files: []
     devcontainer: optional
   verification:
     commands: []

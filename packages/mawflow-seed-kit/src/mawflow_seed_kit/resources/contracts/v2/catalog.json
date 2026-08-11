@@ -1,7 +1,7 @@
 {
   "schema": "mawflow.seed_contract_catalog.v2",
   "contract_version": 2,
-  "seed_version": "2.2.0",
+  "seed_version": "2.3.0",
   "required_files": [
     ".maw/seed.lock",
     ".maw/project.yaml",
@@ -16,12 +16,18 @@
     ".maw/upgrade-policy.yaml",
     ".maw/agent-entry.yaml",
     "AI_START_HERE.md",
+    "MAWFLOW_CLI.md",
+    "PROJECT_COMMANDS.md",
+    "CHATGPT_TO_AI.md",
+    "code/README.md",
+    "docs/README.md",
     "docs/handbooks/manifest.yaml"
   ],
   "profiles": [
-    {"key": "web-api", "label": "Web + API", "description": "前端与服务端双组件项目"},
-    {"key": "service", "label": "服务端", "description": "单服务或 API 项目"},
-    {"key": "minimal", "label": "最小内核", "description": "只建立项目协议，组件后续从工作台添加"}
+    {"key": "blank", "label": "空项目", "description": "只建立项目协议，组件通过 mawflow component init/adopt 显式创建"},
+    {"key": "minimal", "label": "最小内核（兼容）", "description": "兼容旧调用，等价于 blank"},
+    {"key": "service", "label": "服务端（兼容）", "description": "兼容旧调用，不再隐式创建组件"},
+    {"key": "web-api", "label": "Web + API（兼容）", "description": "兼容旧调用，不再隐式创建组件"}
   ],
   "targets": {
     "project": {
@@ -241,6 +247,7 @@
     {"key": "project.update", "target": "project", "modes": ["update"], "risk": "medium"},
     {"key": "component.add", "target": "component", "modes": ["create"], "risk": "high"},
     {"key": "component.update", "target": "component", "modes": ["update"], "risk": "medium"},
+    {"key": "component.enable", "target": "component", "modes": ["update"], "risk": "high"},
     {"key": "component.disable", "target": "component", "modes": ["update"], "risk": "high"},
     {"key": "component.remove", "target": "component", "modes": ["remove"], "risk": "critical"},
     {"key": "module.add", "target": "module", "modes": ["create"], "risk": "medium"},

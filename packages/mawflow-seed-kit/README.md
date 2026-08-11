@@ -1,10 +1,10 @@
 # mawflow-seed-kit
 
-`mawflow-seed-kit` 是 Seed Contract v2 的唯一可执行分发包。v2.2.0 增加 Credential Governance Contract：默认阻断 tracked plaintext、Requirement v2、Local Binding v3、资源/租约/runtime injection 约束与凭证 Doctor。迁移会保护业务 README、既有模块事实和项目私有文件，只归一化能够确定含义的契约字段。
+`mawflow-seed-kit` 是 Seed Contract v2 的唯一可执行分发包。v2.3.0 将新项目收敛为空组件基线，并提供组件目录初始化、存量目录采纳、启用、禁用和检查的原子能力；兼容 profile 不再隐式生成 `server/client`。
 
 主仓 CLI 和 Host Program 必须固定消费同一版本；项目仓库通过 `.maw/seed.lock` 记录版本、BOM 和契约指纹。
 
-本包提供 Python API 与只读诊断命令：
+本包提供 Python API 与只读诊断命令，面向用户的组件操作由 `mawflow component ...` 暴露：
 
 ```bash
 mawflow-seed-kit catalog
