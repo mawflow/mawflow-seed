@@ -1,5 +1,13 @@
 # 模板变更记录
 
+## v0.2.36 - 2026-08-12
+
+### Seed Git 交接入口统一
+
+- 移除根目录历史兼容入口 `CHATGPT_TO_CODEX.md`，当前 Seed、公开仓和派生项目只保留通用 `CHATGPT_TO_AI.md`。
+- 零组件基线回归不再假设内置 `server/client`；组件发布命令与模块档案必须在组件创建或采纳后才可解析。
+- `mawflow-seed-kit` 仍为 2.3.1，本次只推进公开 Seed Git 版本，不重复发布内容未变化的 Python 包。
+
 ## v0.2.35 - 2026-08-12
 
 ### Seed Kit 2.3.1
