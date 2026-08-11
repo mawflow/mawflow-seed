@@ -26,7 +26,11 @@ from mawflow_seed_kit import (  # noqa: E402
     plan_migration,
     rollback_migration,
 )
-from mawflow_seed_kit.catalog import contract_fingerprint, public_catalog  # noqa: E402
+from mawflow_seed_kit.catalog import (  # noqa: E402
+    SEED_VERSION,
+    contract_fingerprint,
+    public_catalog,
+)
 
 
 def _git_init(root: Path) -> None:
@@ -475,6 +479,86 @@ def test_migration_normalizes_legacy_project_and_moves_local_overlay(tmp_path: P
     assert not (root / ".maw/app-runtime.local.yaml").exists()
     assert (root / ".local/.maw/app-runtime.yaml").is_file()
     assert ".local/" in (root / ".gitignore").read_text(encoding="utf-8").splitlines()
+
+
+def test_migration_advances_package_template_source_without_losing_project_text(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "legacy"
+    materialize_project(root, project_key="legacy", name="Legacy", profile="blank")
+    template_source_path = root / ".maw/template-source.yaml"
+    template_source_path.write_text(
+        """# 项目自己的 Seed 来源说明
+schema_version: 2
+template_source:
+  kind: package
+  package: mawflow-seed-kit
+  applied_version: 2.2.1 # 上次已应用版本
+  project_extension: keep-me
+  distribution:
+    kind: package
+    package: mawflow-seed-kit
+    version: 2.2.1
+""",
+        encoding="utf-8",
+    )
+    (root / ".maw/seed.lock").write_text(
+        (root / ".maw/seed.lock").read_text(encoding="utf-8").replace(
+            SEED_VERSION, "2.2.1"
+        ),
+        encoding="utf-8",
+    )
+    _git_init(root)
+
+    public, private = plan_migration(root, profile="blank")
+    result = apply_migration_plan(
+        root,
+        private,
+        public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    assert result["projection"]["status"] == "ready"
+    migrated_text = template_source_path.read_text(encoding="utf-8")
+    migrated = yaml.safe_load(migrated_text)["template_source"]
+    assert migrated["applied_version"] == SEED_VERSION
+    assert migrated["distribution"]["version"] == SEED_VERSION
+    assert migrated["project_extension"] == "keep-me"
+    assert "# 项目自己的 Seed 来源说明" in migrated_text
+    assert "# 上次已应用版本" in migrated_text
+    assert ".maw/template-source.yaml" not in public["migration_safety"][
+        "protected_existing_paths"
+    ]
+
+
+def test_migration_preserves_non_package_template_source(tmp_path: Path) -> None:
+    root = tmp_path / "legacy"
+    materialize_project(root, project_key="legacy", name="Legacy", profile="blank")
+    template_source_path = root / ".maw/template-source.yaml"
+    original = """schema_version: 2
+template_source:
+  kind: git
+  git_url: https://example.invalid/seed.git
+  applied_version: abc123
+"""
+    template_source_path.write_text(original, encoding="utf-8")
+    (root / ".maw/seed.lock").write_text(
+        (root / ".maw/seed.lock").read_text(encoding="utf-8").replace(
+            SEED_VERSION, "2.2.1"
+        ),
+        encoding="utf-8",
+    )
+    _git_init(root)
+
+    public, private = plan_migration(root, profile="blank")
+    apply_migration_plan(
+        root,
+        private,
+        public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    assert template_source_path.read_text(encoding="utf-8") == original
 
 
 @pytest.mark.parametrize("directory_name", ["empty-project", "新 项目"])

@@ -2,5 +2,5 @@ schema_version: 2
 template_source:
   kind: package
   package: mawflow-seed-kit
-  applied_version: 2.0.0
+  applied_version: 2.3.1
   contract_version: 2

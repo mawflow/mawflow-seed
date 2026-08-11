@@ -646,6 +646,58 @@ def _normalized_technology(root: Path, fallback_text: str) -> str:
     return _render(merged if isinstance(merged, dict) else fallback)
 
 
+def _normalized_template_source(root: Path, fallback_text: str) -> str:
+    """Advance package-source baselines while preserving project YAML text."""
+
+    path = root / ".maw/template-source.yaml"
+    if not path.is_file() or path.is_symlink():
+        return fallback_text
+    text = _normalized_top_level_schema(path.read_text(encoding="utf-8"))
+    payload = yaml.safe_load(text)
+    template_source = (
+        payload.get("template_source") if isinstance(payload, dict) else None
+    )
+    if not isinstance(template_source, dict):
+        raise ValueError("seed_migration_existing_yaml_mapping_required")
+    if (
+        template_source.get("kind") != "package"
+        or template_source.get("package") != "mawflow-seed-kit"
+    ):
+        return text
+
+    text = _append_missing_mapping_fields(
+        text,
+        ("template_source",),
+        {"applied_version": SEED_VERSION},
+    )
+    text = _replace_mapping_scalar(
+        text,
+        ("template_source",),
+        "applied_version",
+        SEED_VERSION,
+    )
+
+    payload = yaml.safe_load(text)
+    distribution = payload["template_source"].get("distribution")
+    if isinstance(distribution, dict):
+        if (
+            distribution.get("kind") == "package"
+            and distribution.get("package") == "mawflow-seed-kit"
+        ):
+            text = _append_missing_mapping_fields(
+                text,
+                ("template_source", "distribution"),
+                {"version": SEED_VERSION},
+            )
+            text = _replace_mapping_scalar(
+                text,
+                ("template_source", "distribution"),
+                "version",
+                SEED_VERSION,
+            )
+    return text
+
+
 def plan_migration(
     root: Path | str,
     *,
@@ -691,7 +743,10 @@ def plan_migration(
     desired[".maw/environments.yaml"] = _normalized_environments(project_root, desired[".maw/environments.yaml"])
     desired[".maw/project-lifecycle.yaml"] = _normalized_lifecycle(project_root, desired[".maw/project-lifecycle.yaml"])
     desired[".maw/technology.yaml"] = _normalized_technology(project_root, desired[".maw/technology.yaml"])
-    for source_ref in [".maw/app-runtime.yaml", ".maw/project-doctor.yaml", ".maw/template-source.yaml", ".maw/upgrade-policy.yaml", ".maw/agent-entry.yaml", "AI_START_HERE.md"]:
+    desired[".maw/template-source.yaml"] = _normalized_template_source(
+        project_root, desired[".maw/template-source.yaml"]
+    )
+    for source_ref in [".maw/app-runtime.yaml", ".maw/project-doctor.yaml", ".maw/upgrade-policy.yaml", ".maw/agent-entry.yaml", "AI_START_HERE.md"]:
         path = project_root / source_ref
         if path.is_file() and not path.is_symlink():
             desired[source_ref] = path.read_text(encoding="utf-8")
@@ -730,6 +785,7 @@ def plan_migration(
         ".maw/environments.yaml",
         ".maw/project-lifecycle.yaml",
         ".maw/technology.yaml",
+        ".maw/template-source.yaml",
         ".maw/modules.yaml",
         ".maw/seed.lock",
         ".local/.maw/app-runtime.yaml",

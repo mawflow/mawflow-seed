@@ -1,9 +1,9 @@
 {
   "schema": "mawflow.seed_kit.manifest.v2",
   "name": "mawflow-seed-kit",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:43a8baefb5c6b198c78d0da181d4658f1605fcde3fb4133de972a0440705b3f4",
+  "contract_fingerprint": "sha256:cf302cd791b02cdf59abbd4497738b04a796c3f437a5b369e63f36caa5e66735",
   "template_root": "template",
   "profiles": ["blank", "minimal", "service", "web-api"],
   "required_paths": [".maw/seed.lock", ".maw/project.yaml", ".maw/technology.yaml", ".maw/components.yaml", ".maw/modules.yaml", ".maw/app-runtime.yaml", ".maw/environments.yaml", ".maw/project-lifecycle.yaml", ".maw/project-doctor.yaml", ".maw/template-source.yaml", ".maw/upgrade-policy.yaml", ".maw/agent-entry.yaml", "AI_START_HERE.md", "MAWFLOW_CLI.md", "PROJECT_COMMANDS.md", "CHATGPT_TO_AI.md", "code/README.md", "docs/README.md", "docs/handbooks/manifest.yaml"],

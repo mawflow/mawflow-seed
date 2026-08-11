@@ -25,4 +25,4 @@ __all__ = [
     "rollback_migration",
 ]
 
-__version__ = "2.3.0"
+__version__ = "2.3.1"

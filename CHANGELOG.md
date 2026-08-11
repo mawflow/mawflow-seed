@@ -1,5 +1,12 @@
 # 模板变更记录
 
+## v0.2.35 - 2026-08-12
+
+### Seed Kit 2.3.1
+
+- 修复 package 来源存量项目升级后 `.maw/seed.lock` 已推进、`.maw/template-source.yaml.applied_version` 仍停留旧版本的问题。
+- 迁移只更新 `mawflow-seed-kit` package 来源的版本标量，保留项目注释、扩展字段和非 package Git 来源事实；继续使用预览、精确确认、私有备份与哈希保护。
+
 ## v0.2.34 - 2026-08-12
 
 ### Seed Kit 2.3.0

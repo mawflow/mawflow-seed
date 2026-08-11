@@ -1,7 +1,7 @@
 {
   "schema": "mawflow.seed_contract_catalog.v2",
   "contract_version": 2,
-  "seed_version": "2.3.0",
+  "seed_version": "2.3.1",
   "required_files": [
     ".maw/seed.lock",
     ".maw/project.yaml",
