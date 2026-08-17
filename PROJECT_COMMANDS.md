@@ -402,7 +402,7 @@
 | `#模板设计` | 文档入口 | 模板设计、用户版设计、模板仓库设计 | 查看面向人类用户的模板仓库完整设计说明 | `docs/template-repository-design.md` |
 | `#AI设计` | 文档入口 | AI设计、AI 版设计、Agent 执行协议、模板执行协议 | 查看面向 Codex/Agent/Reviewer 的完整设计与执行协议 | `docs/template-repository-ai-design.md` |
 | `#生成交付文档` | `#T025` | 交付文档、生成用户手册、生成概要设计、生成部署手册、生成文档事实稿 | 按 modules 生成用户手册事实稿、按 design 生成概要设计事实稿、按 ops 生成部署手册事实稿；只生成 Markdown 事实稿，格式由用户模板或专门文档 AI 处理 | `docs/ai-instructions/instructions/generate-delivery-docs.md` |
-| `#UAT交付 <范围>` | `#T041/<范围>` | UAT 交付、模块验收说明、业务验收文档、测试与审计版、逐模块交付测试 | 从正式模块事实和真实证据生成不可变的业务验收说明；业务自述为主、测试引导为辅，进入质量手册供本地阅读和受控云端分享 | `docs/ai-instructions/instructions/uat-business-handoff.md` |
+| `#UAT交付 <范围>` | `#T041/<范围>` | UAT 交付、模块验收说明、业务验收文档、测试与审计版、逐模块交付测试 | 从正式模块事实和真实证据生成不可变的业务验收说明；业务自述为主、测试引导为辅，结构化引用及哈希闭包随同批次进入本地质量手册和受控云端分享 | `docs/ai-instructions/instructions/uat-business-handoff.md` |
 
 ## 常用任务包
 

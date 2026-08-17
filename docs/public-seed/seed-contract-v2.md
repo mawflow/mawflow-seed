@@ -2,6 +2,8 @@
 
 Seed Contract v2 是 MAWflow CLI、Host、本地工作台和项目仓库共同遵守的项目定义协议。它的目标不是把一套大模板复制到每个项目，而是让项目事实可编译、可视化、可安全变更、可迁移。
 
+从统一候选 `v2.3.1` 起，公开 Seed Git 与 Seed Kit 使用同一个完整 SemVer，`contract_version` 固定取该 SemVer 的主版本；重大升级必须三者同时更新。Catalog 指纹继续区分同一主版本内的契约内容变化。
+
 ## 单一事实链
 
 ```text

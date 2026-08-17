@@ -47,14 +47,19 @@
     "docs/public-seed/README.md",
     "docs/public-seed/quickstart.md",
     "docs/public-seed/seed-contract-v2.md",
+    "docs/capabilities/seed-version-family-governance.md",
     "packages/mawflow-seed-kit/pyproject.toml",
     "packages/mawflow-seed-kit/README.md",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/__init__.py",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/catalog.py",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/manifest.json",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/components.py",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/contracts/v2/catalog.json",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/template/.maw/seed.lock",
     "ops/scripts/check-public-seed-workdir.py",
+    "ops/scripts/check-seed-version-alignment.py",
     "tests/test_public_seed_workdir.py",
+    "tests/test_seed_version_alignment.py",
     "tests/test_seed_kit_v2.py"
   ],
   "forbidden_paths": [
@@ -69,6 +74,7 @@
   ],
   "smoke_commands": [
     ["python3", "ops/scripts/check-public-seed-workdir.py", "--format", "json", "--strict"],
+    ["python3", "ops/scripts/check-seed-version-alignment.py", "--format", "json", "--strict"],
     ["python3", "-m", "pytest", "-q", "tests/test_seed_kit_v2.py"]
   ]
 }

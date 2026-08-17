@@ -26,11 +26,11 @@
 1. 读取 `docs/delivery/uat/business-handoff-standard.md`、模块档案、需求/设计、当前代码、组件测试入口和已有质量证据。
 2. 将菜单或自然语言范围解析为正式叶子 `module_key`；存在歧义时先确认，不把一级模块组冒充可验收叶子模块。
 3. 用第一人称角色叙事整理业务背景、价值、主流程、范围、变化、权限和终态；业务自述必须先于测试矩阵。
-4. 运行本批次自测并保留项目根相对证据引用。测试失败或未运行时保持 `draft`。
-5. 基于 `docs/delivery/uat/templates/uat-delivery-spec.example.yaml` 创建项目自有输入 spec；不得把模板示例当作真实业务事实。
+4. 运行本批次自测，并把证据、测试依据和业务来源登记为结构化 `references`。测试失败或未运行时保持 `draft`。
+5. 基于 `docs/delivery/uat/templates/uat-delivery-spec.example.yaml` 创建 schema v2 项目自有输入 spec；每个引用必须声明 `ref_id`、类型、标题、项目根相对路径、必需性和冻结策略，不得把模板示例当作真实业务事实。
 6. 先运行生成器 `--dry-run --format json`，通过后使用新的 `delivery_id` 正式生成。禁止覆盖历史批次。
-7. 验证文档、manifest、敏感信息和 Git 状态；业务文档写入 `docs/handbooks/quality/uat/<delivery_id>/`，内部证据留在项目自有非分享目录。
-8. 本地工作台应能发现该 Markdown。只有用户明确要求分享且具备项目管理权限时，才选择测试人员需要的页面创建云端冻结分享；默认 7 天、允许评论、禁止下载。
+7. 验证文档、manifest、引用目标哈希、`reference_set_hash`、敏感信息和 Git 状态；业务文档写入 `docs/handbooks/quality/uat/<delivery_id>/`，内部证据留在项目自有非分享目录。
+8. 本地工作台应能发现主文档和全部必需引用。只有用户明确要求分享且具备项目管理权限时，才创建云端冻结分享；Host 自动补齐 `snapshot_policy=include` 的引用闭包，必需引用缺失、哈希不匹配或文档工作区不干净时失败关闭。默认 7 天、允许评论、禁止下载。
 9. 测试实际结果进入 TestRun/Bug/Evidence；分享锚点评论可转 Finding/修复任务。文档审阅 `approved` 不得写成 UAT 通过。
 10. 收口报告 `delivery_id`、状态、模块、源提交、输出路径、自测、环境回读、分享状态、TestRun/Bug 引用、阻塞和责任人。
 
@@ -49,6 +49,7 @@ git diff --check
 - 不整库复制开发数据，不默认执行部署、数据库同步或云端分享。
 - 不把内部技术证据、凭据、绝对路径、原始日志或未脱敏客户数据写入测试人员文档。
 - 不覆盖既有 `delivery_id`，不把静态文档作为 TestRun/Bug 第二账本。
+- 不用正文里的反引号路径代替结构化引用，不允许必需引用游离在分享快照之外。
 - 不把本指令并入 TINST-025；TINST-025 是普通事实稿，本指令有不可变批次和证据状态门。
 
 ## 冲突与覆盖规则
@@ -58,4 +59,5 @@ git diff --check
 
 ## 更新记录
 
+- 2026-08-12：升级为 UAT Evidence Closure v2，增加结构化引用、目标哈希、引用集合哈希、候选代码/文档版本分离和分享闭包门禁。
 - 2026-08-11：创建 TINST-041，沉淀业务自述型 UAT 交付、工作台分享和审计边界。

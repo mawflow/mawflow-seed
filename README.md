@@ -10,7 +10,7 @@ MAWflow Seed 是安装在 AI 编程工作目录中的开源 AI Coding 项目导�
 
 MAWflow Seed 不只是一个项目模板，也不只是一个演示仓库。
 
-从 v2.0.0 起，它同时是 MAWflow 项目定义协议的唯一开发源；当前 Seed Kit 版本为 v2.3.1：`mawflow-seed-kit`、Seed Contract、Schema/UI/Operation Catalog、初始化 profiles 和公开 Seed 产物必须共享同一 BOM 与契约指纹。项目仓只保存事实，Project OS 是本地工作台随时可重建的投影。
+从 v2.0.0 起，它同时是 MAWflow 项目定义协议的唯一开发源；当前统一候选版本为 v2.3.1：公开 Seed Git 与 `mawflow-seed-kit` 使用同一个完整 SemVer，Seed Contract 版本由 SemVer 主版本推导，三者共享同一 BOM 与契约指纹。重大升级必须三者同时推进；历史 `v0.2.x` tag 不改写。项目仓只保存事实，Project OS 是本地工作台随时可重建的投影。
 
 它是面向 AI 编程项目的仓库级导航层，用于帮助 AI 工具在修改文件前回答这些问题：
 
