@@ -1,0 +1,53 @@
+schema_version: 1
+upgrade_key: 20260820-public-payload-map-assets-alignment
+title: 公开 payload 模块地图与技术地图资产对齐
+risk_level: T2
+status: active
+summary:
+  - 公开 Seed 新项目获得空的模块候选、公共能力和项目信号索引，不携带来源项目事实。
+  - 模块地图、技术地图和集中 changelog 文档引用的脚本进入公开 payload，并在公开工作区独立运行。
+  - PUBLIC_PAYLOAD_MANIFEST required paths 与 smoke commands 阻断协议文档和分发清单再次漂移。
+  - Seed Kit、公开 Git payload 与 fresh derived fixture 使用同一组空索引基线。
+source_baseline_commit: 27b89e575b4e1bcb7f64e24fa3a46c9b7fb330b3
+source_template_files:
+  - PUBLIC_PAYLOAD_MANIFEST.json
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/template/.maw/module-candidates.yaml
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/template/.maw/capabilities.yaml
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/template/.maw/project-signals.yaml
+  - docs/changelogs/README.md
+  - docs/technical-map/README.md
+  - docs/capabilities/_template/capability.md
+  - docs/project-signals/_template.md
+  - ops/scripts/migrate-module-changelogs.py
+  - ops/scripts/check-template-module-docs.sh
+  - ops/scripts/check-module-candidates.sh
+  - ops/scripts/check-technical-map.sh
+  - ops/scripts/extract-project-metadata.py
+target_project_policy:
+  upgrade_mode: decision_matrix_incremental_merge_only
+  missing_index_policy: initialize_from_public_empty_defaults
+  existing_index_policy: preserve_and_semantically_merge_only
+  public_command_policy: referenced_commands_must_exist_and_run
+  idempotency_required: true
+  conflict_policy: fail_closed_without_deleting_sources
+  protect:
+    - README.md
+    - code/
+    - app_key
+    - release configuration
+    - repository mappings
+    - real secrets
+    - .local/
+    - module dossiers
+    - project capabilities and signals
+    - user work in progress
+validation:
+  - git diff --check
+  - python3 ops/scripts/migrate-module-changelogs.py check --format json
+  - sh ops/scripts/check-template-module-docs.sh
+  - sh ops/scripts/check-module-candidates.sh
+  - sh ops/scripts/check-technical-map.sh
+  - python3 ops/scripts/extract-project-metadata.py --format json
+propagation:
+  migration_note: docs/template-migrations/20260820-public-payload-map-assets-alignment.md
+  prompt: prompts/codex/template-upgrade-prompts/20260820-public-payload-map-assets-alignment-prompt.md

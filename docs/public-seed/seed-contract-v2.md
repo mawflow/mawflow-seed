@@ -8,7 +8,7 @@ Seed Contract v2 是 MAWflow CLI、Host、本地工作台和项目仓库共同�
 
 ```text
 maw-project-template
-  └─ mawflow-seed-kit 2.3.1
+  └─ mawflow-seed-kit 2.3.2
        ├─ Contract / JSON Schema
        ├─ UI + Operation Catalog
        ├─ profiles / project template

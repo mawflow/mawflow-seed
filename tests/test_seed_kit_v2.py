@@ -59,6 +59,9 @@ def test_materialized_project_is_complete_and_editable(tmp_path: Path) -> None:
     assert len(projection["configs"]["docs/handbooks/manifest.yaml"]["handbook_system"]["volumes"]) == 6
     assert projection["configs"][".maw/app-runtime.yaml"]["app_runtime"]["apps"] == {}
     assert projection["configs"][".maw/components.yaml"]["components"] == []
+    assert yaml.safe_load((root / ".maw/module-candidates.yaml").read_text(encoding="utf-8"))["module_candidates"] == []
+    assert yaml.safe_load((root / ".maw/capabilities.yaml").read_text(encoding="utf-8"))["capabilities"] == []
+    assert yaml.safe_load((root / ".maw/project-signals.yaml").read_text(encoding="utf-8"))["signals"] == []
     for source_ref in ("code/README.md", "docs/README.md", "MAWFLOW_CLI.md", "PROJECT_COMMANDS.md", "CHATGPT_TO_AI.md"):
         assert (root / source_ref).is_file()
     assert public_catalog()["trust_boundary"]["arbitrary_paths_writable"] is False

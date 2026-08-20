@@ -1,0 +1,35 @@
+# Public-safe empty module discovery index for fresh derived projects.
+schema_version: 1
+module_discovery:
+  status_values:
+    - seed
+    - candidate
+    - provisional
+    - confirmed
+    - deprecated
+  confidence_values:
+    - low
+    - medium
+    - high
+  promotion_policy:
+    confirmed_requires:
+      - user_confirmation
+      - stable_business_boundary
+      - evidence_for_page_api_data_or_task
+      - owner_or_review_record
+    write_to_modules_yaml_when: confirmed_or_stable_provisional
+    create_leaf_dossier_when: confirmed_leaf
+  evidence_types:
+    - user_statement
+    - requirement
+    - page_path
+    - api_path
+    - table_name
+    - code_path
+    - task_history
+    - release_boundary
+  defaults:
+    unresolved_module_key: not_identified
+    final_closeout_candidate_field: module_candidate
+
+module_candidates: []

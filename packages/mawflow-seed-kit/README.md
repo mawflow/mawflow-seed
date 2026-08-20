@@ -1,6 +1,6 @@
 # mawflow-seed-kit
 
-`mawflow-seed-kit` 是 Seed Contract v2 的唯一可执行分发包。v2.3.1 将新项目收敛为空组件基线，提供组件目录初始化、存量目录采纳、启用、禁用和检查的原子能力，并保证 package 来源的存量项目迁移后同步推进模板来源版本；兼容 profile 不再隐式生成 `server/client`。
+`mawflow-seed-kit` 是 Seed Contract v2 的唯一可执行分发包。v2.3.2 在空组件基线上补齐公开地图索引，并继续提供组件目录初始化、存量目录采纳、启用、禁用和检查的原子能力；package 来源的存量项目迁移仍会同步推进模板来源版本，兼容 profile 不再隐式生成 `server/client`。
 
 主仓 CLI 和 Host Program 必须固定消费同一版本；项目仓库通过 `.maw/seed.lock` 记录版本、BOM 和契约指纹。
 

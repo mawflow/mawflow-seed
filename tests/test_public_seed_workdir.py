@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -41,7 +43,64 @@ def materialize_minimal_payload(tmp_path: Path) -> Path:
     return tmp_path / "PUBLIC_PAYLOAD_MANIFEST.json"
 
 
+MAP_ASSET_PATHS = {
+    ".maw/module-candidates.yaml",
+    ".maw/capabilities.yaml",
+    ".maw/project-signals.yaml",
+    "docs/changelogs/README.md",
+    "docs/technical-map/README.md",
+    "docs/capabilities/_template/capability.md",
+    "docs/project-signals/_template.md",
+    "ops/scripts/migrate-module-changelogs.py",
+    "ops/scripts/check-template-module-docs.sh",
+    "ops/scripts/check-module-candidates.sh",
+    "ops/scripts/check-technical-map.sh",
+    "ops/scripts/extract-project-metadata.py",
+}
+
+MAP_SMOKE_COMMANDS = {
+    ("python3", "ops/scripts/migrate-module-changelogs.py", "check", "--format", "json"),
+    ("sh", "ops/scripts/check-template-module-docs.sh"),
+    ("sh", "ops/scripts/check-module-candidates.sh"),
+    ("sh", "ops/scripts/check-technical-map.sh"),
+    ("python3", "ops/scripts/extract-project-metadata.py", "--format", "json"),
+}
+
+
+def materialize_source_payload(tmp_path: Path) -> dict[str, object]:
+    manifest = json.loads((ROOT / "PUBLIC_PAYLOAD_MANIFEST.json").read_text(encoding="utf-8"))
+    for rel_path in manifest["required_paths"]:
+        source = ROOT / rel_path
+        target = tmp_path / rel_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+    return manifest
+
+
 class PublicSeedWorkdirTest(unittest.TestCase):
+    def test_map_assets_are_required_and_runnable_in_materialized_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_name:
+            root = Path(temp_name)
+            manifest = materialize_source_payload(root)
+
+            self.assertTrue(MAP_ASSET_PATHS.issubset(set(manifest["required_paths"])))
+            self.assertTrue(MAP_SMOKE_COMMANDS.issubset({tuple(command) for command in manifest["smoke_commands"]}))
+
+            for command in sorted(MAP_SMOKE_COMMANDS):
+                completed = subprocess.run(
+                    command,
+                    cwd=root,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(
+                    completed.returncode,
+                    0,
+                    msg=f"command failed: {' '.join(command)}\n{completed.stdout}\n{completed.stderr}",
+                )
+
     def test_accepts_complete_payload(self) -> None:
         with tempfile.TemporaryDirectory() as temp_name:
             root = Path(temp_name)

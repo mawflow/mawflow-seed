@@ -1,0 +1,34 @@
+# Public-safe empty capability index for fresh derived projects.
+schema_version: 1
+capability_registry:
+  purpose: "Machine-readable reusable capability index for technical-map lookup, audit, and AI preconditions."
+  docs_root: docs/capabilities
+  detail_template: docs/capabilities/_template/capability.md
+  extraction_tool: ops/scripts/extract-project-metadata.py
+  check_script: ops/scripts/check-technical-map.sh
+  status_values:
+    - candidate
+    - stable
+    - deprecated
+    - blocked
+  type_values:
+    - api
+    - service
+    - base_class
+    - component
+    - script
+    - governance_protocol
+    - data_contract
+    - integration
+  origin_values:
+    - seed_repository
+    - derived_project_custom
+    - candidate_for_seed_repository
+    - unknown_legacy
+  promotion_policy:
+    candidate_when: "A capability is implemented in one module and likely reusable by another module."
+    stable_when: "The capability is reused by another module, or the owner confirms it as a shared capability."
+    module_reference_policy: "Module dossiers reference capability_key; capability facts remain in the capability index and docs."
+  closeout_metadata_key: capability_map_update_status
+
+capabilities: []

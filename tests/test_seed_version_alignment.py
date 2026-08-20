@@ -39,7 +39,7 @@ def test_current_seed_release_family_is_aligned() -> None:
     result = MODULE.check_alignment(ROOT)
 
     assert result["status"] == "ready"
-    assert result["observations"]["release_version"] == "2.3.1"
+    assert result["observations"]["release_version"] == "2.3.2"
     assert result["observations"]["seed_contract_version"] == 2
     assert result["observations"]["template_metadata_checked"] is True
 

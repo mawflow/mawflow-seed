@@ -1,0 +1,48 @@
+# Public-safe empty project-signal index for fresh derived projects.
+schema_version: 1
+project_signal_registry:
+  purpose: "Machine-readable human and AI hints for audits, dashboards, and development preconditions."
+  docs_root: docs/project-signals
+  detail_template: docs/project-signals/_template.md
+  extraction_tool: ops/scripts/extract-project-metadata.py
+  check_script: ops/scripts/check-technical-map.sh
+  closeout_metadata_key: project_signal_update_status
+  type_values:
+    - todo
+    - clarification
+    - gap
+    - scope_change
+    - terminology_change
+    - risk
+    - audit_hint
+    - ai_precondition
+  status_values:
+    - active
+    - monitoring
+    - resolved
+    - superseded
+    - ignored
+  severity_values:
+    - info
+    - low
+    - medium
+    - high
+    - critical
+  audience_values:
+    - human
+    - ai
+    - dashboard
+    - reviewer
+    - release_manager
+  source_policy:
+    todo_source: docs/planning/todos/active.md
+    clarification_source: docs/ai-instructions/experience-candidates.md
+    terminology_source: docs/ai-instructions/keyword-candidates.md
+    execution_lesson_source: docs/ai-instructions/execution-lesson-candidates.md
+    module_source: docs/modules/
+    local_only_excluded: true
+  ai_precondition_policy:
+    - "Active or monitoring signals for AI or dashboard audiences should be read before related work."
+    - "Signals reference TODO-ID, capability_key, module_key, and evidence paths instead of duplicating facts."
+
+signals: []
