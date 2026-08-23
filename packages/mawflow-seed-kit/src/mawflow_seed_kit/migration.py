@@ -552,11 +552,7 @@ def _normalized_environments(root: Path, fallback_text: str) -> str:
             current_profile = str(environment.get("profile") or canonical)
             canonical_profile = profile_aliases.get(
                 current_profile,
-                "local"
-                if canonical == "local"
-                else "dev"
-                if canonical == "staging"
-                else "pro",
+                current_profile,
             )
             normalized = _replace_mapping_scalar(
                 normalized,
@@ -614,9 +610,10 @@ def _normalized_environments(root: Path, fallback_text: str) -> str:
             canonical = aliases.get(str(key), str(key))
             role, mode, build_required = roles.get(canonical, ("compatibility", "compatibility", False))
             environment.setdefault("role", role)
+            current_profile = str(environment.get("profile") or canonical)
             environment["profile"] = profile_aliases.get(
-                str(environment.get("profile") or canonical),
-                "local" if canonical == "local" else "dev" if canonical == "staging" else "pro",
+                current_profile,
+                current_profile,
             )
             environment.setdefault("runtime_mode", "inherit")
             deployment = environment.get("deployment") if isinstance(environment.get("deployment"), dict) else {}

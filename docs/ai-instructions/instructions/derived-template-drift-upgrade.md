@@ -11,7 +11,7 @@
 
 ## 目标
 
-当用户在派生项目中执行 `#模版升级/#模板升级` 时，AI 不走 `#项目升级` 的泛化策略入口，也不只生成给另一个会话复制的提示词。AI 必须先计算模板漂移，再根据漂移结果生成本轮当前会话执行提示词，并继续执行该提示词。
+当用户在派生项目中执行 `#模版升级/#模板升级` 时，AI 不走 `#项目升级` 的泛化策略入口，也不只生成给另一个会话复制的提示词。AI 必须同时计算模板 commit 漂移和 Seed Contract 漂移，再根据结果生成本轮当前会话执行提示词，并继续执行该提示词。两条版本线独立治理，模板 commit 已对齐不等于 `.maw/seed.lock` 已对齐。
 
 本指令从包含 `template_source.applied_version` 的模板版本开始生效；不追溯兼容此前没有记录模板基线的旧项目。
 
@@ -20,9 +20,7 @@
 - 是否指定 commit 不决定在哪个仓库执行；当前 Codex 会话所在仓库的角色才决定路由。
 - 当前仓库是派生项目时，`#模版升级/#模板升级` 在当前派生项目执行本指令；不会改去源模板仓库生成资产。
 - 未指定 commit、branch 或 tag 时，先读取 `.maw/template-source.yaml` 的 `template_source.source_channel`，再读取 `template_source.version` 作为目标模板版本；该字段缺省时按 `main` 解析源模板目标 commit。
-- `source_channel=内部来源通道` 时，内部派生项目优先从内部 `maw-project-template` 源、本机模板目录或 `.local/.maw/template-source.yaml` 解析升级资产；不得把内部私有 Git URL 写入公开提示词。
-- `source_channel=public_seed` 时，外部公开派生项目优先从 `https://github.com/mawflow/mawflow-seed` 解析公开升级资产，不要求访问内部种子开发仓。
-- `source_channel` 缺失、冲突或为 `unknown_legacy` 时，输出 `.maw/template-source.yaml`、Git remote 和仓库身份检测证据，要求人工确认来源通道后再自动升级。
+- `source_channel=public_seed` 时，公开派生项目只使用公开 Seed 仓 `https://github.com/mawflow/mawflow-seed` 或公开升级资产；`source_channel=unknown_legacy` 或证据冲突时，先输出证据并要求人工确认，不自动漂移升级。
 - 如果 `template_source.applied_version` 为空，只把本次目标模板 commit 初始化为从当前版本开始的基线，不追溯猜测历史差异。
 - 当前仓库其实是源模板仓库时，同一触发词走 `TINST-024`；如果无法判断仓库角色，先向用户确认。
 
@@ -40,16 +38,13 @@
 
 ```yaml
 template_source:
-  source_channel: 内部来源通道 | public_seed | unknown_legacy
+  source_channel: "public_seed | unknown_legacy"
   git_url: "<internal seed git url or public seed git url>"
-  public_source:
-    canonical_public_repository_url: "https://github.com/mawflow/mawflow-seed"
-    default_git_url: "https://github.com/mawflow/mawflow-seed.git"
   version: "main"
   applied_version: "<当前项目已实际采用的源模板 commit SHA>"
 ```
 
-- `source_channel` 表示本项目的 Seed 来源通道。`内部来源通道` 面向内部受控项目，`public_seed` 面向外部公开项目，`unknown_legacy` 表示旧项目或来源冲突，自动升级前必须人工确认。
+- `source_channel` 表示模板来源通道。`public_seed` 使用公开 Seed 分发源；`unknown_legacy` 是旧项目兼容值，必须人工确认后再自动升级。
 - `version` 表示本次对齐的源模板目标，可以是 branch、tag 或 commit，默认 `main`；用户未指定 commit 时使用该字段解析目标模板 commit。
 - `applied_version` 表示当前项目上一次成功采用并提交的源模板 commit。
 - 完成一次模板漂移升级后，必须把 `applied_version` 更新为本次目标模板 commit。
@@ -79,7 +74,9 @@ rtk proxy python3 ops/scripts/plan-template-drift.py
 ```
 
 4. 按计划结果处理：
-   - `status: up_to_date`：说明当前模板基线已到目标模板 commit，无需执行升级。
+   - `status: source_channel_unconfirmed`：停止自动升级，输出 `.maw/template-source.yaml`、Git remote 和仓库身份检测摘要，等待人工确认 `public_seed`。
+   - `status: up_to_date`：说明当前模板基线已到目标模板 commit，且 Seed Contract 不落后；`seed_contract.status: ahead` 表示项目 Seed 比当前源模板记录更新，不回退项目版本。
+   - `status: seed_contract_behind`：模板 commit 已对齐，但 `.maw/seed.lock` 缺失、版本落后或同版本指纹漂移；执行计划器输出的受控 Seed 迁移提示词，先 preview 和隔离校验，再由当前用户确认应用。迁移必须保留项目 profile/source 身份、较新的 schema、项目生命周期 methodology、README、code、app_key 和私有规则。
    - `status: baseline_missing`：将本次目标模板 commit 作为从本版本开始的基线写入 `.maw/template-source.yaml` 的 `template_source.applied_version`；验证、提交、推送并按 mirror 有效计划同步。不要尝试补算旧历史。
    - `status: behind`：读取 `behind_count`、`commit_range` 和 `Current-session execution prompt`，在当前会话继续执行该提示词。
    - `status: ahead` 或 `diverged`：停止自动升级，说明当前项目记录的模板基线与目标模板不是简单落后关系，需要人工确认。
@@ -107,6 +104,8 @@ python3 ops/scripts/plan-template-drift.py
 生成或使用的当前会话提示词必须包含：
 
 - 源模板 git 地址。
+- Seed 来源通道。
+- 公开 Seed 仓地址，用于外部公开项目兜底。
 - 源模板目标 commit。
 - 当前模板基线 commit。
 - 模板落后提交数。
@@ -117,9 +116,9 @@ python3 ops/scripts/plan-template-drift.py
 
 ## 验证方式
 
-- `python3 ops/scripts/plan-template-drift.py` 能输出 `target_commit`、`applied_version`、`behind_count` 和状态。
+- `python3 ops/scripts/plan-template-drift.py` 能输出 `source_channel`、`target_commit`、`applied_version`、`behind_count`、`seed_contract` 和状态。
 - 当 `behind_count > 0` 时，输出包含当前会话执行提示词。
-- 当升级完成后再次运行计划，应显示 `status: up_to_date` 或 `behind_count: 0`。
+- 当升级完成后再次运行计划，应显示 `status: up_to_date`；仅有 `behind_count: 0` 不能证明 Seed Contract 已对齐。
 - `.maw/template-source.yaml` 已记录新的 `template_source.applied_version`。
 - 未覆盖目标项目 README、`code/`、app_key、发布配置、仓库映射、secrets、`.local/` 或项目私有规则。
 
@@ -130,7 +129,9 @@ python3 ops/scripts/plan-template-drift.py
 - 不把直接 fork 后继承的 `seed_repository` 声明当作不可推翻的事实；当前项目事实、用户明确说明和 Git 来源检测优先。
 - 不在 `applied_version` 为空时猜测历史模板基线；从本版本开始初始化即可。
 - 不复制源模板仓库的 `.git`、remote、镜像目标、真实 secrets 或 `.local/` 私有配置。
+- 不要求外部公开派生项目访问内部私有 Seed 源；公开项目只使用公开 Seed URL 或占位。
 - 不整文件覆盖目标项目 README、业务代码、app_key、发布配置或项目私有规则。
+- 不把较新的 `schema_version` 降到 2，不用通用 `profile/source` 覆盖项目 Seed 身份，不让默认 methodology 覆盖 `.maw/project-lifecycle.yaml` 的当前选择。
 
 ## 冲突与覆盖规则
 
@@ -143,3 +144,5 @@ python3 ops/scripts/plan-template-drift.py
 ## 更新记录
 
 - 2026-06-14：创建派生项目模板漂移升级指令，基于 `template_source.applied_version` 计算落后提交数，并在当前会话执行升级提示词。
+- 2026-07-01：公开版补充 Seed 来源通道 `public_seed/unknown_legacy`；来源未确认时停止自动漂移升级。
+- 2026-08-23：模板漂移计划增加 Seed Contract 独立比较与 `seed_contract_behind` 路由；受控迁移保护较新 schema、项目 Seed 身份和生命周期 methodology。

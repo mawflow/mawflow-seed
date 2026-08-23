@@ -1,10 +1,10 @@
 {
   "schema": "mawflow.seed_public_payload.v2",
-  "seed_version": "2.3.2",
+  "seed_version": "2.3.3",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:fc7334cf30d682901cd211bcc2cbb3ff1974e179a86970bf60f526424698b06f",
+  "contract_fingerprint": "sha256:38189ce13c5a82b64441f773f8165dde2d11b6b202c862abdde1ace1dcc2a056",
   "bom": {
-    "kit": "mawflow-seed-kit==2.3.2",
+    "kit": "mawflow-seed-kit==2.3.3",
     "contract": "seed-contract-v2"
   },
   "required_paths": [
@@ -56,6 +56,7 @@
     "docs/ai-coding/coding-style.md",
     "docs/ai-coding/module-dossier-rules.md",
     "docs/ai-instructions/README.md",
+    "docs/ai-instructions/instructions/derived-template-drift-upgrade.md",
     "docs/ai-instructions/instructions/final-closeout-response.md",
     "docs/ai-instructions/instructions/technical-map-project-metadata.md",
     "docs/ai-instructions/templates/final-closeout.zh-CN.md",
@@ -83,6 +84,7 @@
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/contracts/v2/catalog.json",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/template/.maw/seed.lock",
     "ops/scripts/check-public-seed-workdir.py",
+    "ops/scripts/plan-template-drift.py",
     "ops/scripts/check-seed-version-alignment.py",
     "ops/scripts/migrate-module-changelogs.py",
     "ops/scripts/check-template-module-docs.sh",
@@ -90,6 +92,7 @@
     "ops/scripts/check-technical-map.sh",
     "ops/scripts/extract-project-metadata.py",
     "tests/test_public_seed_workdir.py",
+    "tests/test_plan_template_drift.py",
     "tests/test_seed_version_alignment.py",
     "tests/test_seed_kit_v2.py"
   ],

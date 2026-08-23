@@ -1,7 +1,7 @@
 {
   "schema": "mawflow.seed_contract_catalog.v2",
   "contract_version": 2,
-  "seed_version": "2.3.2",
+  "seed_version": "2.3.3",
   "required_files": [
     ".maw/seed.lock",
     ".maw/project.yaml",
@@ -94,7 +94,7 @@
         "acceptance_refs": {"type": "path_list", "label": "验收依据", "required": false, "scope": ["shared"], "risk": "low"},
         "doc": {"type": "path_or_empty", "label": "模块档案", "required": false, "scope": ["shared"], "risk": "low"},
         "last_verified_at": {"type": "date_or_empty", "label": "最近确认日期", "required": false, "scope": ["shared"], "risk": "low"},
-        "last_verified_by": {"type": "enum", "label": "确认方", "options": ["human", "ai", "reviewer"], "required": false, "scope": ["shared"], "risk": "low"}
+        "last_verified_by": {"type": "enum", "label": "确认方", "options": ["human", "ai", "reviewer"], "allow_custom_key": true, "required": false, "scope": ["shared"], "risk": "low"}
       }
     },
     "runtime_app": {
@@ -126,13 +126,13 @@
       "root": "environments",
       "kind": "keyed_mapping",
       "fields": {
-        "role": {"type": "enum", "label": "环境角色", "options": ["local_development", "production_like_validation", "production", "compatibility"], "required": true, "scope": ["shared", "local"], "risk": "medium"},
-        "profile": {"type": "enum", "label": "Profile", "options": ["local", "dev", "pro"], "required": true, "scope": ["shared", "local"], "risk": "medium"},
+        "role": {"type": "enum", "label": "环境角色", "options": ["local_development", "production_like_validation", "production", "compatibility"], "allow_custom_key": true, "required": true, "scope": ["shared", "local"], "risk": "medium"},
+        "profile": {"type": "enum", "label": "Profile", "options": ["local", "dev", "pro"], "allow_custom_key": true, "required": true, "scope": ["shared", "local"], "risk": "medium"},
         "description": {"type": "long_text_or_empty", "label": "环境说明", "required": false, "scope": ["shared", "local"], "risk": "low"},
         "docs": {"type": "path_or_empty", "label": "环境文档", "required": false, "scope": ["shared", "local"], "risk": "low"},
         "remote_required": {"type": "bool", "label": "需要远端", "required": true, "scope": ["shared", "local"], "risk": "high"},
-        "runtime_mode": {"type": "enum", "label": "运行模式", "options": ["inherit", "container", "hybrid", "host", "external"], "required": true, "scope": ["shared", "local"], "risk": "medium"},
-        "deployment.mode": {"type": "enum", "label": "部署模式", "options": ["development", "compiled_package", "production_release", "compatibility"], "required": true, "scope": ["shared", "local"], "risk": "high"},
+        "runtime_mode": {"type": "enum", "label": "运行模式", "options": ["inherit", "container", "hybrid", "host", "external"], "allow_custom_key": true, "required": true, "scope": ["shared", "local"], "risk": "medium"},
+        "deployment.mode": {"type": "enum", "label": "部署模式", "options": ["development", "compiled_package", "production_release", "compatibility"], "allow_custom_key": true, "required": true, "scope": ["shared", "local"], "risk": "high"},
         "deployment.build_artifact_required": {"type": "bool", "label": "需要构建产物", "required": true, "scope": ["shared", "local"], "risk": "medium"},
         "deployment.approval_required": {"type": "bool", "label": "需要审批", "required": false, "scope": ["shared", "local"], "risk": "high"},
         "deployment.backup_required": {"type": "bool", "label": "需要备份", "required": false, "scope": ["shared", "local"], "risk": "high"},

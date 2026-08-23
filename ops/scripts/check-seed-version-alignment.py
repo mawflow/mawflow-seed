@@ -91,6 +91,10 @@ def check_alignment(root: Path = ROOT) -> dict[str, Any]:
         kit_manifest = _read_json(package_root / "manifest.json")
         root_lock = _read_yaml(root / ".maw/seed.lock")
         template_lock = _read_yaml(package_root / "template/.maw/seed.lock")
+        template_source = _read_yaml(package_root / "template/.maw/template-source.yaml")
+        template_source_config = template_source.get("template_source") or {}
+        if not isinstance(template_source_config, dict):
+            template_source_config = {}
         template_config_path = root / ".maw-template/template.yaml"
         template_config_exported = template_config_path.is_file()
         seed_contract: dict[str, Any] = {}
@@ -140,6 +144,9 @@ def check_alignment(root: Path = ROOT) -> dict[str, Any]:
             "template_lock.bom.kit": (template_lock.get("bom") or {}).get("kit")
             if isinstance(template_lock.get("bom"), dict)
             else "",
+            "template_source.applied_version": template_source_config.get(
+                "applied_version"
+            ),
             "catalog.py.SEED_VERSION": _python_constant(catalog_py, "SEED_VERSION"),
             "__init__.py.__version__": _python_constant(init_py, "__version__"),
         }
@@ -167,6 +174,9 @@ def check_alignment(root: Path = ROOT) -> dict[str, Any]:
             "catalog.contract_version": catalog.get("contract_version"),
             "root_lock.contract_version": root_lock.get("contract_version"),
             "template_lock.contract_version": template_lock.get("contract_version"),
+            "template_source.contract_version": template_source_config.get(
+                "contract_version"
+            ),
             "catalog.py.CONTRACT_VERSION": _python_constant(catalog_py, "CONTRACT_VERSION"),
         }
         if template_config_exported:

@@ -725,6 +725,56 @@ def test_compiler_rejects_catalog_value_drift(tmp_path: Path) -> None:
     assert "seed_field_value_invalid" in {issue["code"] for issue in projection["issues"]}
 
 
+def test_compiler_accepts_stable_project_owned_environment_and_reviewer_keys(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "project"
+    materialize_project(root, project_key="demo", name="Demo", profile="minimal")
+    modules_path = root / ".maw/modules.yaml"
+    modules_path.write_text(
+        """schema_version: 2
+modules:
+  - key: customer-delivery
+    name: 客户交付
+    type: domain
+    status: active
+    doc_status: confirmed
+    confidence: high
+    component_refs: []
+    last_verified_by: xiongxiaobai
+""",
+        encoding="utf-8",
+    )
+    environments_path = root / ".maw/environments.yaml"
+    environments = yaml.safe_load(environments_path.read_text(encoding="utf-8"))
+    local = environments["environments"]["local"]
+    local["role"] = "customer_managed_validation_target"
+    local["profile"] = "sit"
+    local["runtime_mode"] = "customer_managed"
+    local["deployment"]["mode"] = "customer_managed"
+    environments_path.write_text(
+        yaml.safe_dump(environments, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    projection = compile_project_definition(root)
+
+    assert projection["status"] == "ready"
+    assert projection["summary"]["errors"] == 0
+
+    environments["environments"]["local"]["role"] = "Customer Managed"
+    environments_path.write_text(
+        yaml.safe_dump(environments, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+    invalid = compile_project_definition(root)
+
+    assert invalid["status"] == "needs_attention"
+    assert "seed_field_value_invalid" in {
+        issue["code"] for issue in invalid["issues"]
+    }
+
+
 def test_change_set_rejects_authenticated_url_and_unknown_permissions(tmp_path: Path) -> None:
     root = tmp_path / "project"
     materialize_project(root, project_key="demo", name="Demo", profile="service")
@@ -955,6 +1005,11 @@ def test_migration_round_trip_preserves_existing_project_facts(tmp_path: Path) -
                 "description": "兼容旧测试别名",
                 "remote_required": True,
             },
+            "sit": {
+                "profile": "sit",
+                "description": "保留客户自定义环境语义",
+                "remote_required": True,
+            },
         },
     }
     (root / ".maw/project.yaml").write_text(
@@ -986,10 +1041,11 @@ def test_migration_round_trip_preserves_existing_project_facts(tmp_path: Path) -
     assert applied["projection"]["status"] == "ready"
     migrated_environments = yaml.safe_load((root / ".maw/environments.yaml").read_text(encoding="utf-8"))
     assert migrated_environments["environments"]["local"]["custom_existing_field"] == "keep-me"
-    assert set(migrated_environments["environments"]) == {"local", "test"}
+    assert set(migrated_environments["environments"]) == {"local", "test", "sit"}
     assert migrated_environments["environments"]["local"]["custom_existing_field"] == "keep-me"
     assert migrated_environments["environments"]["test"]["description"] == "兼容旧测试别名"
     assert migrated_environments["environments"]["test"]["profile"] == "local"
+    assert migrated_environments["environments"]["sit"]["profile"] == "sit"
     assert (root / "compose.dev.yml").read_text(encoding="utf-8") == "services: {}\n"
     assert (root / "docs/handbooks/manifest.yaml").is_file()
 

@@ -96,7 +96,14 @@ def _field_value_valid(field_type: str, value: Any, definition: dict[str, Any]) 
     if field_type in {"text", "long_text", "long_text_or_empty"}:
         return isinstance(value, str)
     if field_type == "enum":
-        return isinstance(value, str) and value in definition.get("options", [])
+        if not isinstance(value, str):
+            return False
+        if value in definition.get("options", []):
+            return True
+        return bool(
+            definition.get("allow_custom_key")
+            and KEY_PATTERN.fullmatch(value)
+        )
     if field_type in {"key", "key_or_empty"}:
         return isinstance(value, str) and bool(KEY_PATTERN.fullmatch(value))
     if field_type == "key_list":
