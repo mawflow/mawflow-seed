@@ -40,7 +40,7 @@ def test_current_seed_release_family_is_aligned() -> None:
     result = MODULE.check_alignment(ROOT)
 
     assert result["status"] == "ready"
-    assert result["observations"]["release_version"] == "2.3.3"
+    assert result["observations"]["release_version"] == "2.4.0"
     assert result["observations"]["seed_contract_version"] == 2
     assert result["observations"]["template_metadata_checked"] is True
 
@@ -78,7 +78,7 @@ def test_template_source_baseline_must_match_seed_release(tmp_path: Path) -> Non
     )
     text = template_source_path.read_text(encoding="utf-8")
     template_source_path.write_text(
-        text.replace("applied_version: 2.3.3", "applied_version: 2.3.1"),
+        text.replace("applied_version: 2.4.0", "applied_version: 2.3.1"),
         encoding="utf-8",
     )
 

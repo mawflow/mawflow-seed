@@ -25,6 +25,9 @@ from .compiler import compile_project_definition
 KEY_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,159}$")
 GIT_REF_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
 REF_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
+COMPONENT_SOURCE_REF_PATTERN = re.compile(r"^mawsource://component/[a-z0-9][a-z0-9._-]{0,159}$")
+GIT_ACCESS_PROFILE_REF_PATTERN = re.compile(r"^mawgit://[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
+SCP_REPOSITORY_PATTERN = re.compile(r"^(?:[A-Za-z0-9._-]+@)?([A-Za-z0-9.-]+):([^?#\s]+)$")
 SENSITIVE_TEXT = re.compile(r"(?i)(?:(?<![A-Za-z0-9_])sk-[A-Za-z0-9_-]{12,}|(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S+)")
 MAX_FIELD_LENGTH = 2000
 RISK_ORDER = {"low": 0, "medium": 1, "high": 2, "critical": 3}
@@ -155,6 +158,33 @@ def _validate_path(value: object, *, empty: bool) -> str:
     return text
 
 
+def _absolute_path_valid(value: str) -> bool:
+    if not value or "\x00" in value or "\n" in value or "\r" in value:
+        return False
+    normalized = value.replace("\\", "/")
+    if ".." in Path(normalized).parts:
+        return False
+    return normalized.startswith("/") or bool(re.match(r"^[A-Za-z]:/[^/].*", normalized)) or normalized.startswith("//")
+
+
+def _repository_url_valid(value: str) -> bool:
+    scp = SCP_REPOSITORY_PATTERN.fullmatch(value)
+    if scp:
+        return bool(scp.group(1) and scp.group(2).strip("/")) and ".." not in Path(scp.group(2)).parts
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError:
+        return False
+    if parsed.scheme not in {"http", "https", "ssh"} or not parsed.hostname or parsed.password or parsed.query or parsed.fragment:
+        return False
+    if parsed.scheme in {"http", "https"} and parsed.username:
+        return False
+    if port is not None and not 1 <= port <= 65535:
+        return False
+    return bool(parsed.path.strip("/"))
+
+
 def _validate(field: str, value: object, rule: str) -> object:
     if isinstance(value, str) and (len(value) > MAX_FIELD_LENGTH or SENSITIVE_TEXT.search(value)):
         raise ValueError("seed_change_sensitive_or_long_text_forbidden")
@@ -224,6 +254,28 @@ def _validate(field: str, value: object, rule: str) -> object:
             return ""
         if not GIT_REF_PATTERN.fullmatch(text) or ".." in text or "//" in text or text.endswith(("/", ".")):
             raise ValueError("seed_change_invalid_git_ref")
+        return text
+    if rule in {"component_source_ref", "component_source_ref_or_empty"}:
+        if not text and rule.endswith("_or_empty"):
+            return ""
+        if not COMPONENT_SOURCE_REF_PATTERN.fullmatch(text):
+            raise ValueError("seed_change_invalid_component_source_ref")
+        return text
+    if rule == "git_access_profile_ref_or_empty":
+        if not text:
+            return ""
+        if not GIT_ACCESS_PROFILE_REF_PATTERN.fullmatch(text):
+            raise ValueError("seed_change_invalid_git_access_profile_ref")
+        return text
+    if rule == "absolute_path":
+        if not _absolute_path_valid(text):
+            raise ValueError("seed_change_absolute_path_required")
+        return text
+    if rule == "repository_url_or_empty":
+        if not text:
+            return ""
+        if not _repository_url_valid(text):
+            raise ValueError("seed_change_invalid_repository_url")
         return text
     if rule in {"date", "date_or_empty"}:
         if not text and rule.endswith("_or_empty"):
@@ -366,8 +418,18 @@ def _append_sequence(
     *,
     base_indent: int,
 ) -> str:
-    lines = [f"{' ' * base_indent}- key: {_scalar_text(key)}"]
-    lines.extend(f"{' ' * (base_indent + 2)}{field}: {_scalar_text(value)}" for field, value in fields.items())
+    if any("." in field for field in fields):
+        payload: dict[str, Any] = {"key": key}
+        for field, value in fields.items():
+            current = payload
+            parts = field.split(".")
+            for part in parts[:-1]:
+                current = current.setdefault(part, {})
+            current[parts[-1]] = value
+        lines = [" " * base_indent + line for line in yaml.safe_dump([payload], allow_unicode=True, sort_keys=False).rstrip().splitlines()]
+    else:
+        lines = [f"{' ' * base_indent}- key: {_scalar_text(key)}"]
+        lines.extend(f"{' ' * (base_indent + 2)}{field}: {_scalar_text(value)}" for field, value in fields.items())
     insertion = "\n".join(lines) + "\n"
     if sequence.flow_style:
         replacement = "\n" + insertion.rstrip("\n")
@@ -381,6 +443,37 @@ def _remove_node(text: str, node: Node) -> str:
     line_start = text.rfind("\n", 0, start) + 1
     line_end = text.find("\n", end)
     return text[:line_start] + text[(len(text) if line_end < 0 else line_end + 1):]
+
+
+def _remove_sequence_item(text: str, sequence: SequenceNode, item: Node) -> str:
+    if len(sequence.value) != 1:
+        return _remove_node(text, item)
+    line_start = text.rfind("\n", 0, item.start_mark.index) + 1
+    line_end = text.find("\n", item.end_mark.index)
+    after = len(text) if line_end < 0 else line_end + 1
+    parent_line_end = line_start - 1
+    parent_line_start = text.rfind("\n", 0, parent_line_end) + 1
+    colon = text.rfind(":", parent_line_start, parent_line_end)
+    if colon >= parent_line_start:
+        return text[: colon + 1] + " []\n" + text[after:]
+    return _remove_node(text, item)
+
+
+def _remove_mapping_entry(text: str, mapping: MappingNode, key: str) -> str:
+    entry = _mapping_entries(mapping).get(key)
+    if not entry:
+        raise ValueError("seed_change_item_missing")
+    key_node, value_node = entry
+    line_start = text.rfind("\n", 0, key_node.start_mark.index) + 1
+    line_end = text.find("\n", value_node.end_mark.index)
+    after = len(text) if line_end < 0 else line_end + 1
+    if len(mapping.value) == 1:
+        parent_line_end = line_start - 1
+        parent_line_start = text.rfind("\n", 0, parent_line_end) + 1
+        colon = text.rfind(":", parent_line_start, parent_line_end)
+        if colon >= parent_line_start:
+            return text[: colon + 1] + " {}\n" + text[after:]
+    return text[:line_start] + text[after:]
 
 
 def _append_mapping(text: str, mapping: MappingNode, key: str, fields: dict[str, object], indent: int) -> str:
@@ -405,7 +498,15 @@ def _operation_map() -> dict[str, dict[str, Any]]:
 
 
 def _skeleton(target: str) -> str:
-    return "app_runtime:\n  apps: {}\n" if target == "runtime_app" else "environments: {}\n"
+    if target == "runtime_app":
+        return "app_runtime:\n  apps: {}\n"
+    if target == "environment":
+        return "environments: {}\n"
+    if target == "component_source_binding":
+        return "component_sources: {}\n"
+    target_definition = catalog()["targets"].get(target, {})
+    root = str(target_definition.get("root") or target or "configuration")
+    return f"{root}: {{}}\n"
 
 
 def _validate_proposed_projection(root: Path, texts: dict[str, str]) -> None:
@@ -496,11 +597,11 @@ def _apply_operation(root: Path, texts: dict[str, str], operation: dict[str, Any
                 raise ValueError("seed_change_item_missing")
             if target_key == "component":
                 _assert_component_unreferenced(root, texts, key)
-            proposed = _remove_node(original, item)
+            proposed = _remove_sequence_item(original, collection, item)
         else:
             if not item:
                 raise ValueError("seed_change_item_missing")
-            proposed = _apply_fields(
+            proposed = (_apply_paths if any("." in field for field in values) else _apply_fields)(
                 original,
                 item,
                 values,
@@ -514,7 +615,11 @@ def _apply_operation(root: Path, texts: dict[str, str], operation: dict[str, Any
             raise ValueError("seed_change_target_missing")
         item = _mapping_value(collection, key)
         values = {field: value for field, value in values.items() if field != "app_key"}
-        if not isinstance(item, MappingNode):
+        if mode == "remove":
+            if not isinstance(item, MappingNode):
+                raise ValueError("seed_change_item_missing")
+            proposed = _remove_mapping_entry(original, collection, key)
+        elif not isinstance(item, MappingNode):
             proposed = _append_mapping(original, collection, key, values, 4 if target.get("collection") else 2)
             mode = "create"
         else:
@@ -549,7 +654,7 @@ def _assert_component_unreferenced(root: Path, texts: dict[str, str], key: str) 
     modules_text = texts.get(".maw/modules.yaml") or (root / ".maw/modules.yaml").read_text(encoding="utf-8")
     runtime_text = texts.get(".maw/app-runtime.yaml") or (root / ".maw/app-runtime.yaml").read_text(encoding="utf-8")
     modules = yaml.safe_load(modules_text).get("modules", [])
-    apps = yaml.safe_load(runtime_text).get("app_runtime", {}).get("apps", {})
+    apps = yaml.safe_load(runtime_text).get("app_runtime", {}).get("apps", {}) or {}
     if any(key in item.get("component_refs", []) for item in modules if isinstance(item, dict)):
         raise ValueError("seed_change_component_referenced_by_module")
     if any(isinstance(item, dict) and item.get("component_ref") == key for item in apps.values()):

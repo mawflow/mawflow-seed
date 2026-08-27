@@ -1,7 +1,7 @@
 {
   "schema": "mawflow.seed_contract_catalog.v2",
   "contract_version": 2,
-  "seed_version": "2.3.3",
+  "seed_version": "2.4.0",
   "required_files": [
     ".maw/seed.lock",
     ".maw/project.yaml",
@@ -66,8 +66,27 @@
         "type": {"type": "enum", "label": "组件类型", "options": ["backend", "frontend", "mobile_frontend", "job", "worker", "agent", "shared", "library", "shared_frontend", "integration_portal", "admin", "site", "vitepress_site", "service", "api", "web", "mobile", "cli", "custom"], "required": true, "scope": ["shared"], "risk": "medium"},
         "path": {"type": "path", "label": "组件目录", "required": true, "scope": ["shared"], "risk": "high"},
         "source_root": {"type": "path_or_empty", "label": "源码根目录", "required": false, "scope": ["shared"], "risk": "medium"},
+        "source.mode": {"type": "enum", "label": "源码模式", "options": ["embedded", "external_git"], "required": false, "scope": ["shared"], "risk": "high"},
+        "source.ref": {"type": "component_source_ref_or_empty", "label": "稳定源码引用", "required": false, "scope": ["shared"], "risk": "high"},
+        "source.repository_url": {"type": "repository_url_or_empty", "label": "源码仓库地址", "required": false, "scope": ["shared"], "risk": "high"},
+        "source.repository_subpath": {"type": "path_or_empty", "label": "仓库内源码目录", "required": false, "scope": ["shared"], "risk": "medium"},
+        "source.default_branch": {"type": "git_ref_or_empty", "label": "源码默认分支", "required": false, "scope": ["shared"], "risk": "medium"},
         "enabled": {"type": "bool_or_optional", "label": "启用状态", "required": true, "scope": ["shared"], "risk": "medium"},
         "guide": {"type": "path_or_empty", "label": "组件说明文档", "required": false, "scope": ["shared"], "risk": "low"}
+      }
+    },
+    "component_source_binding": {
+      "source": ".maw/component-sources.yaml",
+      "local_source": ".local/.maw/component-sources.yaml",
+      "root": "component_sources",
+      "kind": "keyed_mapping",
+      "fields": {
+        "source_ref": {"type": "component_source_ref", "label": "稳定源码引用", "required": true, "scope": ["local"], "risk": "high"},
+        "directory_path": {"type": "absolute_path", "label": "本机源码目录", "required": true, "scope": ["local"], "risk": "critical"},
+        "origin": {"type": "enum", "label": "目录来源", "options": ["existing_directory", "managed_clone"], "required": true, "scope": ["local"], "risk": "high"},
+        "git_access_profile_ref": {"type": "git_access_profile_ref_or_empty", "label": "Git Access Profile", "required": false, "scope": ["local"], "risk": "critical"},
+        "bound_repository_identity": {"type": "long_text", "label": "绑定仓库身份", "required": true, "scope": ["local"], "risk": "high"},
+        "bound_at": {"type": "long_text", "label": "绑定时间", "required": true, "scope": ["local"], "risk": "medium"}
       }
     },
     "module": {
@@ -253,6 +272,8 @@
     {"key": "component.enable", "target": "component", "modes": ["update"], "risk": "high"},
     {"key": "component.disable", "target": "component", "modes": ["update"], "risk": "high"},
     {"key": "component.remove", "target": "component", "modes": ["remove"], "risk": "critical"},
+    {"key": "component_source_binding.upsert", "target": "component_source_binding", "modes": ["create", "update"], "risk": "critical"},
+    {"key": "component_source_binding.remove", "target": "component_source_binding", "modes": ["remove"], "risk": "critical"},
     {"key": "module.add", "target": "module", "modes": ["create"], "risk": "medium"},
     {"key": "module.update", "target": "module", "modes": ["update"], "risk": "medium"},
     {"key": "module.confirm", "target": "module", "modes": ["update"], "risk": "medium"},
@@ -269,6 +290,7 @@
     {"key": "handbook.volume.add", "target": "handbook_volume", "modes": ["create"], "risk": "medium"},
     {"key": "handbook.volume.update", "target": "handbook_volume", "modes": ["update"], "risk": "medium"},
     {"key": "runtime.app.upsert", "target": "runtime_app", "modes": ["create", "update"], "risk": "high"},
+    {"key": "runtime.app.remove", "target": "runtime_app", "modes": ["remove"], "risk": "critical"},
     {"key": "environment.upsert", "target": "environment", "modes": ["create", "update"], "risk": "high"},
     {"key": "lifecycle.update", "target": "lifecycle", "modes": ["update"], "risk": "critical"}
   ]

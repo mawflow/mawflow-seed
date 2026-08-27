@@ -8,7 +8,7 @@ Seed Contract v2 是 MAWflow CLI、Host、本地工作台和项目仓库共同�
 
 ```text
 maw-project-template
-  └─ mawflow-seed-kit 2.3.3
+  └─ mawflow-seed-kit 2.4.0
        ├─ Contract / JSON Schema
        ├─ UI + Operation Catalog
        ├─ profiles / project template
@@ -65,6 +65,14 @@ project .maw/ + .local/.maw/
 
 新增组件时，工作台可在同一个 ChangeSet 中同时写入 `.maw/components.yaml` 和 `.maw/app-runtime.yaml`。本机运行入口、端口和凭据引用可写入 `.local/.maw/app-runtime.yaml` 或 `.local/.maw/environments.yaml`，写前必须由 Git ignore 事实确认。
 
+### 组件源码工作区
+
+组件没有 `source` 或 `source.mode: embedded` 时，真实工程位于项目内 `path`；`source.mode: external_git` 时，共享 `.maw/components.yaml` 只保存无凭据 `repository_url`、可选 `repository_subpath/default_branch` 和稳定组件引用，不保存任何设备绝对路径。每台设备把自己的目录、仓库身份摘要、来源类型和 Git Access Profile 引用写入被 Git 忽略的 `.local/.maw/component-sources.yaml`，因此同一项目可在不同设备绑定不同真实目录而不产生共享 diff。
+
+外部源码未绑定、目录缺失、仓库身份不匹配、Profile 不兼容或网络路由不可解析时，Project Definition 仍可读取共享定义，但当前设备开发 readiness 必须失败关闭，且不得静默回退到 `code/<component>/src`。Git Access Profile 的网络策略与认证引用相互独立：可继承系统环境、强制直连，或引用 SecretStore 中的专用 HTTP/HTTPS/SOCKS 路由；代理 URL 不进入 Seed、计划公开结果或审计事件。
+
+`component add`、`component source bind|unbind` 和 `component remove` 与工作台“添加 code / 绑定 / 仅解绑本机 / 从项目移除”共用 Seed ChangeSet、指纹、精确确认和错误码。remove 先检查 module、runtime、release、mirror 等引用；解绑和移除默认只改治理声明与本机绑定，永不永久删除用户已有目录。
+
 ## 写入事务
 
 所有写入都使用两阶段事务：
@@ -86,7 +94,7 @@ project .maw/ + .local/.maw/
 mawflow project init my-project
 cd my-project
 mawflow project doctor --root .
-mawflow component init api
+mawflow component add api
 mawflow component enable api
 ```
 

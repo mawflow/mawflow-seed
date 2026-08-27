@@ -17,6 +17,13 @@ mawflow project init .
 ## 组件流程
 
 ```bash
+# 统一添加入口：项目内新建或采纳、外部 Git 声明与当前设备绑定
+mawflow component add api --type backend
+mawflow component add api --type backend --source-mode external_git \
+  --repository-url https://git.example.com/team/api.git \
+  --source-directory /path/on/this-device/api \
+  --git-access-profile mawgit://example-profile
+
 # 新组件：只生成 README 和边界描述，默认禁用
 mawflow component init api --type backend
 
@@ -28,9 +35,19 @@ mawflow component show api
 mawflow component doctor api
 mawflow component enable api
 mawflow component disable api
+
+# 外部 Git 组件在另一台设备绑定自己的真实目录；不会改共享仓库
+mawflow component source bind api /path/on/another-device/api \
+  --git-access-profile mawgit://example-profile
+mawflow component source unbind api
+
+# 从项目注销组件；默认保留项目内或外部磁盘目录
+mawflow component remove api
 ```
 
-写操作可加 `--plan` 只保存和展示计划。自动化执行已有计划时使用 `--execute --plan-file <path> --confirm '<确认串>'`。禁用组件不会删除目录或源码。
+写操作可加 `--plan` 只保存和展示计划。自动化执行已有计划时使用 `mawflow component apply --execute --plan-file <path> --confirm '<确认串>'`。`init/adopt` 是兼容入口，与 `add` 复用同一 Seed plan/apply 内核和错误码。
+
+外部源码的共享事实只写 `.maw/components.yaml` 中的 `source.mode/repository_url/repository_subpath/default_branch`；每台设备不同的绝对目录和 Git Access Profile 只写被 Git 忽略的 `.local/.maw/component-sources.yaml`。不要把绝对路径、凭证或代理 URL 写入 `.maw/**`。Profile 可选择继承系统代理、强制直连或引用独立 SecretStore 网络路由；代理明文仅在 Host Git 子进程内解析。解绑、禁用和移除都不会永久删除源码目录。
 
 ## AI 对话入口
 

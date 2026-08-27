@@ -1,5 +1,11 @@
 # 模板变更记录
 
+## v2.4.0 - 2026-08-28
+
+- Seed Contract v2 增加 additive `source.*` 与设备本地 component source binding，支持组件源码位于项目外的独立 Git 仓库。
+- Seed Kit 支持外部源码仓库身份校验、多设备不同绝对目录、绑定/解绑、doctor 与安全 remove；移除默认保留治理目录和源码目录，并对模块、发布和仓库映射引用失败关闭。
+- 新增 `.local/.maw/component-sources.example.yaml`，真实绑定 owner-only 且必须被 Git 忽略。
+
 ## v2.3.3 - 2026-08-23
 
 ### Seed 漂移闭环与项目自定义稳定键

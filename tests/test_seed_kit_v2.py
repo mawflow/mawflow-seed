@@ -20,6 +20,9 @@ from mawflow_seed_kit import (  # noqa: E402
     materialize_project,
     plan_change_set,
     plan_component_init,
+    plan_component_remove,
+    plan_component_source_binding,
+    plan_component_source_unbind,
     plan_component_state,
     inspect_components,
     plan_contract_repair,
@@ -35,6 +38,32 @@ from mawflow_seed_kit.catalog import (  # noqa: E402
 
 def _git_init(root: Path) -> None:
     subprocess.run(["git", "init", "-q", str(root)], check=True)
+
+
+def _external_git_repo(root: Path, remote: str) -> Path:
+    root.mkdir(parents=True)
+    _git_init(root)
+    (root / "src").mkdir()
+    (root / "src/main.py").write_text("print('ready')\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(root), "remote", "add", "origin", remote], check=True)
+    subprocess.run(["git", "-C", str(root), "add", "src/main.py"], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=Seed Test",
+            "-c",
+            "user.email=seed@example.invalid",
+            "commit",
+            "-q",
+            "-m",
+            "init",
+        ],
+        check=True,
+    )
+    return root
 
 
 def test_materialized_project_is_complete_and_editable(tmp_path: Path) -> None:
@@ -129,6 +158,192 @@ def test_component_adopt_preserves_existing_source(tmp_path: Path) -> None:
     assert readme.read_text(encoding="utf-8") == "# existing\n"
     assert source.read_text(encoding="utf-8") == "print('existing')\n"
     assert (legacy / ".maw.component.yaml").is_file()
+
+
+def test_external_component_binding_is_device_local_and_unbind_retains_source(tmp_path: Path) -> None:
+    repository_url = "https://git.example.com/team/api.git"
+    project_one = tmp_path / "project-one"
+    project_two = tmp_path / "project-two"
+    source_one = _external_git_repo(tmp_path / "device-one/api", repository_url)
+    source_two = _external_git_repo(tmp_path / "device-two/api", repository_url)
+
+    for project in (project_one, project_two):
+        materialize_project(project, project_key=project.name, name=project.name, profile="blank")
+        _git_init(project)
+        public, private = plan_component_init(
+            project,
+            key="api",
+            component_type="backend",
+            source_mode="external_git",
+            repository_url=repository_url,
+            repository_subpath="src",
+            default_branch="main",
+        )
+        apply_component_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+        assert inspect_components(project, "api")["components"][0]["source"]["status"] == "unbound"
+
+    for project, source in ((project_one, source_one), (project_two, source_two)):
+        public, private = plan_component_source_binding(
+            project,
+            key="api",
+            directory_path=source,
+            git_access_profile_ref="mawgit://private-git",
+        )
+        apply_component_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+        inspection = inspect_components(project, "api")["components"][0]
+        assert inspection["status"] == "ready"
+        assert inspection["source"]["status"] == "external_ready"
+        assert inspection["source"]["directory_path"] == str(source)
+        local_path = project / ".local/.maw/component-sources.yaml"
+        assert local_path.stat().st_mode & 0o777 == 0o600
+        assert subprocess.run(
+            ["git", "-C", str(project), "check-ignore", "--quiet", ".local/.maw/component-sources.yaml"],
+            check=False,
+        ).returncode == 0
+
+    assert (project_one / ".maw/components.yaml").read_text(encoding="utf-8") == (
+        project_two / ".maw/components.yaml"
+    ).read_text(encoding="utf-8")
+    assert source_one != source_two
+
+    public, private = plan_component_source_unbind(project_one, key="api")
+    apply_component_plan(project_one, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+    assert inspect_components(project_one, "api")["components"][0]["source"]["status"] == "unbound"
+    assert source_one.is_dir()
+
+
+def test_external_component_rejects_repository_mismatch(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    source = _external_git_repo(tmp_path / "source", "https://git.example.com/team/other.git")
+    materialize_project(project, project_key="demo", name="Demo", profile="blank")
+    _git_init(project)
+    public, private = plan_component_init(
+        project,
+        key="api",
+        component_type="backend",
+        source_mode="external_git",
+        repository_url="https://git.example.com/team/api.git",
+    )
+    apply_component_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+
+    with pytest.raises(ValueError, match="seed_component_source_repository_mismatch"):
+        plan_component_source_binding(project, key="api", directory_path=source)
+
+
+def test_component_remove_cleans_runtime_and_binding_but_retains_directories(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    source = _external_git_repo(tmp_path / "source", "https://git.example.com/team/api.git")
+    materialize_project(project, project_key="demo", name="Demo", profile="blank")
+    _git_init(project)
+    public, private = plan_component_init(
+        project,
+        key="api",
+        component_type="backend",
+        source_mode="external_git",
+        repository_url="https://git.example.com/team/api.git",
+        source_directory=source,
+    )
+    apply_component_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+    projection = compile_project_definition(project)
+    runtime_public, runtime_private = plan_change_set(
+        project,
+        {
+            "schema": "mawflow.seed_change_set.v2",
+            "base_projection_fingerprint": projection["fingerprint"],
+            "operations": [
+                {
+                    "op": "runtime.app.upsert",
+                    "key": "api",
+                    "scope": "shared",
+                    "values": {
+                        "app_key": "api",
+                        "enabled": False,
+                        "component_ref": "api",
+                        "code_path": "code/api",
+                    },
+                }
+            ],
+        },
+    )
+    apply_change_plan(
+        project,
+        runtime_private,
+        runtime_public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    remove_public, remove_private = plan_component_remove(project, key="api")
+    assert remove_public["component"]["source_directory_action"] == "retained"
+    apply_component_plan(
+        project,
+        remove_private,
+        remove_public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    projection = compile_project_definition(project)
+    assert projection["status"] == "ready"
+    assert projection["configs"][".maw/components.yaml"]["components"] == []
+    assert projection["configs"][".maw/app-runtime.yaml"]["app_runtime"]["apps"] == {}
+    assert projection["configs"][".maw/component-sources.yaml"]["component_sources"] == {}
+    assert source.is_dir()
+    assert (project / "code/api").is_dir()
+
+
+def test_component_remove_is_blocked_by_module_reference(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    materialize_project(project, project_key="demo", name="Demo", profile="blank")
+    _git_init(project)
+    public, private = plan_component_init(project, key="api", component_type="backend")
+    apply_component_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+    modules = yaml.safe_load((project / ".maw/modules.yaml").read_text(encoding="utf-8"))
+    modules["modules"] = [
+        {
+            "key": "api-module",
+            "name": "API",
+            "type": "leaf",
+            "status": "active",
+            "doc_status": "confirmed",
+            "confidence": "high",
+            "component_refs": ["api"],
+        }
+    ]
+    (project / ".maw/modules.yaml").write_text(yaml.safe_dump(modules, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="seed_component_referenced_by_module"):
+        plan_component_remove(project, key="api")
+
+
+def test_component_remove_conflict_leaves_all_references_intact(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    source = _external_git_repo(tmp_path / "source", "https://git.example.com/team/api.git")
+    materialize_project(project, project_key="demo", name="Demo", profile="blank")
+    _git_init(project)
+    public, private = plan_component_init(
+        project,
+        key="api",
+        component_type="backend",
+        source_mode="external_git",
+        repository_url="https://git.example.com/team/api.git",
+        source_directory=source,
+    )
+    apply_component_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+    remove_public, remove_private = plan_component_remove(project, key="api")
+    components_path = project / ".maw/components.yaml"
+    components_path.write_text(components_path.read_text(encoding="utf-8") + "# concurrent edit\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=r"seed_change_(projection|source)_conflict"):
+        apply_component_plan(
+            project,
+            remove_private,
+            remove_public["confirmation_required"],
+            backup_root=tmp_path / "backups",
+        )
+
+    projection = compile_project_definition(project)
+    assert "api" in {item["key"] for item in projection["configs"][".maw/components.yaml"]["components"]}
+    assert "api" in projection["configs"][".maw/component-sources.yaml"]["component_sources"]
+    assert source.is_dir()
 
 
 @pytest.mark.parametrize("path", ["server", "../server", "/tmp/server", "code"])
