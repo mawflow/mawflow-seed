@@ -17,6 +17,7 @@ KEY_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,159}$")
 GIT_REF_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
 REF_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
 COMPONENT_SOURCE_REF_PATTERN = re.compile(r"^mawsource://component/[a-z0-9][a-z0-9._-]{0,159}$")
+CODE_SOURCE_REF_PATTERN = re.compile(r"^mawsource://code-source/[a-z0-9][a-z0-9._-]{0,159}$")
 GIT_ACCESS_PROFILE_REF_PATTERN = re.compile(r"^mawgit://[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
 SCP_REPOSITORY_PATTERN = re.compile(r"^(?:[A-Za-z0-9._-]+@)?([A-Za-z0-9.-]+):([^?#\s]+)$")
 
@@ -168,11 +169,19 @@ def _field_value_valid(field_type: str, value: Any, definition: dict[str, Any]) 
         return isinstance(value, str) and bool(GIT_REF_PATTERN.fullmatch(value)) and ".." not in value
     if field_type in {"component_source_ref", "component_source_ref_or_empty"}:
         return isinstance(value, str) and bool(COMPONENT_SOURCE_REF_PATTERN.fullmatch(value))
+    if field_type in {"code_source_ref", "code_source_ref_or_empty"}:
+        return isinstance(value, str) and bool(CODE_SOURCE_REF_PATTERN.fullmatch(value))
+    if field_type == "source_ref_or_empty":
+        return isinstance(value, str) and (
+            not value
+            or bool(COMPONENT_SOURCE_REF_PATTERN.fullmatch(value))
+            or bool(CODE_SOURCE_REF_PATTERN.fullmatch(value))
+        )
     if field_type == "git_access_profile_ref_or_empty":
         return isinstance(value, str) and (not value or bool(GIT_ACCESS_PROFILE_REF_PATTERN.fullmatch(value)))
     if field_type == "absolute_path":
         return isinstance(value, str) and _absolute_path_valid(value)
-    if field_type == "repository_url_or_empty":
+    if field_type in {"repository_url", "repository_url_or_empty"}:
         return isinstance(value, str) and _repository_url_valid(value)
     if field_type in {"path", "path_or_empty", "secret_requirement_ref_or_empty", "credential_binding_ref_or_empty"}:
         return isinstance(value, str) and _relative_path_valid(value)
@@ -231,6 +240,57 @@ def _validate_model(configs: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
             )
         )
 
+    raw_subprojects = configs.get(".maw/subprojects.yaml", {}).get("subprojects")
+    subprojects = raw_subprojects if isinstance(raw_subprojects, list) else []
+    subproject_keys: list[str] = []
+    for item in subprojects:
+        key = str(item.get("key") or "").strip() if isinstance(item, dict) else ""
+        if not KEY_PATTERN.fullmatch(key):
+            issues.append(_issue("seed_subproject_key_invalid", ".maw/subprojects.yaml", f"非法子项目标识：{key or '<empty>'}"))
+        subproject_keys.append(key)
+        if isinstance(item, dict):
+            issues.extend(
+                _validate_fields(
+                    item,
+                    catalog()["targets"]["subproject"]["fields"],
+                    source_ref=".maw/subprojects.yaml",
+                    label=f"子项目 {key or '<empty>'}",
+                )
+            )
+    if len(subproject_keys) != len(set(subproject_keys)):
+        issues.append(_issue("seed_subproject_key_duplicate", ".maw/subprojects.yaml", "子项目标识不得重复"))
+
+    raw_code_sources = configs.get(".maw/code-sources.yaml", {}).get("code_sources")
+    code_sources = raw_code_sources if isinstance(raw_code_sources, dict) else {}
+    code_source_map: dict[str, dict[str, Any]] = {}
+    code_source_identities: dict[str, str] = {}
+    if not isinstance(raw_code_sources, dict):
+        issues.append(_issue("seed_code_sources_invalid", ".maw/code-sources.yaml", "code_sources 必须是映射"))
+    else:
+        for raw_key, raw_source in raw_code_sources.items():
+            key = str(raw_key).strip()
+            if not KEY_PATTERN.fullmatch(key) or not isinstance(raw_source, dict):
+                issues.append(_issue("seed_code_source_invalid", ".maw/code-sources.yaml", f"非法代码源：{key or '<empty>'}"))
+                continue
+            source = dict(raw_source)
+            code_source_map[key] = source
+            issues.extend(
+                _validate_fields(
+                    source,
+                    catalog()["targets"]["code_source"]["fields"],
+                    source_ref=".maw/code-sources.yaml",
+                    label=f"代码源 {key}",
+                )
+            )
+            repository_url = str(source.get("repository_url") or "")
+            if _repository_url_valid(repository_url):
+                identity = _repository_identity(repository_url)
+                previous = code_source_identities.get(identity)
+                if previous is not None:
+                    issues.append(_issue("seed_code_source_repository_duplicate", ".maw/code-sources.yaml", f"代码源 {previous} 与 {key} 指向同一仓库"))
+                else:
+                    code_source_identities[identity] = key
+
     raw_components = configs.get(".maw/components.yaml", {}).get("components")
     components = raw_components if isinstance(raw_components, list) else []
     component_keys: list[str] = []
@@ -250,15 +310,29 @@ def _validate_model(configs: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
                     label=f"组件 {key or '<empty>'}",
                 )
             )
+            subproject_ref = str(item.get("subproject_ref") or "default")
+            if subproject_ref not in subproject_keys:
+                issues.append(_issue("seed_component_subproject_missing", ".maw/components.yaml", f"组件 {key} 引用了不存在的子项目 {subproject_ref}"))
             source = item.get("source")
             mode = str(source.get("mode") or "embedded") if isinstance(source, dict) else "embedded"
             if source is not None and not isinstance(source, dict):
                 issues.append(_issue("seed_component_source_invalid", ".maw/components.yaml", f"组件 {key} 的 source 必须是映射"))
             elif mode == "external_git":
-                expected_ref = f"mawsource://component/{key}"
+                repository_ref = str(source.get("repository_ref") or "")
+                expected_ref = (
+                    f"mawsource://code-source/{repository_ref}"
+                    if repository_ref
+                    else f"mawsource://component/{key}"
+                )
                 if source.get("ref") != expected_ref:
                     issues.append(_issue("seed_component_source_ref_mismatch", ".maw/components.yaml", f"组件 {key} 的 source.ref 必须为 {expected_ref}"))
-                if not _repository_url_valid(str(source.get("repository_url") or "")):
+                if repository_ref:
+                    registered = code_source_map.get(repository_ref)
+                    if registered is None:
+                        issues.append(_issue("seed_component_code_source_missing", ".maw/components.yaml", f"组件 {key} 引用了不存在的代码源 {repository_ref}"))
+                    elif source.get("repository_url") and _repository_identity(str(source.get("repository_url"))) != _repository_identity(str(registered.get("repository_url") or "")):
+                        issues.append(_issue("seed_component_code_source_repository_mismatch", ".maw/components.yaml", f"组件 {key} 的内联仓库与代码源 {repository_ref} 不一致"))
+                elif not _repository_url_valid(str(source.get("repository_url") or "")):
                     issues.append(_issue("seed_component_repository_url_invalid", ".maw/components.yaml", f"组件 {key} 缺少合法 repository_url"))
             elif mode == "embedded":
                 if isinstance(source, dict) and any(source.get(field) for field in ("ref", "repository_url", "repository_subpath", "default_branch")):
@@ -287,7 +361,7 @@ def _validate_model(configs: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
             )
             component = component_map.get(key)
             source = component.get("source") if isinstance(component, dict) else None
-            if not isinstance(source, dict) or source.get("mode") != "external_git":
+            if not isinstance(source, dict) or source.get("mode") != "external_git" or source.get("repository_ref"):
                 issues.append(_issue("seed_component_source_binding_orphan", ".local/.maw/component-sources.yaml", f"源码绑定 {key} 没有对应的 external_git 组件"))
                 continue
             expected_ref = f"mawsource://component/{key}"
@@ -296,6 +370,34 @@ def _validate_model(configs: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
             repository_url = str(source.get("repository_url") or "")
             if _repository_url_valid(repository_url) and binding.get("bound_repository_identity") != _repository_identity(repository_url):
                 issues.append(_issue("seed_component_source_binding_repository_mismatch", ".local/.maw/component-sources.yaml", f"源码绑定 {key} 的仓库身份不匹配"))
+
+    raw_code_source_bindings = configs.get(".maw/code-source-bindings.yaml", {}).get("code_source_bindings", {})
+    if not isinstance(raw_code_source_bindings, dict):
+        issues.append(_issue("seed_code_source_bindings_invalid", ".local/.maw/code-source-bindings.yaml", "code_source_bindings 必须是映射"))
+    else:
+        for binding_key, binding in raw_code_source_bindings.items():
+            key = str(binding_key)
+            if not KEY_PATTERN.fullmatch(key) or not isinstance(binding, dict):
+                issues.append(_issue("seed_code_source_binding_invalid", ".local/.maw/code-source-bindings.yaml", f"非法代码源绑定：{key}"))
+                continue
+            issues.extend(
+                _validate_fields(
+                    binding,
+                    catalog()["targets"]["code_source_binding"]["fields"],
+                    source_ref=".local/.maw/code-source-bindings.yaml",
+                    label=f"代码源绑定 {key}",
+                )
+            )
+            registered = code_source_map.get(key)
+            if registered is None:
+                issues.append(_issue("seed_code_source_binding_orphan", ".local/.maw/code-source-bindings.yaml", f"代码源绑定 {key} 没有对应声明"))
+                continue
+            expected_ref = f"mawsource://code-source/{key}"
+            if binding.get("source_ref") != expected_ref:
+                issues.append(_issue("seed_code_source_binding_ref_mismatch", ".local/.maw/code-source-bindings.yaml", f"代码源绑定 {key} 的 source_ref 不匹配"))
+            repository_url = str(registered.get("repository_url") or "")
+            if _repository_url_valid(repository_url) and binding.get("bound_repository_identity") != _repository_identity(repository_url):
+                issues.append(_issue("seed_code_source_binding_repository_mismatch", ".local/.maw/code-source-bindings.yaml", f"代码源绑定 {key} 的仓库身份不匹配"))
 
     raw_modules = configs.get(".maw/modules.yaml", {}).get("modules")
     modules = raw_modules if isinstance(raw_modules, list) else []

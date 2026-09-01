@@ -2,8 +2,11 @@ schema_version: 2
 agent_entry:
   start_here: AI_START_HERE.md
   project_definition: .maw/project.yaml
+  subprojects: .maw/subprojects.yaml
+  code_sources: .maw/code-sources.yaml
   components: .maw/components.yaml
   modules: .maw/modules.yaml
   lifecycle: .maw/project-lifecycle.yaml
   local_overlay_root: .local/.maw
+  managed_clone_root: .local/code-sources
   secret_policy: references_only

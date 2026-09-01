@@ -169,6 +169,28 @@ def _binding_map(projection: dict[str, Any]) -> dict[str, dict[str, Any]]:
     } if isinstance(bindings, dict) else {}
 
 
+def _code_source_map(projection: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    sources = projection.get("configs", {}).get(".maw/code-sources.yaml", {}).get("code_sources", {})
+    return {
+        str(key): dict(value)
+        for key, value in sources.items()
+        if isinstance(value, dict)
+    } if isinstance(sources, dict) else {}
+
+
+def _code_source_binding_map(projection: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    bindings = (
+        projection.get("configs", {})
+        .get(".maw/code-source-bindings.yaml", {})
+        .get("code_source_bindings", {})
+    )
+    return {
+        str(key): dict(value)
+        for key, value in bindings.items()
+        if isinstance(value, dict)
+    } if isinstance(bindings, dict) else {}
+
+
 def _source_mode(value: str) -> str:
     mode = value.strip() or "embedded"
     if mode not in {"embedded", "external_git"}:
@@ -213,6 +235,7 @@ def _validate_external_directory(
     *,
     repository_url: str,
     repository_subpath: str = "",
+    project_root: Path | None = None,
 ) -> tuple[Path, str]:
     candidate = Path(directory_path).expanduser()
     if candidate.is_symlink():
@@ -226,6 +249,28 @@ def _validate_external_directory(
     git_root = Path(_git_output(directory, "rev-parse", "--show-toplevel")).resolve(strict=True)
     if git_root != directory:
         raise ValueError("seed_component_source_directory_must_be_git_root")
+    if project_root is not None:
+        try:
+            directory.relative_to(project_root)
+        except ValueError:
+            pass
+        else:
+            outer = subprocess.run(
+                ["git", "-C", str(project_root), "rev-parse", "--show-toplevel"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if outer.returncode == 0:
+                ignored = subprocess.run(
+                    ["git", "-C", str(project_root), "check-ignore", "--quiet", "--no-index", str(directory)],
+                    check=False,
+                    capture_output=True,
+                    timeout=5,
+                )
+                if ignored.returncode != 0:
+                    raise ValueError("seed_component_source_project_path_must_be_git_ignored")
     remote_url = _git_output(directory, "remote", "get-url", "origin")
     expected_identity = _repository_identity(repository_url)
     if _repository_identity(remote_url) != expected_identity:
@@ -241,6 +286,8 @@ def _external_source(component_key: str, component: dict[str, Any]) -> dict[str,
     source = component.get("source")
     if not isinstance(source, dict) or source.get("mode") != "external_git":
         raise ValueError("seed_component_external_source_required")
+    if source.get("repository_ref"):
+        raise ValueError("seed_component_uses_shared_code_source")
     if source.get("ref") != f"mawsource://component/{component_key}":
         raise ValueError("seed_component_source_ref_mismatch")
     _repository_identity(str(source.get("repository_url") or ""))
@@ -277,10 +324,12 @@ def plan_component_init(
     component_type: str,
     name: str | None = None,
     path: str | None = None,
+    subproject_ref: str = "default",
     source_root: str = "",
     source_mode: str = "embedded",
     source_ref: str = "",
     repository_url: str = "",
+    repository_ref: str = "",
     repository_subpath: str = "",
     default_branch: str = "",
     source_directory: Path | str | None = None,
@@ -297,22 +346,51 @@ def plan_component_init(
         raise ValueError("seed_component_name_invalid")
     relative, target = _component_path(project_root, component_key, path)
     mode = _source_mode(source_mode)
-    stable_source_ref = source_ref.strip() or f"mawsource://component/{component_key}"
+    projection = compile_project_definition(project_root)
+    if projection.get("status") != "ready" or not projection.get("editable"):
+        raise ValueError("seed_component_project_not_editable")
+    subproject_key = _component_key(subproject_ref or "default")
+    subprojects = projection.get("configs", {}).get(".maw/subprojects.yaml", {}).get("subprojects", [])
+    if subproject_key not in {
+        str(item.get("key")) for item in subprojects if isinstance(item, dict)
+    }:
+        raise ValueError("seed_component_subproject_missing")
+    repository_key = _component_key(repository_ref) if repository_ref else ""
+    stable_source_ref = source_ref.strip() or (
+        f"mawsource://code-source/{repository_key}"
+        if repository_key
+        else f"mawsource://component/{component_key}"
+    )
     binding_values: dict[str, Any] | None = None
     if mode == "embedded":
-        if source_ref or repository_url or repository_subpath or default_branch or source_directory is not None or git_access_profile_ref:
+        if source_ref or repository_ref or repository_url or repository_subpath or default_branch or source_directory is not None or git_access_profile_ref:
             raise ValueError("seed_component_embedded_source_fields_forbidden")
     else:
-        if stable_source_ref != f"mawsource://component/{component_key}":
+        expected_source_ref = (
+            f"mawsource://code-source/{repository_key}"
+            if repository_key
+            else f"mawsource://component/{component_key}"
+        )
+        if stable_source_ref != expected_source_ref:
             raise ValueError("seed_component_source_ref_mismatch")
-        repository_identity = _repository_identity(repository_url)
+        if repository_key:
+            registered = _code_source_map(projection).get(repository_key)
+            if registered is None:
+                raise ValueError("seed_component_code_source_missing")
+            if repository_url or default_branch or source_directory is not None or git_access_profile_ref:
+                raise ValueError("seed_component_shared_source_fields_forbidden")
+            effective_repository_url = str(registered.get("repository_url") or "")
+        else:
+            effective_repository_url = repository_url
+        repository_identity = _repository_identity(effective_repository_url)
         if source_origin not in {"existing_directory", "managed_clone"}:
             raise ValueError("seed_component_source_origin_invalid")
         if source_directory is not None:
             directory, repository_identity = _validate_external_directory(
                 source_directory,
-                repository_url=repository_url,
+                repository_url=effective_repository_url,
                 repository_subpath=repository_subpath,
+                project_root=project_root,
             )
             binding_values = {
                 "source_ref": stable_source_ref,
@@ -322,9 +400,6 @@ def plan_component_init(
                 "bound_repository_identity": repository_identity,
                 "bound_at": datetime.now(timezone.utc).isoformat(),
             }
-    projection = compile_project_definition(project_root)
-    if projection.get("status") != "ready" or not projection.get("editable"):
-        raise ValueError("seed_component_project_not_editable")
     if component_key in _component_map(projection):
         raise ValueError("seed_component_exists")
     if adopt:
@@ -359,20 +434,28 @@ def plan_component_init(
         "name": display_name,
         "type": kind,
         "path": relative,
+        "subproject_ref": subproject_key,
         "source_root": source_root.strip(),
         "enabled": bool(enabled),
         "guide": readme_ref,
     }
     if mode == "external_git":
-        component_values.update(
-            {
-                "source.mode": mode,
-                "source.ref": stable_source_ref,
-                "source.repository_url": repository_url.strip(),
-                "source.repository_subpath": repository_subpath.strip(),
-                "source.default_branch": default_branch.strip(),
-            }
-        )
+        component_values.update({"source.mode": mode, "source.ref": stable_source_ref})
+        if repository_key:
+            component_values.update(
+                {
+                    "source.repository_ref": repository_key,
+                    "source.repository_subpath": repository_subpath.strip(),
+                }
+            )
+        else:
+            component_values.update(
+                {
+                    "source.repository_url": repository_url.strip(),
+                    "source.repository_subpath": repository_subpath.strip(),
+                    "source.default_branch": default_branch.strip(),
+                }
+            )
     operations: list[dict[str, Any]] = [
         {
             "op": "component.add",
@@ -408,6 +491,7 @@ def plan_component_init(
             "name": display_name,
             "type": kind,
             "path": relative,
+            "subproject_ref": subproject_key,
             "enabled": bool(enabled),
             "source_mode": mode,
             "source_ref": stable_source_ref if mode == "external_git" else "",
@@ -448,6 +532,7 @@ def plan_component_source_binding(
         directory_path,
         repository_url=str(source.get("repository_url") or ""),
         repository_subpath=str(source.get("repository_subpath") or ""),
+        project_root=project_root,
     )
     change_public, change_private = plan_change_set(
         project_root,
@@ -701,6 +786,8 @@ def inspect_components(root: Path | str, key: str | None = None) -> dict[str, An
     projection = compile_project_definition(project_root)
     components = _component_map(projection)
     bindings = _binding_map(projection)
+    code_sources = _code_source_map(projection)
+    code_source_bindings = _code_source_binding_map(projection)
     if key is not None:
         selected = _component_key(key)
         if selected not in components:
@@ -742,11 +829,25 @@ def inspect_components(root: Path | str, key: str | None = None) -> dict[str, An
         }
         readiness = "embedded_ready"
         if mode == "external_git":
+            repository_ref = str(source.get("repository_ref") or "")
+            registered = code_sources.get(repository_ref) if repository_ref else None
+            repository_url = str(
+                (registered or {}).get("repository_url")
+                or source.get("repository_url")
+                or ""
+            )
+            source_status["repository_ref"] = repository_ref
+            if registered:
+                source_status["default_branch"] = str(registered.get("default_branch") or "")
             try:
-                source_status["repository_identity"] = _repository_identity(str(source.get("repository_url") or ""))
+                source_status["repository_identity"] = _repository_identity(repository_url)
             except ValueError as exc:
                 issues.append({"severity": "error", "code": str(exc)})
-            binding = bindings.get(component_key)
+            binding = (
+                code_source_bindings.get(repository_ref)
+                if repository_ref
+                else bindings.get(component_key)
+            )
             if binding is None:
                 issues.append({"severity": "error", "code": "seed_component_source_unbound"})
                 readiness = "unbound"
@@ -767,8 +868,9 @@ def inspect_components(root: Path | str, key: str | None = None) -> dict[str, An
                     try:
                         validated, repository_identity = _validate_external_directory(
                             directory,
-                            repository_url=str(source.get("repository_url") or ""),
+                            repository_url=repository_url,
                             repository_subpath=str(source.get("repository_subpath") or ""),
+                            project_root=project_root,
                         )
                         source_status["directory_path"] = str(validated)
                         source_status["repository_identity"] = repository_identity

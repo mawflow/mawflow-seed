@@ -1,6 +1,6 @@
 # mawflow-seed-kit
 
-`mawflow-seed-kit` 是 Seed Contract v2 的唯一可执行分发包。v2.4.0 增加组件外部 Git 源码声明、设备本地目录绑定、诊断、解绑和安全移除，并继续提供预览、隔离校验、哈希保护和项目事实保留迁移；模板 commit 与 Seed Contract 漂移由独立版本线治理。
+`mawflow-seed-kit` 是 Seed Contract v2 的唯一可执行分发包。v2.5.0 在兼容 v2.4 组件级外部 Git 的基础上，增加多子项目、共享代码源注册表、新设备 hydrate 和项目内 `.local/code-sources/` 托管 clone；同一仓库只需绑定一次，组件仍保持独立 app_key、构建和发布边界。
 
 主仓 CLI 和 Host Program 必须固定消费同一版本；项目仓库通过 `.maw/seed.lock` 记录版本、BOM 和契约指纹。
 

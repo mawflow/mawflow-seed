@@ -1,0 +1,9 @@
+schema_version: 2
+subprojects:
+  - key: default
+    name: Seed 模板项目
+    description: Seed 仓库自身使用默认子项目；派生项目可新增独立子项目并关联组件。
+    status: active
+    grouping_basis: standalone
+    customer_ref: ""
+    deployment_group_ref: ""

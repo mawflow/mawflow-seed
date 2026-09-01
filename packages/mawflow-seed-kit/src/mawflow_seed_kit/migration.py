@@ -67,6 +67,8 @@ def _normalized_gitignore(root: Path, fallback_text: str) -> str:
     lines = text.splitlines()
     if ".local/" not in lines:
         lines.append(".local/")
+    if "/.local/code-sources/**" not in lines:
+        lines.append("/.local/code-sources/**")
     return "\n".join(lines).rstrip() + "\n"
 
 

@@ -1,0 +1,46 @@
+schema_version: 1
+upgrade_key: 20260902-subprojects-shared-code-sources-hydration
+title: 多子项目、共享代码源与新设备补全
+risk_level: T3
+status: active
+summary:
+  - 一个 MAWflow 项目可包含多个独立子项目，组件继续作为独立 app_key、构建和发布叶子。
+  - 同一 Git 仓库通过共享 code source 只 clone 和绑定一次，多个组件使用 repository_subpath 共存。
+  - 新设备托管 clone 默认进入项目内被外层 Git 忽略的 .local/code-sources/<source-key>/。
+  - 2.4 组件级外部 Git 保持兼容，显式归并不移动或删除源码。
+source_baseline_commit: 1dffca46b69b33ee3aa8113744448612db7dc893
+source_template_files:
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/contracts/v2/catalog.json
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/project_topology.py
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/template/.maw/subprojects.yaml
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/template/.maw/code-sources.yaml
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/template/.gitignore
+  - docs/template-usage-guide.md
+target_project_policy:
+  upgrade_mode: decision_matrix_incremental_merge_only
+  missing_subprojects_policy: create_default_and_resolve_missing_component_refs_to_default
+  legacy_component_source_policy: remain_compatible_until_explicit_consolidation
+  managed_clone_default: .local/code-sources/<source-key>
+  nested_git_policy: allowed_only_under_explicit_outer_git_ignore
+  cloud_sync_policy: declarations_and_redacted_readiness_only
+  source_directory_move_allowed: false
+  idempotency_required: true
+  conflict_policy: fail_closed_without_deleting_sources
+  protect:
+    - README.md
+    - code/
+    - app_key
+    - release configuration
+    - repository mappings
+    - real secrets
+    - .local/ contents
+    - module dossiers
+    - existing component source directories
+    - user work in progress
+validation:
+  - git diff --check
+  - python3 -m pytest -q tests/test_seed_kit_v2.py
+  - mawflow project doctor --root .
+  - git check-ignore .local/code-sources/example/README.md
+propagation:
+  migration_note: docs/template-migrations/20260902-subprojects-shared-code-sources-hydration.md

@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://mawflow.com/schemas/code-sources.v2.json","type":"object","required":["schema_version","code_sources"],"properties":{"schema_version":{"const":2},"code_sources":{"type":"object","additionalProperties":{"type":"object","required":["name","type","repository_url","visibility"]}}},"additionalProperties":true}

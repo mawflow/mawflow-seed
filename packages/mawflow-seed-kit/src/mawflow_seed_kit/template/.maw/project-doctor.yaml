@@ -4,6 +4,8 @@ project_doctor:
     - .maw/seed.lock
     - .maw/project.yaml
     - .maw/technology.yaml
+    - .maw/subprojects.yaml
+    - .maw/code-sources.yaml
     - .maw/components.yaml
     - .maw/modules.yaml
     - .maw/app-runtime.yaml
@@ -13,6 +15,9 @@ project_doctor:
   checks:
     - seed_contract
     - component_references
+    - subproject_references
+    - code_source_references
+    - code_source_bindings
     - runtime_references
     - technology_requirements
     - handbook_manifest

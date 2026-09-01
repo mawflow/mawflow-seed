@@ -47,7 +47,27 @@ mawflow component remove api
 
 写操作可加 `--plan` 只保存和展示计划。自动化执行已有计划时使用 `mawflow component apply --execute --plan-file <path> --confirm '<确认串>'`。`init/adopt` 是兼容入口，与 `add` 复用同一 Seed plan/apply 内核和错误码。
 
-外部源码的共享事实只写 `.maw/components.yaml` 中的 `source.mode/repository_url/repository_subpath/default_branch`；每台设备不同的绝对目录和 Git Access Profile 只写被 Git 忽略的 `.local/.maw/component-sources.yaml`。不要把绝对路径、凭证或代理 URL 写入 `.maw/**`。Profile 可选择继承系统代理、强制直连或引用独立 SecretStore 网络路由；代理明文仅在 Host Git 子进程内解析。解绑、禁用和移除都不会永久删除源码目录。
+2.4 组件级外部源码继续兼容：共享事实写在 `.maw/components.yaml` 的 `source.mode/repository_url/repository_subpath/default_branch`，每台设备的绝对目录与 Git Access Profile 写在 `.local/.maw/component-sources.yaml`。2.5 新项目优先使用下述共享代码源。不要把绝对路径、凭证或代理 URL 写入 `.maw/**`。Profile 可选择继承系统代理、强制直连或引用独立 SecretStore 网络路由；代理明文仅在 Host Git 子进程内解析。解绑、禁用和移除都不会永久删除源码目录。
+
+## 多子项目与共享代码源
+
+```bash
+mawflow subproject add customer-portal --name 客户门户 --grouping-basis same_customer
+mawflow code-source add customer-suite \
+  --repository-url https://git.example.com/customer/suite.git --default-branch main
+mawflow component add portal-api --type backend --subproject customer-portal \
+  --source-mode external_git --repository-ref customer-suite --repository-subpath server
+mawflow component add portal-web --type frontend --subproject customer-portal \
+  --source-mode external_git --repository-ref customer-suite --repository-subpath web
+
+# 新电脑默认补到项目内 .local/code-sources/<source-key>/
+mawflow project hydrate --git-access-profile mawgit://example-profile --execute
+
+# 旧组件级声明显式归并；计划不会移动源码
+mawflow project sources consolidate --plan
+```
+
+共享代码源的本机目录写入 `.local/.maw/code-source-bindings.yaml`。外层项目通过 `/.local/code-sources/**` 明确忽略托管 clone，因此项目内嵌套 Git 不会进入外层提交。云端只同步声明与脱敏 readiness，不同步绝对路径、凭据、源码或未提交改动。
 
 ## AI 对话入口
 

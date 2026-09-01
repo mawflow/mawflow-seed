@@ -19,6 +19,8 @@ cd my-project
 - `AI_START_HERE.md`：保留 AI 启动顺序和默认边界；可补充项目自己的第一步说明。
 - `.maw/agent-entry.yaml`：AI 工作目录入口协议；可按项目事实调整启动文件、禁止路径和收口字段。
 - `.maw/project.yaml`：项目 key、项目名称、负责人和协作模式。
+- `.maw/subprojects.yaml`：项目内独立客户、部署组或其它子项目。
+- `.maw/code-sources.yaml`：多个组件可复用的 Git 仓库声明。
 - `.maw/components.yaml`：`server`、`client` 或你的真实 app_key。
 - `.maw/modules.yaml`：业务模块树。
 - `.maw/app-runtime.yaml`：本地调试入口和测试账号引用。
@@ -35,6 +37,8 @@ cd my-project
 - AGENTS.md
 - .maw/agent-entry.yaml
 - .maw/project.yaml
+- .maw/subprojects.yaml
+- .maw/code-sources.yaml
 - .maw/components.yaml
 - .maw/modules.yaml
 - .maw/app-runtime.yaml

@@ -7,7 +7,7 @@ import json
 from typing import Any
 
 
-SEED_VERSION = "2.4.0"
+SEED_VERSION = "2.5.0"
 CONTRACT_VERSION = 2
 
 

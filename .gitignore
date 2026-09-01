@@ -53,6 +53,7 @@ __pycache__/
 !.local/docs/requirements/
 !.local/docs/requirements/raw/
 !.local/docs/requirements/raw/README.md
+/.local/code-sources/**
 *.pem
 *.key
 *.p12

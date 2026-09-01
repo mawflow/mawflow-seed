@@ -1,0 +1,9 @@
+schema_version: 2
+subprojects:
+  - key: default
+    name: 默认子项目
+    description: 兼容单项目结构；新增多个独立交付单元时可显式拆分。
+    status: active
+    grouping_basis: standalone
+    customer_ref: ""
+    deployment_group_ref: ""

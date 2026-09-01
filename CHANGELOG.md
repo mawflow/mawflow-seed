@@ -1,5 +1,12 @@
 # 模板变更记录
 
+## v2.5.0 - 2026-09-02
+
+- 新增 `.maw/subprojects.yaml`，一个 MAWflow 项目可以包含多个彼此独立的子项目；组件继续作为独立的 app_key、构建和发布叶子，并通过 `subproject_ref` 归属子项目。
+- 新增共享 `.maw/code-sources.yaml` 与本机 `.local/.maw/code-source-bindings.yaml`：同一 Git 仓库可承载多个前后端或其它端组件，每台设备只需克隆和绑定一次。
+- 新设备托管 clone 默认落在项目内的 `.local/code-sources/<source-key>/`；该目录由外层 Git 明确忽略，允许本机嵌套 Git 而不会进入 MAWflow 项目版本库。
+- 保留 2.4 组件级外部 Git 声明与绑定兼容，提供显式归并计划复用现有 Git 根目录，不移动或删除源码；云端只同步声明和脱敏 readiness，不同步绝对路径、凭证、源码与未提交改动。
+
 ## v2.4.0 - 2026-08-28
 
 - Seed Contract v2 增加 additive `source.*` 与设备本地 component source binding，支持组件源码位于项目外的独立 Git 仓库。

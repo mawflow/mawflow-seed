@@ -1,12 +1,14 @@
 {
   "schema": "mawflow.seed_contract_catalog.v2",
   "contract_version": 2,
-  "seed_version": "2.4.0",
+  "seed_version": "2.5.0",
   "required_files": [
     ".maw/seed.lock",
     ".maw/project.yaml",
     ".maw/technology.yaml",
     ".maw/project-lifecycle.yaml",
+    ".maw/subprojects.yaml",
+    ".maw/code-sources.yaml",
     ".maw/components.yaml",
     ".maw/modules.yaml",
     ".maw/module-candidates.yaml",
@@ -55,6 +57,47 @@
         "timezone": {"type": "text", "label": "默认时区", "required": true, "scope": ["shared"], "risk": "low"}
       }
     },
+    "subproject": {
+      "source": ".maw/subprojects.yaml",
+      "root": "subprojects",
+      "kind": "sequence",
+      "identity": "key",
+      "fields": {
+        "name": {"type": "text", "label": "子项目名称", "required": true, "scope": ["shared"], "risk": "low"},
+        "description": {"type": "long_text_or_empty", "label": "子项目说明", "required": false, "scope": ["shared"], "risk": "low"},
+        "status": {"type": "enum", "label": "子项目状态", "options": ["active", "archived"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "grouping_basis": {"type": "enum", "label": "归组依据", "options": ["standalone", "same_customer", "same_deployment", "same_product", "other"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "customer_ref": {"type": "ref_or_empty", "label": "客户引用", "required": false, "scope": ["shared"], "risk": "medium"},
+        "deployment_group_ref": {"type": "ref_or_empty", "label": "部署组引用", "required": false, "scope": ["shared"], "risk": "medium"}
+      }
+    },
+    "code_source": {
+      "source": ".maw/code-sources.yaml",
+      "root": "code_sources",
+      "kind": "keyed_mapping",
+      "fields": {
+        "name": {"type": "text", "label": "代码源名称", "required": true, "scope": ["shared"], "risk": "low"},
+        "type": {"type": "enum", "label": "代码源类型", "options": ["git"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "repository_url": {"type": "repository_url", "label": "Git 仓库地址", "required": true, "scope": ["shared"], "risk": "high"},
+        "default_branch": {"type": "git_ref_or_empty", "label": "默认分支", "required": false, "scope": ["shared"], "risk": "medium"},
+        "visibility": {"type": "enum", "label": "仓库可见性", "options": ["private", "internal", "public"], "required": true, "scope": ["shared"], "risk": "medium"},
+        "credential_requirement_ref": {"type": "ref_or_empty", "label": "凭证需求引用", "required": false, "scope": ["shared"], "risk": "high"}
+      }
+    },
+    "code_source_binding": {
+      "source": ".maw/code-source-bindings.yaml",
+      "local_source": ".local/.maw/code-source-bindings.yaml",
+      "root": "code_source_bindings",
+      "kind": "keyed_mapping",
+      "fields": {
+        "source_ref": {"type": "code_source_ref", "label": "稳定代码源引用", "required": true, "scope": ["local"], "risk": "high"},
+        "directory_path": {"type": "absolute_path", "label": "本机 Git 根目录", "required": true, "scope": ["local"], "risk": "critical"},
+        "origin": {"type": "enum", "label": "目录来源", "options": ["existing_directory", "managed_clone"], "required": true, "scope": ["local"], "risk": "high"},
+        "git_access_profile_ref": {"type": "git_access_profile_ref_or_empty", "label": "Git Access Profile", "required": false, "scope": ["local"], "risk": "critical"},
+        "bound_repository_identity": {"type": "long_text", "label": "绑定仓库身份", "required": true, "scope": ["local"], "risk": "high"},
+        "bound_at": {"type": "long_text", "label": "绑定时间", "required": true, "scope": ["local"], "risk": "medium"}
+      }
+    },
     "component": {
       "source": ".maw/components.yaml",
       "root": "components",
@@ -65,9 +108,11 @@
         "name": {"type": "text", "label": "组件名称", "required": true, "scope": ["shared"], "risk": "low"},
         "type": {"type": "enum", "label": "组件类型", "options": ["backend", "frontend", "mobile_frontend", "job", "worker", "agent", "shared", "library", "shared_frontend", "integration_portal", "admin", "site", "vitepress_site", "service", "api", "web", "mobile", "cli", "custom"], "required": true, "scope": ["shared"], "risk": "medium"},
         "path": {"type": "path", "label": "组件目录", "required": true, "scope": ["shared"], "risk": "high"},
+        "subproject_ref": {"type": "key_or_empty", "label": "所属子项目", "required": false, "scope": ["shared"], "risk": "medium"},
         "source_root": {"type": "path_or_empty", "label": "源码根目录", "required": false, "scope": ["shared"], "risk": "medium"},
         "source.mode": {"type": "enum", "label": "源码模式", "options": ["embedded", "external_git"], "required": false, "scope": ["shared"], "risk": "high"},
-        "source.ref": {"type": "component_source_ref_or_empty", "label": "稳定源码引用", "required": false, "scope": ["shared"], "risk": "high"},
+        "source.ref": {"type": "source_ref_or_empty", "label": "稳定源码引用", "required": false, "scope": ["shared"], "risk": "high"},
+        "source.repository_ref": {"type": "ref_or_empty", "label": "共享代码源引用", "required": false, "scope": ["shared"], "risk": "high"},
         "source.repository_url": {"type": "repository_url_or_empty", "label": "源码仓库地址", "required": false, "scope": ["shared"], "risk": "high"},
         "source.repository_subpath": {"type": "path_or_empty", "label": "仓库内源码目录", "required": false, "scope": ["shared"], "risk": "medium"},
         "source.default_branch": {"type": "git_ref_or_empty", "label": "源码默认分支", "required": false, "scope": ["shared"], "risk": "medium"},
@@ -267,6 +312,13 @@
   },
   "operations": [
     {"key": "project.update", "target": "project", "modes": ["update"], "risk": "medium"},
+    {"key": "subproject.add", "target": "subproject", "modes": ["create"], "risk": "medium"},
+    {"key": "subproject.update", "target": "subproject", "modes": ["update"], "risk": "medium"},
+    {"key": "subproject.remove", "target": "subproject", "modes": ["remove"], "risk": "critical"},
+    {"key": "code_source.upsert", "target": "code_source", "modes": ["create", "update"], "risk": "high"},
+    {"key": "code_source.remove", "target": "code_source", "modes": ["remove"], "risk": "critical"},
+    {"key": "code_source_binding.upsert", "target": "code_source_binding", "modes": ["create", "update"], "risk": "critical"},
+    {"key": "code_source_binding.remove", "target": "code_source_binding", "modes": ["remove"], "risk": "critical"},
     {"key": "component.add", "target": "component", "modes": ["create"], "risk": "high"},
     {"key": "component.update", "target": "component", "modes": ["update"], "risk": "medium"},
     {"key": "component.enable", "target": "component", "modes": ["update"], "risk": "high"},

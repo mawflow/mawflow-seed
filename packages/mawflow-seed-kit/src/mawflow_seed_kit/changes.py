@@ -465,8 +465,16 @@ def _remove_mapping_entry(text: str, mapping: MappingNode, key: str) -> str:
         raise ValueError("seed_change_item_missing")
     key_node, value_node = entry
     line_start = text.rfind("\n", 0, key_node.start_mark.index) + 1
-    line_end = text.find("\n", value_node.end_mark.index)
-    after = len(text) if line_end < 0 else line_end + 1
+    following = sorted(
+        candidate_key.start_mark.index
+        for candidate_key, _ in mapping.value
+        if candidate_key.start_mark.index > key_node.start_mark.index
+    )
+    if following:
+        after = text.rfind("\n", 0, following[0]) + 1
+    else:
+        line_end = text.find("\n", value_node.end_mark.index)
+        after = len(text) if line_end < 0 else line_end + 1
     if len(mapping.value) == 1:
         parent_line_end = line_start - 1
         parent_line_start = text.rfind("\n", 0, parent_line_end) + 1

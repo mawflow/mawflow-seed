@@ -21,6 +21,8 @@ startup:
     - AI_START_HERE.md
     - .maw/agent-entry.yaml
     - .maw/project.yaml
+    - .maw/subprojects.yaml
+    - .maw/code-sources.yaml
     - .maw/components.yaml
     - .maw/modules.yaml
     - .maw/app-runtime.yaml
@@ -37,6 +39,8 @@ startup:
 
 facts:
   project: .maw/project.yaml
+  subprojects: .maw/subprojects.yaml
+  code_sources: .maw/code-sources.yaml
   components: .maw/components.yaml
   modules: .maw/modules.yaml
   runtime: .maw/app-runtime.yaml
@@ -128,6 +132,8 @@ validation:
     - AI_START_HERE.md exists
     - .maw/agent-entry.yaml exists
     - .maw/project.yaml exists
+    - .maw/subprojects.yaml exists
+    - .maw/code-sources.yaml exists
     - .maw/components.yaml exists
     - .maw/modules.yaml exists
     - .maw/app-runtime.yaml exists

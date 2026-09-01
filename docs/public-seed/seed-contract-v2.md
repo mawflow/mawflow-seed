@@ -8,7 +8,7 @@ Seed Contract v2 是 MAWflow CLI、Host、本地工作台和项目仓库共同�
 
 ```text
 maw-project-template
-  └─ mawflow-seed-kit 2.4.0
+  └─ mawflow-seed-kit 2.5.0
        ├─ Contract / JSON Schema
        ├─ UI + Operation Catalog
        ├─ profiles / project template
@@ -32,6 +32,8 @@ project .maw/ + .local/.maw/
 - `.maw/project.yaml`
 - `.maw/project-lifecycle.yaml`
 - `.maw/technology.yaml`
+- `.maw/subprojects.yaml`
+- `.maw/code-sources.yaml`
 - `.maw/components.yaml`
 - `.maw/modules.yaml`
 - `.maw/app-runtime.yaml`
@@ -65,9 +67,17 @@ project .maw/ + .local/.maw/
 
 新增组件时，工作台可在同一个 ChangeSet 中同时写入 `.maw/components.yaml` 和 `.maw/app-runtime.yaml`。本机运行入口、端口和凭据引用可写入 `.local/.maw/app-runtime.yaml` 或 `.local/.maw/environments.yaml`，写前必须由 Git ignore 事实确认。
 
+### 子项目与共享代码源
+
+`.maw/subprojects.yaml` 把同一 MAWflow 项目中的客户、部署组、产品或其它独立交付单元组织起来。组件通过 `subproject_ref` 归属子项目，但继续独立拥有 app_key、构建、运行、发布和回滚边界。没有显式引用的旧组件按 `default` 子项目解释。
+
+`.maw/code-sources.yaml` 为 Git 仓库提供稳定注册表。同一仓库包含多个端时只登记、clone 和绑定一次，各组件用 `source.repository_ref` 与 `repository_subpath` 指向自己的源码子目录。本机绑定保存在 `.local/.maw/code-source-bindings.yaml`，托管 clone 默认位于 `.local/code-sources/<source-key>/`；外层 Git 必须明确忽略该路径，因此允许嵌套 Git 而不会进入项目版本库。
+
+新设备运行 `mawflow project hydrate` 后按声明补全缺失代码源。云端只允许同步 source key、关联组件和是否需要绑定等脱敏 readiness，不同步本机绝对路径、Git Access Profile、凭据、源码内容、HEAD/dirty 详情或未提交改动。2.4 的组件级外部 Git 声明继续兼容，可通过显式归并计划复用现有目录，不移动源码。
+
 ### 组件源码工作区
 
-组件没有 `source` 或 `source.mode: embedded` 时，真实工程位于项目内 `path`；`source.mode: external_git` 时，共享 `.maw/components.yaml` 只保存无凭据 `repository_url`、可选 `repository_subpath/default_branch` 和稳定组件引用，不保存任何设备绝对路径。每台设备把自己的目录、仓库身份摘要、来源类型和 Git Access Profile 引用写入被 Git 忽略的 `.local/.maw/component-sources.yaml`，因此同一项目可在不同设备绑定不同真实目录而不产生共享 diff。
+组件没有 `source` 或 `source.mode: embedded` 时，真实工程位于项目内 `path`；`source.mode: external_git` 时，推荐引用共享 code source。2.4 兼容模式仍可在 `.maw/components.yaml` 保存无凭据 `repository_url`、可选 `repository_subpath/default_branch` 和稳定组件引用，并把设备目录写入 `.local/.maw/component-sources.yaml`。
 
 外部源码未绑定、目录缺失、仓库身份不匹配、Profile 不兼容或网络路由不可解析时，Project Definition 仍可读取共享定义，但当前设备开发 readiness 必须失败关闭，且不得静默回退到 `code/<component>/src`。Git Access Profile 的网络策略与认证引用相互独立：可继承系统环境、强制直连，或引用 SecretStore 中的专用 HTTP/HTTPS/SOCKS 路由；代理 URL 不进入 Seed、计划公开结果或审计事件。
 

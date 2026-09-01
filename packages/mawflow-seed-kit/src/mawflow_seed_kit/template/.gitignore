@@ -2,6 +2,7 @@
 !.local/
 !.local/**/
 !.local/**/*.example.yaml
+/.local/code-sources/**
 *.local.yaml
 artifacts/
 runtime/

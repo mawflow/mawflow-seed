@@ -16,6 +16,7 @@ from mawflow_seed_kit import (  # noqa: E402
     apply_change_plan,
     apply_component_plan,
     apply_migration_plan,
+    apply_topology_plan,
     compile_project_definition,
     materialize_project,
     plan_change_set,
@@ -25,8 +26,13 @@ from mawflow_seed_kit import (  # noqa: E402
     plan_component_source_unbind,
     plan_component_state,
     inspect_components,
+    inspect_project_sources,
+    plan_code_source_binding,
+    plan_code_source_upsert,
     plan_contract_repair,
     plan_migration,
+    plan_source_registry_consolidation,
+    plan_subproject_upsert,
     rollback_migration,
 )
 from mawflow_seed_kit.catalog import (  # noqa: E402
@@ -228,6 +234,164 @@ def test_external_component_rejects_repository_mismatch(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="seed_component_source_repository_mismatch"):
         plan_component_source_binding(project, key="api", directory_path=source)
+
+
+def test_subprojects_and_shared_code_source_use_one_device_binding(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    repository_url = "https://git.example.com/customer/customer-suite.git"
+    source = _external_git_repo(tmp_path / "customer-suite", repository_url)
+    materialize_project(project, project_key="customer", name="Customer", profile="blank")
+    _git_init(project)
+
+    public, private = plan_subproject_upsert(
+        project,
+        key="portal",
+        name="客户门户",
+        grouping_basis="same_customer",
+        customer_ref="customer-a",
+    )
+    apply_topology_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+    public, private = plan_code_source_upsert(
+        project,
+        key="customer-suite",
+        name="客户套件仓库",
+        repository_url=repository_url,
+        default_branch="main",
+    )
+    apply_topology_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+
+    for key, component_type in (("portal-api", "backend"), ("portal-web", "frontend")):
+        public, private = plan_component_init(
+            project,
+            key=key,
+            component_type=component_type,
+            subproject_ref="portal",
+            source_mode="external_git",
+            repository_ref="customer-suite",
+        )
+        apply_component_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+
+    public, private = plan_code_source_binding(
+        project,
+        key="customer-suite",
+        directory_path=source,
+        git_access_profile_ref="mawgit://private-git",
+    )
+    apply_topology_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+
+    topology = inspect_project_sources(project)
+    assert topology["status"] == "ready"
+    assert topology["summary"] == {
+        "subprojects": 2,
+        "code_sources": 1,
+        "legacy_component_sources": 0,
+        "unbound": 0,
+    }
+    assert topology["code_sources"][0]["component_keys"] == ["portal-api", "portal-web"]
+    assert topology["code_sources"][0]["local"]["directory_path"] == str(source)
+    assert topology["cloud_summary"]["absolute_paths_included"] is False
+    assert inspect_components(project)["status"] == "ready"
+
+
+def test_managed_clone_default_is_inside_ignored_local_directory(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    materialize_project(project, project_key="demo", name="Demo", profile="blank")
+    _git_init(project)
+    managed = project / ".local/code-sources/customer-suite"
+    managed.mkdir(parents=True)
+    (managed / "README.md").write_text("nested source\n", encoding="utf-8")
+
+    topology = inspect_project_sources(project)
+
+    assert topology["status"] == "ready"
+    assert subprocess.run(
+        ["git", "-C", str(project), "check-ignore", "--quiet", ".local/code-sources/customer-suite/README.md"],
+        check=False,
+    ).returncode == 0
+
+
+def test_project_internal_external_git_requires_outer_git_ignore(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    repository_url = "https://git.example.com/customer/internal.git"
+    materialize_project(project, project_key="demo", name="Demo", profile="blank")
+    _git_init(project)
+    public, private = plan_component_init(
+        project,
+        key="api",
+        component_type="backend",
+        source_mode="external_git",
+        repository_url=repository_url,
+    )
+    apply_component_plan(
+        project,
+        private,
+        public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+    tracked_source = _external_git_repo(project / "code/tracked-source", repository_url)
+
+    with pytest.raises(
+        ValueError,
+        match="seed_component_source_project_path_must_be_git_ignored",
+    ):
+        plan_component_source_binding(
+            project,
+            key="api",
+            directory_path=tracked_source,
+            origin="managed_clone",
+        )
+
+    ignored_source = _external_git_repo(
+        project / ".local/code-sources/internal",
+        repository_url,
+    )
+    public, private = plan_component_source_binding(
+        project,
+        key="api",
+        directory_path=ignored_source,
+        origin="managed_clone",
+    )
+    result = apply_component_plan(
+        project,
+        private,
+        public["confirmation_required"],
+        backup_root=tmp_path / "backups",
+    )
+
+    assert result["status"] == "applied"
+    assert inspect_components(project)["status"] == "ready"
+
+
+def test_consolidation_reuses_one_legacy_git_root_without_moving_source(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    repository_url = "https://git.example.com/customer/suite.git"
+    source = _external_git_repo(tmp_path / "suite", repository_url)
+    materialize_project(project, project_key="demo", name="Demo", profile="blank")
+    _git_init(project)
+    for key, component_type in (("api", "backend"), ("web", "frontend")):
+        public, private = plan_component_init(
+            project,
+            key=key,
+            component_type=component_type,
+            source_mode="external_git",
+            repository_url=repository_url,
+            source_directory=source,
+        )
+        apply_component_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+
+    public, private = plan_source_registry_consolidation(project)
+    assert public["consolidation"]["source_directories_moved"] is False
+    apply_topology_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+
+    projection = compile_project_definition(project)
+    assert projection["status"] == "ready"
+    sources = projection["configs"][".maw/code-sources.yaml"]["code_sources"]
+    assert list(sources) == ["suite"]
+    assert projection["configs"][".maw/component-sources.yaml"]["component_sources"] == {}
+    assert list(projection["configs"][".maw/code-source-bindings.yaml"]["code_source_bindings"]) == ["suite"]
+    components = projection["configs"][".maw/components.yaml"]["components"]
+    assert {item["source"]["repository_ref"] for item in components} == {"suite"}
+    assert source.is_dir()
 
 
 def test_component_remove_cleans_runtime_and_binding_but_retains_directories(tmp_path: Path) -> None:
