@@ -11,7 +11,7 @@ Seed gives the AI:
 
 - project facts in `.maw/project.yaml`;
 - subproject boundaries in `.maw/subprojects.yaml`;
-- shared Git declarations in `.maw/code-sources.yaml` and component boundaries in `.maw/components.yaml`;
+- shared Git declarations in `.maw/code-sources.yaml`, deployment targets in `.maw/deployments.yaml`, and component boundaries in `.maw/components.yaml`;
 - module boundaries in `.maw/modules.yaml`;
 - runtime hints in `.maw/app-runtime.yaml`;
 - collaboration rules in `.maw/agent-entry.yaml`;
@@ -30,7 +30,7 @@ Mawflow Agent Skills may be installed at user scope to help an Agent discover th
 1. Read `AGENTS.md` if your tool supports it.
 2. Read this file.
 3. Read `.maw/agent-entry.yaml`.
-4. Read `.maw/project.yaml`, `.maw/subprojects.yaml`, `.maw/code-sources.yaml`, `.maw/components.yaml`, `.maw/modules.yaml`, and `.maw/app-runtime.yaml`.
+4. Read `.maw/project.yaml`, `.maw/subprojects.yaml`, `.maw/code-sources.yaml`, `.maw/deployments.yaml`, `.maw/components.yaml`, `.maw/modules.yaml`, and `.maw/app-runtime.yaml`.
 5. Read `docs/README.md` and then only the docs needed for the current task.
 6. Locate the module or component before editing.
 7. State the intended scope and validation path before broad changes.

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mawflow.com/schemas/deployments.v2.json",
+  "type": "object",
+  "required": ["schema_version", "deployment_targets"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "deployment_targets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "name", "environment_key", "environment_role", "server_ref", "component_refs", "scope_mode", "enabled"],
+        "properties": {
+          "key": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,159}$"},
+          "name": {"type": "string", "minLength": 1},
+          "environment_key": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,159}$"},
+          "environment_role": {"enum": ["local", "staging", "production"]},
+          "server_ref": {"type": "string", "minLength": 1},
+          "subproject_ref": {"type": "string"},
+          "component_refs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "scope_mode": {"enum": ["exclusive", "replicated"]},
+          "deployment_profile_ref": {"type": "string"},
+          "access_profile_ref": {"type": "string"},
+          "enabled": {"type": "boolean"},
+          "policy": {"type": "object"}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

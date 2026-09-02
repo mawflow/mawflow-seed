@@ -26,9 +26,12 @@ from mawflow_seed_kit import (  # noqa: E402
     plan_component_source_unbind,
     plan_component_state,
     inspect_components,
+    inspect_deployment_targets,
     inspect_project_sources,
     plan_code_source_binding,
     plan_code_source_upsert,
+    plan_deployment_target_remove,
+    plan_deployment_target_upsert,
     plan_contract_repair,
     plan_migration,
     plan_source_registry_consolidation,
@@ -308,6 +311,76 @@ def test_managed_clone_default_is_inside_ignored_local_directory(tmp_path: Path)
         ["git", "-C", str(project), "check-ignore", "--quiet", ".local/code-sources/customer-suite/README.md"],
         check=False,
     ).returncode == 0
+
+
+def test_multiple_deployment_targets_scope_independent_subprojects(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    materialize_project(project, project_key="multi", name="Multi", profile="blank")
+    _git_init(project)
+    for subproject in ("customer-a", "customer-b"):
+        public, private = plan_subproject_upsert(
+            project,
+            key=subproject,
+            name=subproject,
+            grouping_basis="same_customer",
+            customer_ref=subproject,
+        )
+        apply_topology_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+        public, private = plan_component_init(
+            project,
+            key=f"{subproject}-api",
+            component_type="backend",
+            subproject_ref=subproject,
+        )
+        apply_component_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+
+    for suffix, role in (("staging", "staging"), ("production", "production")):
+        public, private = plan_deployment_target_upsert(
+            project,
+            key=f"customer-a-{suffix}",
+            name=f"Customer A {suffix}",
+            environment_key=suffix,
+            environment_role=role,
+            server_ref=f"mawresource://server/customer-a-{suffix}",
+            subproject_ref="customer-a",
+            component_refs=["customer-a-api"],
+        )
+        apply_topology_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+
+    snapshot = inspect_deployment_targets(project)
+    assert snapshot["status"] == "ready"
+    assert snapshot["summary"]["explicit"] == 2
+    assert snapshot["summary"]["components_scoped"] == 1
+    assert snapshot["cloud_summary"]["credential_values_included"] is False
+    projection = compile_project_definition(project)
+    production = projection["configs"][".maw/deployments.yaml"]["deployment_targets"][1]
+    assert production["policy"]["approval_required"] is True
+
+    public, private = plan_deployment_target_remove(project, key="customer-a-staging")
+    apply_topology_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+    assert inspect_deployment_targets(project)["summary"]["explicit"] == 1
+
+
+def test_deployment_target_rejects_cross_subproject_component(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    materialize_project(project, project_key="multi", name="Multi", profile="blank")
+    _git_init(project)
+    public, private = plan_component_init(project, key="api", component_type="backend")
+    apply_component_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+    public, private = plan_subproject_upsert(project, key="other", name="Other")
+    apply_topology_plan(project, private, public["confirmation_required"], backup_root=tmp_path / "backups")
+
+    with pytest.raises(ValueError, match="seed_change_proposed_projection_invalid"):
+        plan_deployment_target_upsert(
+            project,
+            key="other-staging",
+            name="Other staging",
+            environment_key="staging",
+            environment_role="staging",
+            server_ref="mawresource://server/other-staging",
+            subproject_ref="other",
+            component_refs=["api"],
+        )
 
 
 def test_project_internal_external_git_requires_outer_git_ignore(tmp_path: Path) -> None:

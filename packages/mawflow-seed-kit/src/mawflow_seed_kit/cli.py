@@ -7,6 +7,7 @@ from pathlib import Path
 from .catalog import public_catalog
 from .compiler import compile_project_definition
 from .credential_doctor import scan_credentials
+from .project_topology import inspect_deployment_targets
 from .template import materialize_project
 
 
@@ -34,6 +35,8 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "doctor":
         if args.target_or_root == "credentials":
             payload = scan_credentials(Path(args.root), include_source=args.include_source)
+        elif args.target_or_root == "deployments":
+            payload = inspect_deployment_targets(Path(args.root))
         else:
             payload = compile_project_definition(Path(args.target_or_root))
     else:

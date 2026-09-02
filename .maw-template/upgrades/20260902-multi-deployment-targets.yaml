@@ -1,0 +1,43 @@
+schema_version: 1
+upgrade_key: 20260902-multi-deployment-targets
+title: 多服务器部署目标与组件范围治理
+risk_level: T4
+status: active
+summary:
+  - 新增 .maw/deployments.yaml，一个环境可配置多个稳定部署目标。
+  - 服务器保持全局资源；子项目和 component_refs 范围属于部署目标关系。
+  - 生产环境角色不依赖 environment key 名称，始终要求独立审批、健康、备份与回滚门禁。
+  - 发布状态按环境、部署目标、组件隔离，外部 Git 使用其本机绑定仓库的 commit。
+source_baseline_commit: f0dbec42af4b88093b6c1ed569c3336c37ef7a31
+source_template_files:
+  - .maw/deployments.yaml
+  - .maw/releases.yaml
+  - ops/scripts/plan-release-components.py
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/contracts/v2/catalog.json
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/contracts/v2/deployments.schema.json
+target_project_policy:
+  upgrade_mode: decision_matrix_incremental_merge_only
+  server_asset_scope_owner: deployment_target
+  default_scope_mode: exclusive
+  new_component_auto_enrollment: forbidden
+  production_role_gate_by_environment_key: forbidden
+  legacy_single_server_policy: materialize_read_only_implicit_target_until_confirmed
+  legacy_empty_component_scope_means_all: false
+  release_state_legacy_read: true
+  release_state_new_write: artifacts/release-state/<environment>/<deployment-target>/<app-key>.json
+  cloud_sync_policy: topology_and_public_safe_server_summary_only
+  protect:
+    - code/
+    - app_key
+    - existing release configuration
+    - repository mappings
+    - real secrets
+    - .local/ contents
+    - module dossiers
+validation:
+  - git diff --check
+  - python3 -m pytest -q tests/test_seed_kit_v2.py
+  - python3 ops/scripts/check-seed-version-alignment.py --strict
+  - mawflow project doctor --root .
+propagation:
+  migration_note: docs/template-migrations/20260902-multi-deployment-targets.md

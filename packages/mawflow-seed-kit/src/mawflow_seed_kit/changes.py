@@ -27,6 +27,8 @@ GIT_REF_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
 REF_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
 COMPONENT_SOURCE_REF_PATTERN = re.compile(r"^mawsource://component/[a-z0-9][a-z0-9._-]{0,159}$")
 GIT_ACCESS_PROFILE_REF_PATTERN = re.compile(r"^mawgit://[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
+RESOURCE_REF_PATTERN = re.compile(r"^mawresource://server/[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
+ACCESS_PROFILE_REF_PATTERN = re.compile(r"^(?:mawaccess|mawresource)://[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
 SCP_REPOSITORY_PATTERN = re.compile(r"^(?:[A-Za-z0-9._-]+@)?([A-Za-z0-9.-]+):([^?#\s]+)$")
 SENSITIVE_TEXT = re.compile(r"(?i)(?:(?<![A-Za-z0-9_])sk-[A-Za-z0-9_-]{12,}|(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S+)")
 MAX_FIELD_LENGTH = 2000
@@ -267,6 +269,16 @@ def _validate(field: str, value: object, rule: str) -> object:
         if not GIT_ACCESS_PROFILE_REF_PATTERN.fullmatch(text):
             raise ValueError("seed_change_invalid_git_access_profile_ref")
         return text
+    if rule == "resource_ref":
+        if not RESOURCE_REF_PATTERN.fullmatch(text):
+            raise ValueError("seed_change_invalid_resource_ref")
+        return text
+    if rule == "access_profile_ref_or_empty":
+        if not text:
+            return ""
+        if not ACCESS_PROFILE_REF_PATTERN.fullmatch(text):
+            raise ValueError("seed_change_invalid_access_profile_ref")
+        return text
     if rule == "absolute_path":
         if not _absolute_path_valid(text):
             raise ValueError("seed_change_absolute_path_required")
@@ -447,7 +459,15 @@ def _remove_node(text: str, node: Node) -> str:
 
 def _remove_sequence_item(text: str, sequence: SequenceNode, item: Node) -> str:
     if len(sequence.value) != 1:
-        return _remove_node(text, item)
+        start = text.rfind("\n", 0, item.start_mark.index) + 1
+        position = sequence.value.index(item)
+        if position + 1 < len(sequence.value):
+            next_item = sequence.value[position + 1]
+            after = text.rfind("\n", 0, next_item.start_mark.index) + 1
+        else:
+            line_end = text.find("\n", item.end_mark.index)
+            after = len(text) if line_end < 0 else line_end + 1
+        return text[:start] + text[after:]
     line_start = text.rfind("\n", 0, item.start_mark.index) + 1
     line_end = text.find("\n", item.end_mark.index)
     after = len(text) if line_end < 0 else line_end + 1

@@ -6,6 +6,7 @@ project_doctor:
     - .maw/technology.yaml
     - .maw/subprojects.yaml
     - .maw/code-sources.yaml
+    - .maw/deployments.yaml
     - .maw/components.yaml
     - .maw/modules.yaml
     - .maw/app-runtime.yaml
@@ -22,6 +23,7 @@ project_doctor:
     - subproject_references
     - code_source_references
     - code_source_bindings
+    - deployment_target_references
     - runtime_references
     - technology_requirements
     - handbook_manifest

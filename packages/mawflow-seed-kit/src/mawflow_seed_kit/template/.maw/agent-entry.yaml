@@ -4,6 +4,7 @@ agent_entry:
   project_definition: .maw/project.yaml
   subprojects: .maw/subprojects.yaml
   code_sources: .maw/code-sources.yaml
+  deployment_targets: .maw/deployments.yaml
   components: .maw/components.yaml
   modules: .maw/modules.yaml
   lifecycle: .maw/project-lifecycle.yaml

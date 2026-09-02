@@ -1,7 +1,7 @@
 {
   "schema": "mawflow.seed_contract_catalog.v2",
   "contract_version": 2,
-  "seed_version": "2.5.0",
+  "seed_version": "2.6.0",
   "required_files": [
     ".maw/seed.lock",
     ".maw/project.yaml",
@@ -9,6 +9,7 @@
     ".maw/project-lifecycle.yaml",
     ".maw/subprojects.yaml",
     ".maw/code-sources.yaml",
+    ".maw/deployments.yaml",
     ".maw/components.yaml",
     ".maw/modules.yaml",
     ".maw/module-candidates.yaml",
@@ -96,6 +97,28 @@
         "git_access_profile_ref": {"type": "git_access_profile_ref_or_empty", "label": "Git Access Profile", "required": false, "scope": ["local"], "risk": "critical"},
         "bound_repository_identity": {"type": "long_text", "label": "绑定仓库身份", "required": true, "scope": ["local"], "risk": "high"},
         "bound_at": {"type": "long_text", "label": "绑定时间", "required": true, "scope": ["local"], "risk": "medium"}
+      }
+    },
+    "deployment_target": {
+      "source": ".maw/deployments.yaml",
+      "root": "deployment_targets",
+      "kind": "sequence",
+      "identity": "key",
+      "fields": {
+        "name": {"type": "text", "label": "部署目标名称", "required": true, "scope": ["shared"], "risk": "low"},
+        "environment_key": {"type": "key", "label": "环境标识", "required": true, "scope": ["shared"], "risk": "high"},
+        "environment_role": {"type": "enum", "label": "规范环境角色", "options": ["local", "staging", "production"], "required": true, "scope": ["shared"], "risk": "critical"},
+        "server_ref": {"type": "resource_ref", "label": "服务器资产引用", "required": true, "scope": ["shared"], "risk": "critical"},
+        "subproject_ref": {"type": "key_or_empty", "label": "子项目范围", "required": false, "scope": ["shared"], "risk": "high"},
+        "component_refs": {"type": "key_list", "label": "显式组件范围", "required": true, "scope": ["shared"], "risk": "critical"},
+        "scope_mode": {"type": "enum", "label": "范围模式", "options": ["exclusive", "replicated"], "required": true, "scope": ["shared"], "risk": "critical"},
+        "deployment_profile_ref": {"type": "ref_or_empty", "label": "部署策略引用", "required": false, "scope": ["shared"], "risk": "high"},
+        "access_profile_ref": {"type": "access_profile_ref_or_empty", "label": "访问配置引用", "required": false, "scope": ["shared"], "risk": "critical"},
+        "enabled": {"type": "bool", "label": "启用状态", "required": true, "scope": ["shared"], "risk": "high"},
+        "policy.approval_required": {"type": "bool", "label": "需要审批", "required": false, "scope": ["shared"], "risk": "critical"},
+        "policy.backup_required": {"type": "bool", "label": "需要备份", "required": false, "scope": ["shared"], "risk": "critical"},
+        "policy.rollback_required": {"type": "bool", "label": "需要回滚", "required": false, "scope": ["shared"], "risk": "critical"},
+        "policy.health_freshness_seconds": {"type": "integer", "label": "健康证据有效期", "required": false, "scope": ["shared"], "risk": "high"}
       }
     },
     "component": {
@@ -319,6 +342,9 @@
     {"key": "code_source.remove", "target": "code_source", "modes": ["remove"], "risk": "critical"},
     {"key": "code_source_binding.upsert", "target": "code_source_binding", "modes": ["create", "update"], "risk": "critical"},
     {"key": "code_source_binding.remove", "target": "code_source_binding", "modes": ["remove"], "risk": "critical"},
+    {"key": "deployment_target.add", "target": "deployment_target", "modes": ["create"], "risk": "critical"},
+    {"key": "deployment_target.update", "target": "deployment_target", "modes": ["update"], "risk": "critical"},
+    {"key": "deployment_target.remove", "target": "deployment_target", "modes": ["remove"], "risk": "critical"},
     {"key": "component.add", "target": "component", "modes": ["create"], "risk": "high"},
     {"key": "component.update", "target": "component", "modes": ["update"], "risk": "medium"},
     {"key": "component.enable", "target": "component", "modes": ["update"], "risk": "high"},

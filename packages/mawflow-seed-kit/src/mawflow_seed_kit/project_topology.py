@@ -70,6 +70,15 @@ def _components(projection: dict[str, Any]) -> dict[str, dict[str, Any]]:
     } if isinstance(raw, list) else {}
 
 
+def _deployment_targets(projection: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    raw = _configs(projection, ".maw/deployments.yaml", "deployment_targets")
+    return {
+        str(item.get("key")): dict(item)
+        for item in raw
+        if isinstance(item, dict) and item.get("key")
+    } if isinstance(raw, list) else {}
+
+
 def _change(
     root: Path,
     projection: dict[str, Any],
@@ -259,6 +268,144 @@ def plan_code_source_remove(root: Path | str, *, key: str) -> tuple[dict[str, An
         operations.append({"op": "code_source_binding.remove", "key": source_key, "scope": "local", "values": {}})
     operations.append({"op": "code_source.remove", "key": source_key, "scope": "shared", "values": {}})
     return _change(project_root, projection, operations, f"移除共享代码源 {source_key}，保留磁盘目录")
+
+
+def plan_deployment_target_upsert(
+    root: Path | str,
+    *,
+    key: str,
+    name: str,
+    environment_key: str,
+    environment_role: str,
+    server_ref: str,
+    component_refs: list[str],
+    subproject_ref: str = "",
+    scope_mode: str = "exclusive",
+    deployment_profile_ref: str = "",
+    access_profile_ref: str = "",
+    enabled: bool = True,
+    approval_required: bool | None = None,
+    backup_required: bool = True,
+    rollback_required: bool = True,
+    health_freshness_seconds: int = 900,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    project_root = _root(root)
+    projection = compile_project_definition(project_root)
+    target_key = _key(key, "seed_deployment_target_key_invalid")
+    if environment_role not in {"local", "staging", "production"}:
+        raise ValueError("seed_deployment_target_environment_role_invalid")
+    if scope_mode not in {"exclusive", "replicated"}:
+        raise ValueError("seed_deployment_target_scope_mode_invalid")
+    if enabled and not component_refs:
+        raise ValueError("seed_deployment_target_scope_empty")
+    normalized_refs = list(dict.fromkeys(_key(item, "seed_deployment_target_component_ref_invalid") for item in component_refs))
+    operation = "deployment_target.update" if target_key in _deployment_targets(projection) else "deployment_target.add"
+    require_approval = environment_role == "production" if approval_required is None else bool(approval_required)
+    if environment_role == "production" and not require_approval:
+        raise ValueError("seed_deployment_target_production_approval_required")
+    return _change(
+        project_root,
+        projection,
+        [{
+            "op": operation,
+            "key": target_key,
+            "scope": "shared",
+            "values": {
+                "name": name.strip() or target_key,
+                "environment_key": _key(environment_key, "seed_deployment_target_environment_key_invalid"),
+                "environment_role": environment_role,
+                "server_ref": server_ref.strip(),
+                "subproject_ref": subproject_ref.strip(),
+                "component_refs": normalized_refs,
+                "scope_mode": scope_mode,
+                "deployment_profile_ref": deployment_profile_ref.strip(),
+                "access_profile_ref": access_profile_ref.strip(),
+                "enabled": bool(enabled),
+                "policy.approval_required": require_approval,
+                "policy.backup_required": bool(backup_required),
+                "policy.rollback_required": bool(rollback_required),
+                "policy.health_freshness_seconds": int(health_freshness_seconds),
+            },
+        }],
+        f"{'更新' if operation.endswith('update') else '新增'}部署目标 {target_key}",
+    )
+
+
+def plan_deployment_target_remove(root: Path | str, *, key: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    project_root = _root(root)
+    projection = compile_project_definition(project_root)
+    target_key = _key(key, "seed_deployment_target_key_invalid")
+    if target_key not in _deployment_targets(projection):
+        raise ValueError("seed_deployment_target_missing")
+    return _change(
+        project_root,
+        projection,
+        [{"op": "deployment_target.remove", "key": target_key, "scope": "shared", "values": {}}],
+        f"移除部署目标 {target_key}；不会删除服务器资产或组件源码",
+    )
+
+
+def inspect_deployment_targets(root: Path | str) -> dict[str, Any]:
+    project_root = _root(root)
+    projection = compile_project_definition(project_root)
+    components = _components(projection)
+    explicit = list(_deployment_targets(projection).values())
+    environments = _configs(projection, ".maw/environments.yaml", "environments")
+    implicit: list[dict[str, Any]] = []
+    explicitly_covered = {str(item.get("environment_key") or "") for item in explicit}
+    for environment_key, environment in (environments.items() if isinstance(environments, dict) else []):
+        if environment_key in explicitly_covered or not isinstance(environment, dict):
+            continue
+        remote = environment.get("remote_server") if isinstance(environment.get("remote_server"), dict) else {}
+        component_refs = list(dict.fromkeys(str(item) for item in (remote.get("default_release_components") or []) if str(item)))
+        configured = bool(component_refs or remote.get("credential_ref") or remote.get("healthcheck_url") or remote.get("port"))
+        if not configured:
+            continue
+        role = "production" if str(environment.get("role") or "") == "production" else "staging"
+        implicit.append({
+            "key": f"{environment_key}-default",
+            "name": f"{environment_key} 兼容部署目标",
+            "environment_key": environment_key,
+            "environment_role": role,
+            "server_ref": f"legacy://environments/{environment_key}/remote_server",
+            "subproject_ref": "",
+            "component_refs": component_refs,
+            "scope_mode": "exclusive",
+            "enabled": True,
+            "implicit_legacy": True,
+            "migration_required": True,
+        })
+    targets = [*explicit, *implicit]
+    return {
+        "schema": "mawflow.deployment_targets.v2",
+        "status": "ready" if not implicit else "migration_recommended",
+        "deployment_targets": targets,
+        "summary": {
+            "explicit": len(explicit),
+            "implicit_legacy": len(implicit),
+            "components_scoped": len({ref for item in targets for ref in item.get("component_refs", []) if ref in components}),
+        },
+        "cloud_summary": {
+            "deployment_targets": [
+                {
+                    "key": item.get("key"),
+                    "name": item.get("name"),
+                    "environment_key": item.get("environment_key"),
+                    "environment_role": item.get("environment_role"),
+                    "server_ref": item.get("server_ref"),
+                    "subproject_ref": item.get("subproject_ref"),
+                    "component_refs": item.get("component_refs", []),
+                    "scope_mode": item.get("scope_mode"),
+                    "deployment_profile_ref": item.get("deployment_profile_ref", ""),
+                    "access_profile_ref": item.get("access_profile_ref", ""),
+                    "enabled": item.get("enabled", True),
+                }
+                for item in targets
+            ],
+            "credential_values_included": False,
+            "local_paths_included": False,
+        },
+    }
 
 
 def _available_source_key(preferred: str, used: set[str]) -> str:
@@ -518,11 +665,14 @@ def apply_topology_plan(
 __all__ = [
     "apply_topology_plan",
     "default_managed_clone_path",
+    "inspect_deployment_targets",
     "inspect_project_sources",
     "plan_code_source_binding",
     "plan_code_source_remove",
     "plan_code_source_unbind",
     "plan_code_source_upsert",
+    "plan_deployment_target_remove",
+    "plan_deployment_target_upsert",
     "plan_source_registry_consolidation",
     "plan_subproject_remove",
     "plan_subproject_upsert",

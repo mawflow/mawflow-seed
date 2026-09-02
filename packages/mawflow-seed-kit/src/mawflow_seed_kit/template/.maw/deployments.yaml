@@ -1,0 +1,5 @@
+schema_version: 2
+deployment_targets: []
+
+# 一个物理服务器可被多个部署目标引用；组件范围属于部署目标，不属于服务器资产。
+# 新增组件不会自动进入任何生产目标，必须显式加入 component_refs。

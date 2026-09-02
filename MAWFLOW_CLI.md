@@ -69,6 +69,19 @@ mawflow project sources consolidate --plan
 
 共享代码源的本机目录写入 `.local/.maw/code-source-bindings.yaml`。外层项目通过 `/.local/code-sources/**` 明确忽略托管 clone，因此项目内嵌套 Git 不会进入外层提交。云端只同步声明与脱敏 readiness，不同步绝对路径、凭据、源码或未提交改动。
 
+## 多服务器部署目标
+
+部署目标写入 `.maw/deployments.yaml`。同一环境存在多个目标时，发布必须精确选择目标：
+
+```bash
+python3 ops/scripts/plan-release-components.py 发布上线 \
+  --deployment-target customer-a-staging --format json
+python3 ops/scripts/plan-release-components.py 发布生产 \
+  --deployment-target customer-a-production --format json
+```
+
+服务器资源可以复用，但 `subproject_ref` 与 `component_refs` 归部署目标所有。组件范围必须显式登记，空范围不会展开成全部组件；生产门禁依据 `environment_role: production`，而不是环境 key 的字面值。
+
 ## AI 对话入口
 
 对 AI 说“初始化组件 api，类型 backend”“启用组件 api”时，AI 应读取 `PROJECT_COMMANDS.md`，再调用上述 CLI 或执行同等验证链路。跨 AI 交接见 `CHATGPT_TO_AI.md`。

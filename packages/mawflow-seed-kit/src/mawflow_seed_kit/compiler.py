@@ -19,6 +19,8 @@ REF_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
 COMPONENT_SOURCE_REF_PATTERN = re.compile(r"^mawsource://component/[a-z0-9][a-z0-9._-]{0,159}$")
 CODE_SOURCE_REF_PATTERN = re.compile(r"^mawsource://code-source/[a-z0-9][a-z0-9._-]{0,159}$")
 GIT_ACCESS_PROFILE_REF_PATTERN = re.compile(r"^mawgit://[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
+RESOURCE_REF_PATTERN = re.compile(r"^mawresource://server/[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
+ACCESS_PROFILE_REF_PATTERN = re.compile(r"^(?:mawaccess|mawresource)://[A-Za-z0-9][A-Za-z0-9._/-]{0,239}$")
 SCP_REPOSITORY_PATTERN = re.compile(r"^(?:[A-Za-z0-9._-]+@)?([A-Za-z0-9.-]+):([^?#\s]+)$")
 
 
@@ -179,6 +181,10 @@ def _field_value_valid(field_type: str, value: Any, definition: dict[str, Any]) 
         )
     if field_type == "git_access_profile_ref_or_empty":
         return isinstance(value, str) and (not value or bool(GIT_ACCESS_PROFILE_REF_PATTERN.fullmatch(value)))
+    if field_type == "resource_ref":
+        return isinstance(value, str) and bool(RESOURCE_REF_PATTERN.fullmatch(value))
+    if field_type == "access_profile_ref_or_empty":
+        return isinstance(value, str) and (not value or bool(ACCESS_PROFILE_REF_PATTERN.fullmatch(value)))
     if field_type == "absolute_path":
         return isinstance(value, str) and _absolute_path_valid(value)
     if field_type in {"repository_url", "repository_url_or_empty"}:
@@ -341,6 +347,60 @@ def _validate_model(configs: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
                 issues.append(_issue("seed_component_source_mode_invalid", ".maw/components.yaml", f"组件 {key} 的 source.mode 非法"))
     if len(component_keys) != len(set(component_keys)):
         issues.append(_issue("seed_component_key_duplicate", ".maw/components.yaml", "组件标识不得重复"))
+
+    raw_deployment_targets = configs.get(".maw/deployments.yaml", {}).get("deployment_targets")
+    deployment_targets = raw_deployment_targets if isinstance(raw_deployment_targets, list) else []
+    deployment_target_keys: list[str] = []
+    environments = configs.get(".maw/environments.yaml", {}).get("environments") or {}
+    environment_keys = set(environments) if isinstance(environments, dict) else set()
+    component_assignments: dict[tuple[str, str], tuple[str, str]] = {}
+    for item in deployment_targets:
+        key = str(item.get("key") or "").strip() if isinstance(item, dict) else ""
+        if not KEY_PATTERN.fullmatch(key):
+            issues.append(_issue("seed_deployment_target_key_invalid", ".maw/deployments.yaml", f"非法部署目标标识：{key or '<empty>'}"))
+        deployment_target_keys.append(key)
+        if not isinstance(item, dict):
+            continue
+        issues.extend(
+            _validate_fields(
+                item,
+                catalog()["targets"]["deployment_target"]["fields"],
+                source_ref=".maw/deployments.yaml",
+                label=f"部署目标 {key or '<empty>'}",
+            )
+        )
+        environment_key = str(item.get("environment_key") or "")
+        environment_role = str(item.get("environment_role") or "")
+        subproject_ref = str(item.get("subproject_ref") or "")
+        component_refs = item.get("component_refs") if isinstance(item.get("component_refs"), list) else []
+        scope_mode = str(item.get("scope_mode") or "exclusive")
+        policy = item.get("policy") if isinstance(item.get("policy"), dict) else {}
+        if environment_key not in environment_keys:
+            issues.append(_issue("seed_deployment_target_environment_missing", ".maw/deployments.yaml", f"部署目标 {key} 引用了不存在的环境 {environment_key}"))
+        if subproject_ref and subproject_ref not in subproject_keys:
+            issues.append(_issue("seed_deployment_target_subproject_missing", ".maw/deployments.yaml", f"部署目标 {key} 引用了不存在的子项目 {subproject_ref}"))
+        if item.get("enabled") is True and not component_refs:
+            issues.append(_issue("seed_deployment_target_scope_empty", ".maw/deployments.yaml", f"启用的部署目标 {key} 必须显式选择至少一个组件"))
+        if environment_role == "production" and policy.get("approval_required") is not True:
+            issues.append(_issue("seed_deployment_target_production_approval_required", ".maw/deployments.yaml", f"生产部署目标 {key} 必须要求独立审批"))
+        for component_ref in component_refs:
+            component = component_map.get(str(component_ref))
+            if component is None:
+                issues.append(_issue("seed_deployment_target_component_missing", ".maw/deployments.yaml", f"部署目标 {key} 引用了不存在的组件 {component_ref}"))
+                continue
+            component_subproject = str(component.get("subproject_ref") or "default")
+            if subproject_ref and component_subproject != subproject_ref:
+                issues.append(_issue("seed_deployment_target_component_subproject_mismatch", ".maw/deployments.yaml", f"部署目标 {key} 的组件 {component_ref} 不属于子项目 {subproject_ref}"))
+            assignment_key = (environment_key, str(component_ref))
+            previous = component_assignments.get(assignment_key)
+            if previous and (scope_mode == "exclusive" or previous[1] == "exclusive"):
+                issues.append(_issue("seed_deployment_target_scope_conflict", ".maw/deployments.yaml", f"组件 {component_ref} 在环境 {environment_key} 已属于互斥目标 {previous[0]}"))
+            else:
+                component_assignments[assignment_key] = (key, scope_mode)
+    if not isinstance(raw_deployment_targets, list):
+        issues.append(_issue("seed_deployment_targets_invalid", ".maw/deployments.yaml", "deployment_targets 必须是列表"))
+    if len(deployment_target_keys) != len(set(deployment_target_keys)):
+        issues.append(_issue("seed_deployment_target_key_duplicate", ".maw/deployments.yaml", "部署目标标识不得重复"))
 
     raw_bindings = configs.get(".maw/component-sources.yaml", {}).get("component_sources", {})
     if not isinstance(raw_bindings, dict):

@@ -14,11 +14,14 @@ from .migration import apply_migration_plan, plan_migration, rollback_migration
 from .project_topology import (
     apply_topology_plan,
     default_managed_clone_path,
+    inspect_deployment_targets,
     inspect_project_sources,
     plan_code_source_binding,
     plan_code_source_remove,
     plan_code_source_unbind,
     plan_code_source_upsert,
+    plan_deployment_target_remove,
+    plan_deployment_target_upsert,
     plan_source_registry_consolidation,
     plan_subproject_remove,
     plan_subproject_upsert,
@@ -36,6 +39,7 @@ __all__ = [
     "compile_project_definition",
     "contract_fingerprint",
     "default_managed_clone_path",
+    "inspect_deployment_targets",
     "inspect_components",
     "inspect_project_sources",
     "materialize_project",
@@ -49,6 +53,8 @@ __all__ = [
     "plan_code_source_remove",
     "plan_code_source_unbind",
     "plan_code_source_upsert",
+    "plan_deployment_target_remove",
+    "plan_deployment_target_upsert",
     "plan_contract_repair",
     "plan_migration",
     "plan_source_registry_consolidation",
@@ -58,4 +64,4 @@ __all__ = [
     "rollback_migration",
 ]
 
-__version__ = "2.5.0"
+__version__ = "2.6.0"

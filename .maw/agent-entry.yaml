@@ -23,6 +23,7 @@ startup:
     - .maw/project.yaml
     - .maw/subprojects.yaml
     - .maw/code-sources.yaml
+    - .maw/deployments.yaml
     - .maw/components.yaml
     - .maw/modules.yaml
     - .maw/app-runtime.yaml
@@ -41,6 +42,7 @@ facts:
   project: .maw/project.yaml
   subprojects: .maw/subprojects.yaml
   code_sources: .maw/code-sources.yaml
+  deployment_targets: .maw/deployments.yaml
   components: .maw/components.yaml
   modules: .maw/modules.yaml
   runtime: .maw/app-runtime.yaml
@@ -134,6 +136,7 @@ validation:
     - .maw/project.yaml exists
     - .maw/subprojects.yaml exists
     - .maw/code-sources.yaml exists
+    - .maw/deployments.yaml exists
     - .maw/components.yaml exists
     - .maw/modules.yaml exists
     - .maw/app-runtime.yaml exists

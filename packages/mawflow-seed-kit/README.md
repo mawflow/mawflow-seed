@@ -1,6 +1,6 @@
 # mawflow-seed-kit
 
-`mawflow-seed-kit` 是 Seed Contract v2 的唯一可执行分发包。v2.5.0 在兼容 v2.4 组件级外部 Git 的基础上，增加多子项目、共享代码源注册表、新设备 hydrate 和项目内 `.local/code-sources/` 托管 clone；同一仓库只需绑定一次，组件仍保持独立 app_key、构建和发布边界。
+`mawflow-seed-kit` 是 Seed Contract v2 的唯一可执行分发包。v2.6.0 增加多部署目标：一个环境可绑定多个服务器目标，每个目标显式选择子项目与组件范围；服务器仍是可复用资源，组件继续保持独立 app_key、源码、构建、发布和回滚边界。v2.5 的多子项目、共享代码源、新设备 hydrate 与 `.local/code-sources/` 托管 clone 保持兼容。
 
 主仓 CLI 和 Host Program 必须固定消费同一版本；项目仓库通过 `.maw/seed.lock` 记录版本、BOM 和契约指纹。
 
