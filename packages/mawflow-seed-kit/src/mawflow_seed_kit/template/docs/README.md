@@ -3,3 +3,4 @@
 - `handbooks/`：需求、技术、质量、决策风险、任务审计和发布运维手册。
 - 根目录 `MAWFLOW_CLI.md`：面向终端用户的确定性命令。
 - 根目录 `PROJECT_COMMANDS.md`：面向 AI 对话的意图指令。
+- [Seed 经验反馈报告](ai-instructions/instructions/seed-feedback.md)：当前对话即可使用，无需安装 Skill 或 CLI。

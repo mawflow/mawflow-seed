@@ -1,5 +1,11 @@
 # 模板变更记录
 
+## v2.8.1 - 2026-09-06
+
+- 补齐 #Seed反馈 / #Seed复盘 / #Seed优化报告，支持有限任务采样、证据分级、脱敏报告与接收评审；复用 TINST-027 台账。
+- Git 与 Seed Kit 分发同一指令和报告模板，无 CLI 或历史工具的 Web Agent 也可执行。
+- 保持 Contract 2 与 Host 0.2.16 兼容。
+
 ## v2.8.0
 
 - 为 Codex、Claude Code、Gemini CLI 提供专用入口；未知 Agent 使用 AI_START_HERE.md。

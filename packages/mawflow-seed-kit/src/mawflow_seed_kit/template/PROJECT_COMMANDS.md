@@ -10,3 +10,5 @@
 - `发布上线`：按项目定义的发布环境与审批边界执行；不自动等同于生产发布。
 
 跨 AI 工具转交任务时使用 `CHATGPT_TO_AI.md` 的通用格式。
+
+- `#Seed反馈` / `#Seed复盘` / `#Seed优化报告`：按 [TINST-042](docs/ai-instructions/instructions/seed-feedback.md) 从可访问的任务经验生成脱敏建议报告；`#Seed反馈：评审 <报告>` 接入既有种子仓回流流程。

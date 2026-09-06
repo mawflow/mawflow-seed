@@ -75,6 +75,13 @@ upgrade_policy:
       - "This route is for derived projects. Source template repositories still use template_upgrade to generate migration assets."
       - "If applied_version is empty, initialize the baseline from the current target commit and do not backfill old history."
       - "Resolve template_source.source_channel before drift execution: controlled internal projects use a trusted source or local overlay, public_seed uses the public mawflow/mawflow-seed source, and unknown_legacy requires human confirmation."
+  seed_feedback:
+    trigger_keywords: ["#Seed反馈", "#Seed复盘", "#Seed优化报告"]
+    strategy: evidence_report_then_existing_seed_feedback_loop
+    instruction: docs/ai-instructions/instructions/seed-feedback.md
+    report_template: docs/ai-instructions/templates/seed-feedback-report.md
+    default_scope: current_visible_conversation
+    automatic_external_upload: false
   seed_repository_upgrade:
     trigger_keywords:
       - "#种子仓库升级"

@@ -1,10 +1,10 @@
 {
   "schema": "mawflow.seed_public_payload.v2",
-  "seed_version": "2.8.0",
+  "seed_version": "2.8.1",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:27751994f2cf0f94cb84cb7c4272d2caaba6c66877f0e47531ea7eb37837d057",
+  "contract_fingerprint": "sha256:3ce51c09a47a32ba448fdfa123751a2dec159ba931ce170af33e657dcfacd919",
   "bom": {
-    "kit": "mawflow-seed-kit==2.8.0",
+    "kit": "mawflow-seed-kit==2.8.1",
     "contract": "seed-contract-v2"
   },
   "required_paths": [
@@ -129,7 +129,14 @@
     ".maw-template/upgrades/20260906-agent-portability.yaml",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/agent_context.py",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/agent-contract.v1.json",
-    "CHATGPT.md"
+    "CHATGPT.md",
+    "docs/ai-instructions/instructions/seed-feedback.md",
+    "docs/ai-instructions/templates/seed-feedback-report.md",
+    "docs/capabilities/seed-feedback-report.md",
+    "docs/template-migrations/20260906-seed-feedback.md",
+    ".maw-template/upgrades/20260906-seed-feedback.yaml",
+    "tests/test_seed_feedback_distribution.py",
+    "prompts/codex/template-upgrade-prompts/20260906-seed-feedback-prompt.md"
   ],
   "forbidden_paths": [
     ".maw/secrets.yaml",

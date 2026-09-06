@@ -71,4 +71,4 @@ __all__ = [
     "script_contract",
 ]
 
-__version__ = "2.8.0"
+__version__ = "2.8.1"

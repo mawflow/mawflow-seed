@@ -156,6 +156,7 @@ read_contract:
 | TINST-039 | 发布公开镜像 | #发布公开镜像、#发布开源镜像、#发布镜像、公开发布镜像、发布 public mirror、私有仓发布到公开仓、开发完成一个版本后发布到公开仓、种子仓发布公开仓 | [instructions/publish-repository-mirror.md](instructions/publish-repository-mirror.md) |
 | TINST-040 | MCP Knowledge Runtime | #MCP知识库、#MCP安装、#MCP更新、#MCP同步、#MCP审计、#技术选型、#框架包、#风格包、#项目蓝图、#提示词包、Framework Pack、Style Pack、Blueprint Pack、Prompt Pack、Pack Registry、Project Override | [instructions/mcp-knowledge-runtime.md](instructions/mcp-knowledge-runtime.md) |
 | TINST-041 | UAT 业务交付 | #UAT交付、UAT 交付、模块验收说明、业务验收文档、测试与审计版、逐模块交付测试 | [instructions/uat-business-handoff.md](instructions/uat-business-handoff.md) |
+| TINST-042 | Seed 经验反馈报告 | #Seed反馈、#Seed复盘、#Seed优化报告、Seed 经验反馈报告 | [instructions/seed-feedback.md](instructions/seed-feedback.md) |
 
 ## 当前术语列表
 

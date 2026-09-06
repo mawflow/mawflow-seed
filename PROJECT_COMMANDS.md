@@ -60,6 +60,7 @@
 - `#本机记忆：把本机路径、端口、工具链或调试差异留在 .local`
 - `#模板升级：源模板仓库生成升级资产；派生项目计算模板漂移并执行`
 - `#模版升级：同 #模板升级`
+- `#Seed反馈` / `#Seed复盘` / `#Seed优化报告`：按 [TINST-042](docs/ai-instructions/instructions/seed-feedback.md) 从可访问的任务经验生成脱敏建议报告；`#Seed反馈：评审 <报告>` 接入既有种子仓回流流程。
 - `#种子仓库升级：把派生项目中的可复用优化分级记录为种子仓库升级建议，并生成在种子仓库执行的反向回流提示词`
 - `#收口格式：按中文人类优先格式说明本次任务结果；默认简化，按需详细；缺敏感参数时先创建 .local 本机填写文件`
 
@@ -403,6 +404,7 @@
 | `#AI设计` | 文档入口 | AI设计、AI 版设计、Agent 执行协议、模板执行协议 | 查看面向 Codex/Agent/Reviewer 的完整设计与执行协议 | `docs/template-repository-ai-design.md` |
 | `#生成交付文档` | `#T025` | 交付文档、生成用户手册、生成概要设计、生成部署手册、生成文档事实稿 | 按 modules 生成用户手册事实稿、按 design 生成概要设计事实稿、按 ops 生成部署手册事实稿；只生成 Markdown 事实稿，格式由用户模板或专门文档 AI 处理 | `docs/ai-instructions/instructions/generate-delivery-docs.md` |
 | `#UAT交付 <范围>` | `#T041/<范围>` | UAT 交付、模块验收说明、业务验收文档、测试与审计版、逐模块交付测试 | 从正式模块事实和真实证据生成不可变的业务验收说明；业务自述为主、测试引导为辅，结构化引用及哈希闭包随同批次进入本地质量手册和受控云端分享 | `docs/ai-instructions/instructions/uat-business-handoff.md` |
+| `#Seed反馈` | `#T042` | #Seed复盘、#Seed优化报告、Seed 经验反馈报告 | 从实际可见对话生成有证据、可脱敏传递的建议报告；接收方核验后沿用既有种子仓升级候选台账 | `docs/ai-instructions/instructions/seed-feedback.md` |
 
 ## 常用任务包
 

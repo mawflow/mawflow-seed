@@ -51,7 +51,7 @@ def test_current_seed_release_family_is_aligned() -> None:
     result = MODULE.check_alignment(ROOT)
 
     assert result["status"] == "ready"
-    assert result["observations"]["release_version"] == "2.8.0"
+    assert result["observations"]["release_version"] == (ROOT / "TEMPLATE_VERSION").read_text().strip().removeprefix("v")
     assert result["observations"]["seed_contract_version"] == 2
     assert result["observations"]["template_metadata_checked"] is (ROOT / ".maw-template/template.yaml").is_file()
 
@@ -87,9 +87,10 @@ def test_template_source_baseline_must_match_seed_release(tmp_path: Path) -> Non
         tmp_path
         / "packages/mawflow-seed-kit/src/mawflow_seed_kit/template/.maw/template-source.yaml"
     )
-    text = template_source_path.read_text(encoding="utf-8")
+    payload = yaml.safe_load(template_source_path.read_text(encoding="utf-8"))
+    payload["template_source"]["applied_version"] = "2.3.1"
     template_source_path.write_text(
-        text.replace("applied_version: 2.8.0", "applied_version: 2.3.1"),
+        yaml.safe_dump(payload, allow_unicode=True, sort_keys=False),
         encoding="utf-8",
     )
 

@@ -1,0 +1,30 @@
+schema_version: 1
+upgrade_key: 20260906-seed-feedback
+title: Seed 经验反馈报告与接收评审
+risk_level: T2
+status: active
+source_paths:
+  - docs/ai-instructions/instructions/seed-feedback.md
+  - docs/ai-instructions/templates/seed-feedback-report.md
+  - docs/capabilities/seed-feedback-report.md
+target_policy:
+  merge_mode: semantic_incremental
+  preserve:
+    - README.md
+    - code/**
+    - .local/**
+    - docs/seed-repository-upgrade-candidates.md
+    - docs/modules/**
+    - project_specific_commands
+  required_outcomes:
+    - 增量合并 PROJECT_COMMANDS.md 与指令索引的 TINST-042 路由
+    - TINST-027 关联报告入口，保留原有分级、候选状态与历史记录
+    - Git 与 Seed Kit 新建项目均可读取相同反馈指令和报告模板
+    - 没有 CLI、Skill、历史检索或文件写入能力时仍能在对话生成报告
+validation:
+  - python3 -m pytest -q tests/test_seed_feedback_distribution.py
+  - bash ops/scripts/check-ai-framework-consistency.sh
+  - bash ops/scripts/check-local-boundary.sh
+artifacts:
+  migration_note: docs/template-migrations/20260906-seed-feedback.md
+  upgrade_prompt: prompts/codex/template-upgrade-prompts/20260906-seed-feedback-prompt.md
