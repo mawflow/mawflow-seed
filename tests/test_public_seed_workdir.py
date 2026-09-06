@@ -78,6 +78,31 @@ def materialize_source_payload(tmp_path: Path) -> dict[str, object]:
 
 
 class PublicSeedWorkdirTest(unittest.TestCase):
+    def test_real_git_checkout_metadata_is_not_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_name:
+            root = Path(temp_name)
+            manifest = materialize_minimal_payload(root)
+            subprocess.run(["git", "init", "--quiet", str(root)], check=True)
+            (root / ".git/metadata.json").write_text("not a payload JSON file")
+            (root / ".git/history.md").write_text("[old](../../outside.md)")
+            self.assertEqual(MODULE.check_public_workdir(root, manifest, True)["status"], "ready")
+
+    def test_root_worktree_pointer_is_allowed_but_nested_metadata_is_blocked(self) -> None:
+        for nested_directory in (False, True):
+            with self.subTest(nested_directory=nested_directory), tempfile.TemporaryDirectory() as temp_name:
+                root = Path(temp_name)
+                manifest = materialize_minimal_payload(root)
+                (root / ".git").write_text("gitdir: ../checkout/.git/worktrees/feature\n")
+                self.assertEqual(MODULE.check_public_workdir(root, manifest, True)["status"], "ready")
+                nested = root / "code/component/.git"
+                nested.parent.mkdir(parents=True, exist_ok=True)
+                if nested_directory:
+                    nested.mkdir()
+                else:
+                    nested.write_text("gitdir: ../../somewhere\n")
+                findings = MODULE.check_public_workdir(root, manifest, True)["blockers"]
+                self.assertIn({"kind": "nested_git_metadata", "path": "code/component/.git"}, findings)
+
     def test_map_assets_are_required_and_runnable_in_materialized_payload(self) -> None:
         with tempfile.TemporaryDirectory() as temp_name:
             root = Path(temp_name)

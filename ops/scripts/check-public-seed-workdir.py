@@ -28,9 +28,25 @@ def rel_exists(root: Path, rel_path: str) -> bool:
     return (target / "README.md").exists()
 
 
+def workdir_paths(root: Path):
+    """Inspect payload paths, excluding only the checkout's own Git metadata."""
+    for directory, dirs, filenames in os.walk(root, followlinks=False):
+        base = Path(directory)
+        for name in dirs + filenames:
+            path = base / name
+            if base == root and name == ".git" and not path.is_symlink():
+                continue
+            yield path
+        # Nested metadata is yielded and rejected, never traversed. A root
+        # worktree pointer is also metadata; symlink entries remain forbidden.
+        dirs[:] = [name for name in dirs if name != ".git"]
+
+
 def check_markdown_links(root: Path) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
-    for path in sorted(root.rglob("*.md")):
+    for path in sorted(workdir_paths(root)):
+        if path.suffix != ".md" or not path.is_file() or path.is_symlink():
+            continue
         rel_file = path.relative_to(root).as_posix()
         text = path.read_text(encoding="utf-8", errors="replace")
         for line_no, line in enumerate(text.splitlines(), start=1):
@@ -74,15 +90,16 @@ def check_public_workdir(root: Path, manifest_path: Path, strict: bool) -> dict[
                 {"kind": "forbidden_local_runtime_file", "path": path.relative_to(root).as_posix()}
             )
 
-    for path in sorted(root.rglob("*")):
+    for path in sorted(workdir_paths(root)):
         rel_path = path.relative_to(root).as_posix()
         if path.is_symlink():
             blockers.append({"kind": "symlink_not_allowed", "path": rel_path})
             continue
-        if not path.is_file():
-            continue
         if ".git" in path.relative_to(root).parts:
             blockers.append({"kind": "nested_git_metadata", "path": rel_path})
+            continue
+        if not path.is_file():
+            continue
         if path.suffix == ".json":
             try:
                 json.loads(path.read_text(encoding="utf-8"))

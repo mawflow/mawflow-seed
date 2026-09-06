@@ -4,6 +4,8 @@ title: Seed 经验反馈报告与接收评审
 risk_level: T2
 status: active
 source_paths:
+  - ops/scripts/check-public-seed-workdir.py
+  - tests/test_public_seed_workdir.py
   - docs/ai-instructions/instructions/seed-feedback.md
   - docs/ai-instructions/templates/seed-feedback-report.md
   - docs/capabilities/seed-feedback-report.md
