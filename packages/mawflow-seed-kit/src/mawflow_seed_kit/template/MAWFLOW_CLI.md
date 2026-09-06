@@ -56,3 +56,13 @@ mawflow project sources consolidate --plan
 需要先审阅变更时给写操作加 `--plan`；应用已保存计划使用对应命令的精确确认串。直接执行写操作时，CLI 仍会在内部生成可回滚计划再应用。Git Access Profile 可独立选择继承、直连或 SecretStore 网络路由；共享 Seed 与云端 readiness 不保存代理明文、本机绝对路径、源码内容或未提交改动。
 
 多个线上或生产服务器通过 `.maw/deployments.yaml` 的稳定部署目标配置。服务器资源可复用，但每个目标必须显式选择 `environment_role`、`server_ref`、可选子项目和 `component_refs`；空范围不代表全部组件，生产门禁不能通过自定义环境 key 绕过。
+
+## 通用 Agent 入口与上下文
+
+```bash
+mawflow-seed-kit doctor agents .
+mawflow-seed-kit context . --agent codex --module <module-key> --max-chars 12000 --format markdown
+mawflow-seed-kit context . --agent unknown --task-kind review --format json
+```
+
+Agent 身份未知时统一使用 `AI_START_HERE.md`。静态 ready 只证明入口契约，通过真实会话验收后才能声明运行验证通过。

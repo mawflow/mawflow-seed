@@ -649,6 +649,8 @@ def _validate_model(configs: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
 
 
 def compile_project_definition(root: Path | str) -> dict[str, Any]:
+    from .agent_context import inspect_agent_readiness
+
     project_root = Path(root).expanduser().resolve(strict=True)
     contract = catalog()
     required_files = set(contract["required_files"])
@@ -713,6 +715,7 @@ def compile_project_definition(root: Path | str) -> dict[str, Any]:
             "warnings": sum(1 for item in issues if item["severity"] == "warning"),
         },
         "fingerprint": fingerprint,
+        "agent_readiness": inspect_agent_readiness(project_root),
     }
 
 

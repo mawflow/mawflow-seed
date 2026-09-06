@@ -1,0 +1,37 @@
+schema_version: 1
+upgrade_key: 20260906-agent-portability
+title: 跨 Agent 专用入口与通用回退
+risk_level: T3
+status: active
+source_template_files:
+- AI_START_HERE.md
+- AGENTS.md
+- CLAUDE.md
+- GEMINI.md
+- CHATGPT.md
+- CHATGPT_TO_AI.md
+- .maw/agent-entry.yaml
+- .maw/agent-rules.yaml
+- .maw/agent-context.md
+- ops/scripts/check-agent-portability.py
+- docs/capabilities/agent-portability.md
+target_project_policy:
+  upgrade_mode: decision_matrix_incremental_merge_only
+  agent_entry: merge_missing_fields
+  tool_adapters: managed_block_preserve_manual_text
+  unknown_agent: AI_START_HERE.md
+  protect:
+  - README.md
+  - code/
+  - app_key
+  - releases
+  - repositories
+  - secrets
+  - .local/
+  - module_dossiers
+validation:
+- mawflow-seed-kit doctor agents .
+- python3 ops/scripts/check-agent-portability.py --check-distribution
+- python3 -m pytest -q tests/test_agent_portability.py
+propagation:
+  migration_note: docs/template-migrations/20260906-agent-portability.md

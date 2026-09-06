@@ -120,6 +120,10 @@ def check_alignment(root: Path = ROOT) -> dict[str, Any]:
             catalog_source = catalog_relative.as_posix()
         catalog = _read_json(root / catalog_relative)
         fingerprint = _contract_fingerprint(catalog)
+        agent_contract_path = package_root / "resources/agent-contract.v1.json"
+        agent_hash = "sha256:" + hashlib.sha256(agent_contract_path.read_bytes()).hexdigest()
+        if (catalog.get("agent_bootstrap") or {}).get("resource_hash") != agent_hash:
+            block("seed_agent_contract_fingerprint_mismatch", actual=(catalog.get("agent_bootstrap") or {}).get("resource_hash"), expected=agent_hash)
         catalog_py = package_root / "catalog.py"
         init_py = package_root / "__init__.py"
 

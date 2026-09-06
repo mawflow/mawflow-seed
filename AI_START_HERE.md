@@ -27,13 +27,10 @@ Mawflow Agent Skills may be installed at user scope to help an Agent discover th
 
 ## Startup Order
 
-1. Read `AGENTS.md` if your tool supports it.
-2. Read this file.
-3. Read `.maw/agent-entry.yaml`.
-4. Read `.maw/project.yaml`, `.maw/subprojects.yaml`, `.maw/code-sources.yaml`, `.maw/deployments.yaml`, `.maw/components.yaml`, `.maw/modules.yaml`, and `.maw/app-runtime.yaml`.
-5. Read `docs/README.md` and then only the docs needed for the current task.
-6. Locate the module or component before editing.
-7. State the intended scope and validation path before broad changes.
+1. Read `.maw/agent-entry.yaml` and `.maw/agent-context.md`.
+2. Read `.maw/agent-rules.yaml`, `.maw/project.yaml`, `.maw/components.yaml`, and `.maw/modules.yaml`.
+3. Follow task_routes and the selected module doc; load only task-relevant context.
+4. Identify allowed paths, validation commands, and existing authorization before editing.
 
 ## Default Boundaries
 
@@ -52,3 +49,7 @@ At the end of a task, report:
 - known risks;
 - release or local environment impact;
 - suggested next step when a human decision is needed.
+
+## 选择 Agent 入口
+
+[Codex / Cursor](AGENTS.md) · [Claude Code](CLAUDE.md) · [Gemini CLI](GEMINI.md) · [ChatGPT Web / GitHub 源码阅读](CHATGPT.md) · [通用入口](AI_START_HERE.md)。无法识别 Agent 时使用通用入口。网页 Agent 由用户显式提供入口链接与仓库目标分支或提交。

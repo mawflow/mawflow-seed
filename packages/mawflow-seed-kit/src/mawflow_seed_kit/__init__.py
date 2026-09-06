@@ -1,5 +1,6 @@
 from .catalog import CONTRACT_VERSION, SEED_VERSION, catalog, contract_fingerprint, public_catalog
 from .compiler import compile_project_definition
+from .agent_context import export_agent_context, inspect_agent_readiness, render_agent_context
 from .components import (
     apply_component_plan,
     inspect_components,
@@ -26,6 +27,7 @@ from .project_topology import (
     plan_subproject_remove,
     plan_subproject_upsert,
 )
+from .script_contract import public_script_contract, script_contract
 from .template import materialize_project
 
 __all__ = [
@@ -37,6 +39,9 @@ __all__ = [
     "apply_topology_plan",
     "catalog",
     "compile_project_definition",
+    "export_agent_context",
+    "inspect_agent_readiness",
+    "render_agent_context",
     "contract_fingerprint",
     "default_managed_clone_path",
     "inspect_deployment_targets",
@@ -61,7 +66,9 @@ __all__ = [
     "plan_subproject_remove",
     "plan_subproject_upsert",
     "public_catalog",
+    "public_script_contract",
     "rollback_migration",
+    "script_contract",
 ]
 
-__version__ = "2.6.0"
+__version__ = "2.8.0"

@@ -267,3 +267,7 @@ MAWflow Seed 使用 MIT License，具体内容见 `LICENSE`。
 - 快速开始：<https://ai.mawflow.com/docs/quickstart>
 - 产品能力：<https://ai.mawflow.com/docs/product-features>
 - 信任中心：<https://ai.mawflow.com/docs/trust-center>
+
+## 选择 Agent 入口
+
+[Codex / Cursor](AGENTS.md) · [Claude Code](CLAUDE.md) · [Gemini CLI](GEMINI.md) · [ChatGPT Web / GitHub 源码阅读](CHATGPT.md) · [通用入口](AI_START_HERE.md)。无法识别 Agent 时使用通用入口。网页 Agent 由用户显式提供入口链接与仓库目标分支或提交。

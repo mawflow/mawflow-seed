@@ -14,7 +14,7 @@ Mawflow Seed provides a shared entry protocol for local AI coding tools working 
 - `.maw/agent-rules.yaml`: shared rule set for tool-specific adapters.
 - `AGENTS.md`: Codex and CLI Agent adapter aligned to the shared entry contract.
 
-Future adapters such as `CLAUDE.md`, `GEMINI.md`, and `.cursor/rules/mawflow.md` should be generated from or checked against `.maw/agent-entry.yaml`.
+Seed 2.8 provides generated managed blocks in `AGENTS.md`, `CLAUDE.md` and `GEMINI.md`; Cursor consumes `AGENTS.md`. Unknown agents use `AI_START_HERE.md`. See [agent portability](agent-portability.md).
 
 ## Boundaries
 

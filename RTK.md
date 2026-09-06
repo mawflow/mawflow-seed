@@ -6,11 +6,11 @@
 
 ## 基本规则
 
-所有 shell 命令默认先尝试 `rtk` 包装。
+先检查 `rtk` 是否可用；可用时默认先尝试包装，未安装时直接使用有界原生命令，不要求为读取项目安装工具。
 
 - 优先使用 `rtk <command>`。
 - 只有 `rtk` 不支持、会破坏命令行为、或必须获取原始机器可解析输出时，才使用 `rtk proxy <command>`。
-- 文件读取、搜索、diff、git 状态查看和脚本验证默认不要直接使用原生命令。
+- 文件读取、搜索、diff、git 状态查看和脚本验证在 RTK 可用时优先使用包装；不可用时使用原生命令。
 - 长输出先落盘或缩小范围，再用 `rtk log`、`rtk summary`、`sed -n` 或限定路径读取摘要。
 - 搜索和读取必须先限定任务相关目录；不要因为缺少上下文就整仓扫描。
 
@@ -47,7 +47,7 @@ rtk proxy <command>
 
 MAW 项目通常同时包含需求、设计、模块档案、AI 协作规则、运维脚本、发布覆盖层和一次性提示词。默认按“启动上下文 -> 总索引 -> 子目录 README -> 任务相关文档 -> 必要片段”的顺序读取。
 
-- 开始任何开发、配置、文档或脚本任务前，先读 `README.md`、`.maw/codex-context.md`、`.maw/agent-briefing.md`、`.maw/project.yaml`、`.maw/components.yaml`、`.maw/modules.yaml`、`.maw/policies.yaml`、`docs/README.md`。
+- 启动读取顺序统一由 `.maw/agent-entry.yaml` 定义；RTK 不再维护第二份必读清单。
 - 处理具体端代码时，先读对应 `code/<component>/.maw.component.yaml` 和 `docs/ai-coding/component-guides/<component>.md`。
 - 处理需求、设计、计划、验收或交付资料时，先读 `docs/README.md` 和对应子目录 `README.md`，再读任务相关文件。
 - 处理 AI 编码边界时，先读 `docs/ai-coding/README.md`，再按任务风险读取初始化清单、模块档案规则、代码风格或端说明。

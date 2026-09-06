@@ -1,10 +1,10 @@
 {
   "schema": "mawflow.seed_public_payload.v2",
-  "seed_version": "2.6.0",
+  "seed_version": "2.8.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:4cb0dd0b2db2cfd197243e669982bdbbbf4ba37fe4aaf98809b105a112a4def5",
+  "contract_fingerprint": "sha256:27751994f2cf0f94cb84cb7c4272d2caaba6c66877f0e47531ea7eb37837d057",
   "bom": {
-    "kit": "mawflow-seed-kit==2.6.0",
+    "kit": "mawflow-seed-kit==2.8.0",
     "contract": "seed-contract-v2"
   },
   "required_paths": [
@@ -67,6 +67,7 @@
     "docs/template-migrations/20260820-public-payload-map-assets-alignment.md",
     "docs/template-migrations/20260902-subprojects-shared-code-sources-hydration.md",
     "docs/template-migrations/20260902-multi-deployment-targets.md",
+    "docs/template-migrations/20260904-selectable-local-dev-and-script-contract.md",
     "docs/handbooks/README.md",
     "docs/handbooks/manifest.yaml",
     "docs/handbooks/requirements/README.md",
@@ -83,6 +84,7 @@
     ".maw-template/upgrades/20260820-public-payload-map-assets-alignment.yaml",
     ".maw-template/upgrades/20260902-subprojects-shared-code-sources-hydration.yaml",
     ".maw-template/upgrades/20260902-multi-deployment-targets.yaml",
+    ".maw-template/upgrades/20260904-selectable-local-dev-and-script-contract.yaml",
     "packages/mawflow-seed-kit/pyproject.toml",
     "packages/mawflow-seed-kit/README.md",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/__init__.py",
@@ -90,6 +92,8 @@
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/manifest.json",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/components.py",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/project_topology.py",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/script_contract.py",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/script-contract.v1.json",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/contracts/v2/catalog.json",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/contracts/v2/subprojects.schema.json",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/contracts/v2/code-sources.schema.json",
@@ -98,6 +102,8 @@
     "ops/scripts/check-public-seed-workdir.py",
     "ops/scripts/plan-template-drift.py",
     "ops/scripts/plan-release-components.py",
+    "ops/scripts/local-dev.sh",
+    "ops/scripts/run-local-dev.py",
     "ops/lib/maw_config_loader.py",
     "ops/scripts/check-seed-version-alignment.py",
     "ops/scripts/migrate-module-changelogs.py",
@@ -109,7 +115,21 @@
     "tests/test_plan_template_drift.py",
     "tests/test_seed_version_alignment.py",
     "tests/test_seed_kit_v2.py",
-    "tests/test_plan_release_deployment_targets.py"
+    "tests/test_plan_release_deployment_targets.py",
+    "tests/test_local_dev_runner.py",
+    "tests/test_script_contract.py",
+    "CLAUDE.md",
+    "GEMINI.md",
+    ".maw/agent-rules.yaml",
+    ".maw/agent-context.md",
+    "ops/scripts/check-agent-portability.py",
+    "tests/test_agent_portability.py",
+    "docs/capabilities/agent-portability.md",
+    "docs/template-migrations/20260906-agent-portability.md",
+    ".maw-template/upgrades/20260906-agent-portability.yaml",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/agent_context.py",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/agent-contract.v1.json",
+    "CHATGPT.md"
   ],
   "forbidden_paths": [
     ".maw/secrets.yaml",
@@ -122,13 +142,61 @@
     "prompts/private"
   ],
   "smoke_commands": [
-    ["python3", "ops/scripts/check-public-seed-workdir.py", "--format", "json", "--strict"],
-    ["python3", "ops/scripts/check-seed-version-alignment.py", "--format", "json", "--strict"],
-    ["python3", "ops/scripts/migrate-module-changelogs.py", "check", "--format", "json"],
-    ["sh", "ops/scripts/check-template-module-docs.sh"],
-    ["sh", "ops/scripts/check-module-candidates.sh"],
-    ["sh", "ops/scripts/check-technical-map.sh"],
-    ["python3", "ops/scripts/extract-project-metadata.py", "--format", "json"],
-    ["python3", "-m", "pytest", "-q", "tests/test_seed_kit_v2.py", "tests/test_plan_release_deployment_targets.py"]
+    [
+      "python3",
+      "ops/scripts/check-public-seed-workdir.py",
+      "--format",
+      "json",
+      "--strict"
+    ],
+    [
+      "python3",
+      "ops/scripts/check-seed-version-alignment.py",
+      "--format",
+      "json",
+      "--strict"
+    ],
+    [
+      "python3",
+      "ops/scripts/migrate-module-changelogs.py",
+      "check",
+      "--format",
+      "json"
+    ],
+    [
+      "sh",
+      "ops/scripts/check-template-module-docs.sh"
+    ],
+    [
+      "sh",
+      "ops/scripts/check-module-candidates.sh"
+    ],
+    [
+      "sh",
+      "ops/scripts/check-technical-map.sh"
+    ],
+    [
+      "python3",
+      "ops/scripts/extract-project-metadata.py",
+      "--format",
+      "json"
+    ],
+    [
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_seed_kit_v2.py",
+      "tests/test_plan_release_deployment_targets.py",
+      "tests/test_local_dev_runner.py",
+      "tests/test_script_contract.py",
+      "tests/test_agent_portability.py",
+      "tests/test_seed_version_alignment.py"
+    ],
+    [
+      "python3",
+      "ops/scripts/check-agent-portability.py",
+      "--check-distribution"
+    ]
   ]
 }

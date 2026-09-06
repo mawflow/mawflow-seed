@@ -196,7 +196,8 @@ def _normalized_top_level_schema(text: str) -> str:
     if schema_node is None:
         separator = "" if not text or text.endswith("\n") else "\n"
         return f"{text}{separator}schema_version: 2\n"
-    if payload.get("schema_version") == 2:
+    version = payload.get("schema_version")
+    if isinstance(version, int) and not isinstance(version, bool) and version >= 2:
         return text
     if not isinstance(schema_node, ScalarNode):
         raise ValueError("seed_migration_schema_version_scalar_required")
@@ -803,6 +804,10 @@ def plan_migration(
             protected_existing_paths.append(source_ref)
 
     technology_field_normalizations: list[dict[str, Any]] = []
+    from .agent_context import portable_agent_files
+
+    # Managed blocks and missing protocol fields are additive; custom prose stays.
+    desired.update(portable_agent_files(project_root))
     with tempfile.TemporaryDirectory(
         prefix="mawflow-seed-migration-repair-"
     ) as repair_temporary:

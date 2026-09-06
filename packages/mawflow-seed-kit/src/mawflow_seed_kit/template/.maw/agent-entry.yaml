@@ -1,4 +1,4 @@
-schema_version: 2
+schema_version: 3
 agent_entry:
   start_here: AI_START_HERE.md
   project_definition: .maw/project.yaml
@@ -11,3 +11,86 @@ agent_entry:
   local_overlay_root: .local/.maw
   managed_clone_root: .local/code-sources
   secret_policy: references_only
+agent_protocol_version: 1
+startup:
+  recommended_order:
+  - AI_START_HERE.md
+  - .maw/agent-entry.yaml
+  - .maw/agent-context.md
+  - .maw/project.yaml
+  - .maw/components.yaml
+  - .maw/modules.yaml
+  read_policy:
+    docs_are_on_demand: true
+    prompts_are_manual_only: true
+    archive_is_not_default_context: true
+facts:
+  project: .maw/project.yaml
+  subprojects: .maw/subprojects.yaml
+  code_sources: .maw/code-sources.yaml
+  deployment_targets: .maw/deployments.yaml
+  components: .maw/components.yaml
+  modules: .maw/modules.yaml
+  runtime: .maw/app-runtime.yaml
+protected_paths:
+  never_commit:
+  - .local/**
+  - .maw/*.local.yaml
+  - .ssh/**
+  - artifacts/**
+  manual_only:
+  - prompts/**
+  - docs/archive/**
+execution_contract:
+  before_editing:
+  - identify module and owned paths
+  - choose real validation commands
+  closeout:
+    required_human_fields:
+    - changes
+    - validation
+    - unverified
+    - risks
+    - release_impact
+task_routes:
+  development:
+  - docs/README.md
+  review:
+  - docs/README.md
+  delivery:
+  - MAWFLOW_CLI.md
+  governance:
+  - PROJECT_COMMANDS.md
+tool_adapters:
+  codex:
+    file: AGENTS.md
+    loader: instructions
+    status: supported
+  claude:
+    file: CLAUDE.md
+    loader: import
+    status: supported
+  gemini:
+    file: GEMINI.md
+    loader: import
+    status: supported
+  cursor:
+    file: AGENTS.md
+    loader: instructions
+    status: supported
+  generic_ai:
+    file: AI_START_HERE.md
+    loader: manual
+    status: supported
+  chatgpt_web:
+    file: CHATGPT.md
+    loader: repository_links
+    status: supported
+tool_preferences:
+  rtk: optional_with_native_fallback
+  mcp: optional
+  skills: optional
+git_policy:
+  commit: project_policy
+  push: project_policy
+  mirror: project_policy

@@ -5,6 +5,10 @@ app_runtime:
     ai_debug_source: maw
     conflict_policy: code_wins_and_update_maw
     default_profile: dev
+    # npm run dev 只启动当前电脑选择的服务；本机工作台把选择写入
+    # `.local/.maw/app-runtime.yaml`，不会改变团队成员的启动范围。
+    development_start_preset: default_application
+    development_app_keys: []
     closeout_local_entry_required_when_configured: true
     local_environment_install_hint: "#安装开发环境"
   # 组件初始化不自动猜测运行端口或创建应用；需要时由项目按事实登记。

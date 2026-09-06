@@ -85,3 +85,13 @@ python3 ops/scripts/plan-release-components.py 发布生产 \
 ## AI 对话入口
 
 对 AI 说“初始化组件 api，类型 backend”“启用组件 api”时，AI 应读取 `PROJECT_COMMANDS.md`，再调用上述 CLI 或执行同等验证链路。跨 AI 交接见 `CHATGPT_TO_AI.md`。
+
+## 通用 Agent 入口与上下文
+
+```bash
+mawflow-seed-kit doctor agents .
+mawflow-seed-kit context . --agent codex --module <module-key> --max-chars 12000 --format markdown
+mawflow-seed-kit context . --agent unknown --task-kind review --format json
+```
+
+Agent 身份未知时统一使用 `AI_START_HERE.md`。静态 ready 只证明入口契约，通过真实会话验收后才能声明运行验证通过。

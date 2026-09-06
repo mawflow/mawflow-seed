@@ -1,0 +1,80 @@
+{
+  "schema": "mawflow.seed_script_contract.v1",
+  "canonical_local_development_script": "dev",
+  "real_command_sources": [
+    "code/<app_key>/.maw.component.yaml#commands.dev",
+    "code/<app_key>/.maw.component.yaml#commands.start",
+    "code/<app_key>/package.json#scripts.dev",
+    "code/<app_key>/package.json#scripts.start",
+    "ops/scripts",
+    "docker compose files"
+  ],
+  "readiness_gates": [
+    "development_service_selection_configured",
+    "selected_services_have_real_commands",
+    "canonical_dev_script_connected",
+    "successful_background_start_recorded"
+  ],
+  "groups": [
+    {
+      "key": "local_debug",
+      "label": "本地调试",
+      "description": "启动、查看或停止当前电脑的开发服务。",
+      "environment_key": "local",
+      "exact": ["dev", "local:dev", "test:dev", "local:test", "dev:list", "dev:status", "dev:stop"],
+      "recommended": ["dev"],
+      "execution_modes": {
+        "dev": "background_development",
+        "dev:list": "confirmed_environment_action",
+        "dev:status": "confirmed_environment_action",
+        "dev:stop": "confirmed_environment_action"
+      },
+      "default_execution_mode": "compatibility_alias"
+    },
+    {
+      "key": "verification",
+      "label": "检查与验证",
+      "description": "执行测试计划、代码检查或项目验证，不负责发布。",
+      "environment_key": "local",
+      "exact": ["test", "test:plan", "test:run", "check:all"],
+      "prefixes": ["test:", "check:"],
+      "exclude": ["test:dev"],
+      "recommended": ["test:plan", "check:all"],
+      "default_execution_mode": "confirmed_environment_action"
+    },
+    {
+      "key": "configuration",
+      "label": "配置与帮助",
+      "description": "查看脚本说明或读取合并后的 Seed 配置。",
+      "environment_key": "project",
+      "prefixes": ["scripts:", "config:"],
+      "recommended": ["scripts:help"],
+      "default_execution_mode": "confirmed_environment_action"
+    },
+    {
+      "key": "release_planning",
+      "label": "发布计划",
+      "description": "只生成发布范围和风险计划；正式发布仍在发布流程确认。",
+      "environment_key": "staging_production",
+      "prefixes": ["release:plan:"],
+      "recommended": ["release:plan:test"],
+      "default_execution_mode": "release_workspace"
+    },
+    {
+      "key": "delivery_operations",
+      "label": "交付与运维",
+      "description": "部署、镜像、数据库和交付脚本；环境页只展示，不直接执行。",
+      "environment_key": "delivery",
+      "prefixes": ["release:", "deploy:", "publish", "mirror:", "customer:", "delivery:", "db:"],
+      "default_execution_mode": "terminal_only"
+    },
+    {
+      "key": "project_extensions",
+      "label": "项目扩展脚本",
+      "description": "项目自行增加的脚本；保留在命令面板中，不冒充 Seed 标准入口。",
+      "environment_key": "project",
+      "fallback": true,
+      "default_execution_mode": "terminal_only"
+    }
+  ]
+}

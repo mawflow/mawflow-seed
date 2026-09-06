@@ -59,6 +59,12 @@ def materialize_project(
         raise ValueError("seed_materialize_profile_invalid")
     destination.mkdir(parents=True, exist_ok=True)
     _copy_tree(files("mawflow_seed_kit").joinpath("template"), destination)
+    from .agent_context import portable_agent_files
+
+    for source_ref, text in portable_agent_files(destination).items():
+        target = destination / source_ref
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8")
 
     replacements = {"__PROJECT_KEY__": project_key, "__PROJECT_NAME__": name.strip() or project_key}
     for path in destination.rglob("*"):

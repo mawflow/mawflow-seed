@@ -1,25 +1,21 @@
-@RTK.md
+<!-- mawflow:bootstrap:start -->
+# MAWflow Agent 入口
+Read [AI_START_HERE.md](AI_START_HERE.md) before working in this project.
+共享规则与项目事实以 `.maw/agent-entry.yaml`、`.maw/agent-rules.yaml` 为准。
+只读取本任务所需的模块和文档；先确认允许路径、禁止路径及验证命令。
+不自动读取 prompts、归档、本机私有目录；不提交秘密或无关改动。
+工具、Skill、MCP、RTK 均非读取项目规则的前置条件；已有授权按任务范围延续。
+完成时区分已修改、已验证、已发布与真人验收，列出未验证项。
+<!-- mawflow:bootstrap:end -->
+
 
 # AGENTS.md
 
-本文件是 Codex、CLI Agent 和其它自动化协作者进入本仓库时的轻量入口。通用 AI 工作目录入口以 `AI_START_HERE.md` 和 `.maw/agent-entry.yaml` 为准；详细规则以 `RTK.md`、`.maw/codex-context.md`、`.maw/agent-briefing.md`、`docs/ai-instructions/README.md` 和任务命中的具体指令为准。
+本文件是 Codex、CLI Agent 和其它自动化协作者进入本仓库时的轻量入口。通用 AI 工作目录入口以 `AI_START_HERE.md` 和 `.maw/agent-entry.yaml` 为准；详细规则以 `RTK.md`、`.maw/agent-context.md`、`.maw/agent-briefing.md`、`docs/ai-instructions/README.md` 和任务命中的具体指令为准。
 
 ## Startup Context
 
-开始任何开发、配置、文档、脚本或模板协议任务前，先按需读取：
-
-1. `AI_START_HERE.md`
-2. `.maw/agent-entry.yaml`
-3. `.maw/codex-context.md`
-4. `.maw/agent-briefing.md`
-5. `.maw/project.yaml`
-6. `.maw/components.yaml`
-7. `.maw/modules.yaml`
-8. `.maw/app-runtime.yaml`
-9. `.maw/policies.yaml`
-10. `docs/README.md`
-11. `docs/ai-instructions/README.md`
-12. 与当前任务直接相关的 README、指令或脚本说明
+开始任务时只读取 `AI_START_HERE.md`、`.maw/agent-entry.yaml`、`.maw/agent-context.md` 与项目/组件/模块索引；后续按 task_routes 和模块 doc 加载。通用高级规则见 `docs/ai-coding/project-workflow.md`。
 
 只有模板维护、来源升级、能力地图、项目信号或仓库身份任务才继续读取 `.maw/upgrade-policy.yaml`、`.maw/template-source.yaml`、`.maw/capabilities.yaml`、`.maw/project-signals.yaml` 和 `.maw/repository-identity.yaml`。公开 payload 不包含内部模板来源文件；缺少这些高级维护文件时按当前公开项目事实继续，不得反向读取私有来源。
 
@@ -73,7 +69,7 @@
 
 ## Validation And Git
 
-- Shell 命令默认使用 `rtk`；需要原始机器输出时使用 `rtk proxy`，并限制路径和输出行数。
+- `rtk` 可用时用于压缩输出；未安装时使用原生命令并限制路径和输出行数，不能阻止基础工作。
 - 修改模板协议、指令、任务包或检查脚本后，优先运行：
   - `git diff --check`
   - `bash ops/scripts/check-template-module-docs.sh`

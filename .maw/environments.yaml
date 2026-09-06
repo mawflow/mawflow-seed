@@ -345,17 +345,27 @@ host_runtime_environment:
       update_required_during_test_environment_install: true
       merge_policy: additive_preserve_existing_scripts
       root_scripts_are_entrypoints_not_source_of_truth: true
+      script_contract_ref: mawflow-seed-kit://script-contract/v1
+      local_workbench_projection: script_group_to_environment_actions
+      local_readiness_gates:
+        - development_service_selection_configured
+        - selected_services_have_real_commands
+        - canonical_dev_script_connected
+        - successful_background_start_recorded
       source_of_truth_refs:
         - code/<app_key>/.maw.component.yaml commands
         - component package.json scripts
         - ops/scripts
         - docker compose files
       required_scripts:
-        dev: 默认本地开发验收入口；一键启动或重启本地开发环境，并输出本机 127.0.0.1 与局域网调试地址，可转发到 local:dev。
-        local:dev: 稳定底层本地开发入口；可直接接 ops/scripts/local-dev.sh、组件 dev server、Docker Compose 或等价命令。
+        dev: 默认本地开发入口；按当前电脑选择的应用范围启动真实 dev/start 命令，并转发到 local:dev。
+        local:dev: Seed 可选择启动器；读取 .local/.maw/app-runtime.yaml 的设备级选择，未选应用不启动、不探测、不阻塞。
         test:dev: 本地测试/调试兼容入口；应转发到 dev 或 local:dev。
       recommended_scripts:
         - local:test
+        - dev:list
+        - dev:status
+        - dev:stop
         - client:dev
         - client:build
         - server:start

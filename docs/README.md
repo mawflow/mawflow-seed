@@ -127,3 +127,5 @@ AI/Codex 不应在任务开始时全量读取 `docs/**`。本目录采用“总�
 - `acceptance/`：验收清单、测试报告和缺陷清单。
 - `delivery/`：发布说明、交付摘要和交接清单。
 - `archive/`：历史归档目录，AI/Codex 默认永不自动读取。
+
+- [跨 Agent 入口与任务上下文](capabilities/agent-portability.md)：专用入口、未知 Agent 回退、独立就绪检查及受控迁移。

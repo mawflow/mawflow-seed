@@ -214,7 +214,7 @@ grep -Eq '渐进式模块发现|module_candidate|候选模块|TINST-021' docs/ai
 grep -Eq '项目记忆闭环|memory_update|local_update|TINST-022' docs/ai-instructions/README.md docs/ai-instructions/instructions/project-memory-loop.md || fail "project memory loop must be registered"
 grep -Eq '项目升级策略|upgrade decision matrix|TINST-023' docs/ai-instructions/README.md docs/ai-instructions/instructions/project-upgrade-strategy.md || fail "project upgrade strategy must be registered"
 grep -Eq '模板升级策略|升级资产|TINST-024' docs/ai-instructions/README.md docs/ai-instructions/instructions/template-upgrade-strategy.md || fail "template upgrade strategy must be registered"
-require_grep '用户输入.*\.local/.maw/template-source\.yaml.*\.maw/template-source\.yaml.*当前仓库' .maw/codex-context.md docs/ai-instructions/instructions/project-upgrade-strategy.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md GETTING_STARTED.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md
+require_grep '用户输入.*\.local/.maw/template-source\.yaml.*\.maw/template-source\.yaml.*当前仓库' docs/ai-coding/project-workflow.md docs/ai-instructions/instructions/project-upgrade-strategy.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md GETTING_STARTED.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md
 require_grep '个人本机路径|本机路径.*\.local|共享.*git' .maw/template-source.yaml .maw/README.md .local/README.md
 require_grep 'R0|R1|R2|R3|R4' .maw/upgrade-policy.yaml docs/ai-instructions/instructions/project-upgrade-strategy.md docs/ai-instructions/templates/upgrade-decision-matrix.md
 require_grep 'T0|T1|T2|T3|T4' .maw/upgrade-policy.yaml docs/ai-instructions/instructions/template-upgrade-strategy.md docs/ai-instructions/templates/upgrade-decision-matrix.md
@@ -293,8 +293,8 @@ require_grep '#发布公开镜像|#发布开源镜像|TINST-039|repository_publi
 require_grep 'publish-repository-mirror\.sh|same_git_history|export_sanitized_tree' .maw/repositories.yaml docs/repository-publish-mirror-guide.md ops/scripts/README.md docs/capabilities/repository-publish-mirror.md
 private_seed_channel='internal_'"seed"
 require_grep "seed-source-channel-publication|${private_seed_channel}|public_seed|unknown_legacy" .maw/template-source.yaml .maw/capabilities.yaml .maw/project-signals.yaml .maw-template/template.yaml docs/capabilities/seed-source-channel-publication.md docs/template-migrations/20260701-seed-source-channel-publication.md prompts/codex/template-upgrade-prompts/20260701-seed-source-channel-publication-prompt.md
-require_grep 'release_commands|release_confirmation_prompt' docs/ai-coding/module-dossier-rules.md .maw/codex-context.md docs/ai-coding/coding-style.md prompts/codex/task-packs/_template/prompts/01-task-template.md prompts/codex/task-packs/_template/EXECUTE_PROMPT.md
-require_grep '多个 app_key|部分发布|复制其中一条' docs/ai-coding/module-dossier-rules.md .maw/codex-context.md docs/ai-instructions/instructions/release-component.md PROJECT_COMMANDS.md prompts/codex/task-packs/_template/prompts/01-task-template.md
+require_grep 'release_commands|release_confirmation_prompt' docs/ai-coding/module-dossier-rules.md docs/ai-coding/project-workflow.md docs/ai-coding/coding-style.md prompts/codex/task-packs/_template/prompts/01-task-template.md prompts/codex/task-packs/_template/EXECUTE_PROMPT.md
+require_grep '多个 app_key|部分发布|复制其中一条' docs/ai-coding/module-dossier-rules.md docs/ai-coding/project-workflow.md docs/ai-instructions/instructions/release-component.md PROJECT_COMMANDS.md prompts/codex/task-packs/_template/prompts/01-task-template.md
 require_grep 'default_environment|environment_options|release_commands' .maw/releases.yaml docs/configuration-guide.md docs/ai-instructions/instructions/release-component.md
 require_grep 'release_command_aliases|发布测试|发布上线|发布生产|发布生成' .maw/releases.yaml docs/configuration-guide.md docs/ai-instructions/instructions/release-component.md
 require_grep 'default_release_components' .maw/environments.yaml .maw/environments.dev.yaml .maw/environments.pro.yaml .local/.maw/environments.example.yaml docs/configuration-guide.md docs/ai-instructions/instructions/release-component.md
@@ -304,7 +304,7 @@ require_grep '^components: \[\]|components: \[\]' .maw/components.yaml
 require_grep 'components: \{\}' .maw/releases.yaml
 require_grep 'test.*staging.*production|test.*production' .maw/releases.yaml
 require_grep '歧义|向用户确认|不得自行猜测' PROJECT_COMMANDS.md docs/ai-instructions/README.md docs/ai-instructions/instructions/use-project-instructions.md
-require_grep '当前仓库角色|先问清楚|先向用户确认' .maw/codex-context.md AGENTS.md docs/ai-instructions/instructions/use-project-instructions.md
+require_grep '当前仓库角色|先问清楚|先向用户确认' docs/ai-coding/project-workflow.md AGENTS.md docs/ai-instructions/instructions/use-project-instructions.md
 require_grep '#T001' docs/ai-instructions/README.md docs/ai-instructions/instructions/use-project-instructions.md
 require_grep '#T指令号/关键字|#P指令号/关键字' docs/ai-instructions/instructions/use-project-instructions.md
 require_grep '维护 PROJECT_COMMANDS' docs/ai-instructions/instructions/update-project-instructions.md
@@ -380,7 +380,7 @@ require_grep 'language.*zh-CN|audience.*human_and_codex|closeout_profile.*zh_cn_
 require_grep 'documentation_language.*zh-CN' prompts/codex/task-packs/_template/manifest.json prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/manifest.json
 require_grep 'documentation: zh-CN|generated_documentation: zh-CN|task_pack_body: zh-CN' .maw/interaction.yaml
 require_grep 'i18n|中文给人读|英文.*AI|human.*zh-CN|ai.*en-US' .maw/interaction.yaml .maw-template/template.yaml docs/template-repository-ai-design.md docs/ai-instructions/instructions/final-closeout-response.md docs/ai-instructions/instructions/create-task-prompt-project.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md prompts/codex/task-packs/_template/manifest.json prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/manifest.json .maw-template/upgrades/20260706-derived-doc-language-default.yaml
-require_grep '文档语言|默认.*中文|documentation|generated_documentation|task_pack_body|component guide|Component Guide|中文标题' .maw/codex-context.md docs/template-repository-ai-design.md docs/ai-instructions/instructions/create-task-prompt-project.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md docs/ai-instructions/instructions/final-closeout-response.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/PLAN.md
+require_grep '文档语言|默认.*中文|documentation|generated_documentation|task_pack_body|component guide|Component Guide|中文标题' docs/ai-coding/project-workflow.md docs/template-repository-ai-design.md docs/ai-instructions/instructions/create-task-prompt-project.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md docs/ai-instructions/instructions/final-closeout-response.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/PLAN.md
 require_grep '中文.*人类优先|人类优先.*中文' prompts/codex/task-packs/_template/EXECUTE_PROMPT.md prompts/codex/task-packs/_template/prompts/00-session-runbook.md prompts/codex/task-packs/README.md
 if grep -R -nE '^(## (Goal|Baseline|Highest Priority Rules|Required Reads|Objective|Implementation Requirements|Suggested Commands|Acceptance Criteria|Final Response Requirements)|# .*Session Runbook|# .+ Component Guide|## (Scope|Build Notes|Sensitive Config))$' \
   prompts/codex/task-packs/_template \
@@ -393,7 +393,7 @@ fi
 rm -f /tmp/maw-english-doc-headings.$$
 require_grep 'dry-run|customer|developer|CHECKSUMS|delivery-report' ops/scripts/export-code-only.sh ops/scripts/README.md
 grep -Eq '经验防重复踩坑|avoid-repeat-pitfalls|experience-index|solutions' docs/ai-instructions/README.md docs/ai-instructions/experience-index.md docs/ai-instructions/solutions/README.md || fail "experience index and solutions protocol must be registered"
-grep -Eq '不得主动全量读取|不主动.*solutions|命中.*索引' docs/ai-instructions/solutions/README.md .maw/codex-context.md || fail "solutions must require index-first reading"
+grep -Eq '不得主动全量读取|不主动.*solutions|命中.*索引' docs/ai-instructions/solutions/README.md docs/ai-coding/project-workflow.md || fail "solutions must require index-first reading"
 require_grep 'experience-index' RTK.md docs/ai-coding/README.md docs/ai-instructions/instructions/use-project-instructions.md docs/ai-instructions/instructions/update-project-instructions.md
 require_grep 'solutions' RTK.md docs/ai-coding/README.md docs/ai-instructions/instructions/use-project-instructions.md docs/ai-instructions/instructions/update-project-instructions.md
 require_grep 'maw-key-get|config-key-index|template\.applied_version|release\.component\.command|module\.dossier' docs/configuration-guide.md ops/scripts/README.md .maw-template/config-key-index.yaml
@@ -436,7 +436,7 @@ require_grep '源模板读取优先级：用户输入 > \.local/\.maw/template-s
 require_grep '源模板版本：main' GETTING_STARTED.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md
 require_grep '源模板版本：<生成时填入当前模板仓库 HEAD commit' docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md
 require_grep '未指定 commit.*当前仓库角色|是否指定 commit 不决定在哪个仓库执行' PROJECT_COMMANDS.md docs/ai-instructions/README.md docs/ai-instructions/instructions/template-upgrade-strategy.md docs/ai-instructions/instructions/derived-template-drift-upgrade.md AGENTS.md
-require_grep 'template_source.version.*默认.*main|默认 `main`' docs/ai-instructions/instructions/derived-template-drift-upgrade.md .maw/codex-context.md AGENTS.md
+require_grep 'template_source.version.*默认.*main|默认 `main`' docs/ai-instructions/instructions/derived-template-drift-upgrade.md docs/ai-coding/project-workflow.md AGENTS.md
 require_grep '不要只.*任务包路径|任务包目录推测|只凭任务包目录' docs/ai-instructions/instructions/use-builtin-template-task-packs.md prompts/codex/task-packs/README.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/prompts/00-session-runbook.md
 require_grep 'EXP-003' docs/ai-instructions/experience-index.md
 require_grep 'EXP-005' docs/ai-instructions/experience-index.md
@@ -468,14 +468,14 @@ require_grep 'experience-index' docs/ai-instructions/instructions/create-task-pr
 require_grep 'solutions' docs/ai-instructions/instructions/create-task-prompt-project.md prompts/codex/06-codex-upgrade-template-features.md prompts/codex/05-codex-desensitize-check.md
 require_grep 'experience_lookup' docs/ai-instructions/instructions/create-task-prompt-project.md prompts/codex/06-codex-upgrade-template-features.md prompts/codex/05-codex-desensitize-check.md
 grep -Eq 'experience_lookup|experience-index|solutions' docs/ai-coding/coding-style.md docs/ai-coding/module-dossier-rules.md prompts/codex/task-packs/_template/prompts/01-task-template.md || fail "final response and task-pack templates must include experience lookup"
-grep -q '.maw/modules.yaml' TEMPLATE_OVERVIEW.md .maw/codex-context.md || fail "template overview or codex context must reference .maw/modules.yaml"
+grep -q '.maw/modules.yaml' TEMPLATE_OVERVIEW.md docs/ai-coding/project-workflow.md || fail "template overview or codex context must reference .maw/modules.yaml"
 grep -Eq '相对路径|project_root_relative' TEMPLATE_OVERVIEW.md .maw/policies.yaml || fail "template overview and policies must document project-relative path rules"
-grep -Eq 'hit_code_components|需要更新发布|当前已发布|当前未发布' docs/ai-coding/module-dossier-rules.md .maw/codex-context.md || fail "final response must require code component and release status judgment"
-grep -Eq 'release_commands|release_confirmation_prompt|#发布' docs/ai-coding/module-dossier-rules.md .maw/codex-context.md prompts/codex/task-packs/README.md || fail "final response must require release command and confirmation prompt"
+grep -Eq 'hit_code_components|需要更新发布|当前已发布|当前未发布' docs/ai-coding/module-dossier-rules.md docs/ai-coding/project-workflow.md || fail "final response must require code component and release status judgment"
+grep -Eq 'release_commands|release_confirmation_prompt|#发布' docs/ai-coding/module-dossier-rules.md docs/ai-coding/project-workflow.md prompts/codex/task-packs/README.md || fail "final response must require release command and confirmation prompt"
 require_grep 'todo_task_update_status' docs/ai-coding/module-dossier-rules.md docs/ai-coding/coding-style.md docs/ai-instructions/instructions/final-closeout-response.md docs/ai-instructions/templates/final-closeout.zh-CN.md prompts/codex/task-packs/_template/prompts/01-task-template.md
 require_grep 'health_context_update_status' docs/ai-coding/module-dossier-rules.md docs/ai-coding/coding-style.md docs/ai-instructions/instructions/final-closeout-response.md docs/ai-instructions/templates/final-closeout.zh-CN.md prompts/codex/task-packs/_template/prompts/01-task-template.md prompts/codex/task-packs/_template/EXECUTE_PROMPT.md
 require_grep 'require_push_after_task_segment: true' .maw/policies.yaml
-require_grep '不要等用户再次要求.*提交 push|任务段.*提交并推送|子任务.*提交.*推送' RTK.md .maw/codex-context.md .maw/agent-briefing.md docs/ai-coding/coding-style.md docs/ai-coding/user-provided-rules.md docs/ai-instructions/instructions/create-task-prompt-project.md prompts/codex/task-packs/README.md prompts/codex/task-packs/_template/prompts/00-session-runbook.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/prompts/00-session-runbook.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/prompts/00-session-runbook.md
+require_grep '不要等用户再次要求.*提交 push|任务段.*提交并推送|子任务.*提交.*推送' RTK.md docs/ai-coding/project-workflow.md .maw/agent-briefing.md docs/ai-coding/coding-style.md docs/ai-coding/user-provided-rules.md docs/ai-instructions/instructions/create-task-prompt-project.md prompts/codex/task-packs/README.md prompts/codex/task-packs/_template/prompts/00-session-runbook.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/prompts/00-session-runbook.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/prompts/00-session-runbook.md
 if rg -n '如果用户要求提交推送|否则只报告待提交' docs prompts .maw RTK.md >/dev/null 2>&1; then
   fail "task closeout must require proactive commit/push, not only when the user asks"
 fi

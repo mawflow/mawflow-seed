@@ -1,7 +1,7 @@
 {
   "schema": "mawflow.seed_contract_catalog.v2",
   "contract_version": 2,
-  "seed_version": "2.6.0",
+  "seed_version": "2.8.0",
   "required_files": [
     ".maw/seed.lock",
     ".maw/project.yaml",
@@ -371,5 +371,20 @@
     {"key": "runtime.app.remove", "target": "runtime_app", "modes": ["remove"], "risk": "critical"},
     {"key": "environment.upsert", "target": "environment", "modes": ["create", "update"], "risk": "high"},
     {"key": "lifecycle.update", "target": "lifecycle", "modes": ["update"], "risk": "critical"}
-  ]
+  ],
+  "agent_bootstrap": {
+    "protocol_version": 1,
+    "resource": "resources/agent-contract.v1.json",
+    "resource_hash": "sha256:75b21c80fed7669bff72cc0b138704a68129434b7a21fcd467b678e512c31cb4",
+    "required_files": [
+      "AGENTS.md",
+      "CLAUDE.md",
+      "GEMINI.md",
+      "AI_START_HERE.md",
+      ".maw/agent-entry.yaml",
+      ".maw/agent-rules.yaml",
+      ".maw/agent-context.md",
+      "CHATGPT.md"
+    ]
+  }
 }

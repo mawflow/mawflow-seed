@@ -1,0 +1,58 @@
+schema_version: 1
+upgrade_key: 20260904-selectable-local-dev-and-script-contract
+title: 可选择本地调试与 Seed 脚本合同
+risk_level: T3
+status: active
+summary:
+  - npm run dev 保持规范入口，但只启动当前设备选择的可运行服务。
+  - 组件描述和组件 package.json 保持真实命令来源，根脚本不复制业务命令。
+  - 未选应用不启动、不探测、不阻塞；当前范围成功启动一次后解除本地调试阻塞。
+  - 本地与云端工作台复用 Seed 同一账本；设备选择和运行证据只写 Git 已忽略的 .local。
+source_baseline_commit: ""
+source_template_files:
+  - .maw/app-runtime.yaml
+  - .maw/environments.yaml
+  - package.json
+  - ops/scripts/local-dev.sh
+  - ops/scripts/run-local-dev.py
+  - ops/scripts/sync-root-package-scripts.py
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/resources/script-contract.v1.json
+target_project_policy:
+  upgrade_mode: decision_matrix_incremental_merge_only
+  canonical_script: dev
+  selectable_launcher: local:dev
+  real_command_sources:
+    - code/<app_key>/.maw.component.yaml commands.dev
+    - code/<app_key>/.maw.component.yaml commands.start
+    - code/<app_key>/package.json scripts.dev
+    - code/<app_key>/package.json scripts.start
+    - ops/scripts
+    - docker compose files
+  existing_local_dev_script: inspect_and_preserve_before_rewire
+  existing_component_commands: preserve
+  shared_default_target: .maw/app-runtime.yaml app_runtime.defaults
+  device_selection_target: .local/.maw/app-runtime.yaml app_runtime.defaults
+  device_runtime_target: .local/run/local-dev
+  unselected_application_policy: visible_not_started_not_probed_not_blocking
+  readiness_gates:
+    - development_service_selection_configured
+    - selected_services_have_real_commands
+    - canonical_dev_script_connected
+    - successful_background_start_recorded
+  protect:
+    - README.md
+    - code/
+    - app_key
+    - existing business scripts and command semantics
+    - existing release configuration
+    - repository mappings
+    - real secrets
+    - .local/ contents
+    - module dossiers
+validation:
+  - git diff --check
+  - npm run scripts:sync:check
+  - npm run dev:list
+  - python3 -m pytest -q tests/test_local_dev_runner.py tests/test_script_contract.py
+propagation:
+  migration_note: docs/template-migrations/20260904-selectable-local-dev-and-script-contract.md

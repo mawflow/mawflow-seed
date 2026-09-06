@@ -72,3 +72,5 @@ docs/capabilities/<capability-key>.md
 ```
 
 同时在 `.maw/capabilities.yaml` 中新增同名 `key`。
+
+- [跨 Agent 入口与任务上下文](agent-portability.md)：专用入口、未知 Agent 回退、独立就绪检查及受控迁移。

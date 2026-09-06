@@ -1,0 +1,20 @@
+schema_version: 1
+rules:
+- id: preserve_project_facts
+  severity: required
+  summary: 项目事实优先于模板默认值；不覆盖业务 README、源码、组件标识或既有规则。
+- id: scope_work
+  severity: required
+  summary: 先定位模块、允许修改路径与禁止路径，只提交当前任务的改动。
+- id: protect_secrets
+  severity: required
+  summary: 共享输出不得包含凭据值、私钥、客户隐私、本机绑定或未脱敏日志。
+- id: manual_prompts
+  severity: required
+  summary: prompts、归档和运行产物只在用户明确指定且任务需要时读取。
+- id: validate_evidence
+  severity: required
+  summary: 执行项目真实验证；分别说明实现、测试、部署与真人验收证据。
+- id: respect_authorization
+  severity: required
+  summary: 沿用当前任务已有授权；发布、外部写入与破坏性操作按项目策略和实际授权执行。
