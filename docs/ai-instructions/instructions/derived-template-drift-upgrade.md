@@ -75,10 +75,11 @@ rtk proxy python3 ops/scripts/plan-template-drift.py
 
 4. 按计划结果处理：
    - `status: source_channel_unconfirmed`：停止自动升级，输出 `.maw/template-source.yaml`、Git remote 和仓库身份检测摘要，等待人工确认 `public_seed`。
+   - `status: seed_contract_unavailable`：源模板 `.maw/seed.lock` 缺失、无法解析或版本/契约/指纹字段不完整；停止自动升级，先修复或确认源契约。`template_status` 保留模板提交关系，不能把契约不可验证判为已对齐，也不能直接推进基线。
    - `status: up_to_date`：说明当前模板基线已到目标模板 commit，且 Seed Contract 不落后；`seed_contract.status: ahead` 表示项目 Seed 比当前源模板记录更新，不回退项目版本。
-   - `status: seed_contract_behind`：模板 commit 已对齐，但 `.maw/seed.lock` 缺失、版本落后或同版本指纹漂移；执行计划器输出的受控 Seed 迁移提示词，先 preview 和隔离校验，再由当前用户确认应用。迁移必须保留项目 profile/source 身份、较新的 schema、项目生命周期 methodology、README、code、app_key 和私有规则。
-   - `status: baseline_missing`：将本次目标模板 commit 作为从本版本开始的基线写入 `.maw/template-source.yaml` 的 `template_source.applied_version`；验证、提交、推送并按 mirror 有效计划同步。不要尝试补算旧历史。
-   - `status: behind`：读取 `behind_count`、`commit_range` 和 `Current-session execution prompt`，在当前会话继续执行该提示词。
+   - `status: seed_contract_behind`：模板 commit 已对齐，但 `.maw/seed.lock` 缺失、版本落后或同版本指纹漂移；执行计划器输出的受控 Seed 迁移提示词，先 preview 和隔离校验，按当前用户已有授权及目标项目确认机制应用；缺少必要授权时展示具体预览再确认。迁移必须保留项目 profile/source 身份、较新的 schema、项目生命周期 methodology、README、code、app_key 和私有规则。
+   - `status: baseline_missing`：不补算旧历史；若契约需要迁移，先执行计划器的迁移提示词，再将本次目标模板 commit 作为起始基线写入 `template_source.applied_version`，重新检查两条版本线后提交交付。
+   - `status: behind`：读取 `behind_count`、`commit_range` 和 `Current-session execution prompt`，在当前会话继续执行该提示词。若 `seed_contract.status` 为 `behind/missing/contract_drift`，必须同时执行附带的契约迁移步骤；不能只合并模板、更新 `applied_version` 就结束。
    - `status: ahead` 或 `diverged`：停止自动升级，说明当前项目记录的模板基线与目标模板不是简单落后关系，需要人工确认。
    - `status: baseline_invalid`：停止并要求修正 `template_source.applied_version` 为 commit SHA。
 
@@ -99,6 +100,12 @@ python3 ops/scripts/plan-template-drift.py
 
 8. 本次产生实际改动后，按目标项目规则提交并推送当前分支；推送后运行仓库级 mirror 计划命令，按有效计划同步镜像。
 
+### 契约迁移目标与完成门禁
+
+- 固定计划中的源模板 commit、Seed 版本、契约版本和指纹；先核对迁移工具的 Seed Kit 支持版本，无法迁移到目标契约时报告阻塞。不得只改 `.maw/seed.lock` 版本号伪造升级。
+- 更新模板基线后重新运行计划器；只有 `status: up_to_date` 且 `seed_contract.status: current/ahead` 才可声明升级完成。若仍为 `seed_contract_behind`，必须在当前会话继续迁移；若不可验证，保留未完成状态。
+- 模板计划器对比源模板，工作台健康检测对比本机 Seed Kit；验收时分别回读。两者目标不同应明确报告，不能为消除提示擅自更换模板来源、升级宿主机或回退项目；工作台不可用时标记未验证。
+
 ## 当前会话提示词要求
 
 生成或使用的当前会话提示词必须包含：
@@ -116,7 +123,7 @@ python3 ops/scripts/plan-template-drift.py
 
 ## 验证方式
 
-- `python3 ops/scripts/plan-template-drift.py` 能输出 `source_channel`、`target_commit`、`applied_version`、`behind_count`、`seed_contract` 和状态。
+- `python3 ops/scripts/plan-template-drift.py` 能输出 `source_channel`、`target_commit`、`applied_version`、`behind_count`、`seed_contract` 和状态；契约不可验证时保留 `template_status` 并返回 `seed_contract_unavailable`。
 - 当 `behind_count > 0` 时，输出包含当前会话执行提示词。
 - 当升级完成后再次运行计划，应显示 `status: up_to_date`；仅有 `behind_count: 0` 不能证明 Seed Contract 已对齐。
 - `.maw/template-source.yaml` 已记录新的 `template_source.applied_version`。
@@ -146,3 +153,4 @@ python3 ops/scripts/plan-template-drift.py
 - 2026-06-14：创建派生项目模板漂移升级指令，基于 `template_source.applied_version` 计算落后提交数，并在当前会话执行升级提示词。
 - 2026-07-01：公开版补充 Seed 来源通道 `public_seed/unknown_legacy`；来源未确认时停止自动漂移升级。
 - 2026-08-23：模板漂移计划增加 Seed Contract 独立比较与 `seed_contract_behind` 路由；受控迁移保护较新 schema、项目 Seed 身份和生命周期 methodology。
+- 2026-09-07：补齐模板与契约同时落后的迁移及最终复检；源契约不可验证时停止自动升级，明确源模板与本机 Seed Kit 的比较边界。

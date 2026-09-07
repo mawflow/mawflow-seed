@@ -102,7 +102,9 @@ def _seed_version_tuple(value: Any) -> Optional[tuple[int, int, int]]:
     return tuple(int(part) for part in parts)
 
 
-def _seed_lock_summary(payload: Any) -> Dict[str, Any]:
+def _seed_lock_summary(
+    payload: Any, *, require_contract_fields: bool = False
+) -> Dict[str, Any]:
     if not isinstance(payload, dict):
         return {
             "available": False,
@@ -111,7 +113,12 @@ def _seed_lock_summary(payload: Any) -> Dict[str, Any]:
             "contract_fingerprint": "",
         }
     return {
-        "available": True,
+        "available": not require_contract_fields or bool(
+            _seed_version_tuple(payload.get("seed_version")) is not None
+            and type(payload.get("contract_version")) is int
+            and payload["contract_version"] > 0
+            and str(payload.get("contract_fingerprint") or "").strip()
+        ),
         "seed_version": str(payload.get("seed_version") or ""),
         "contract_version": payload.get("contract_version"),
         "contract_fingerprint": str(payload.get("contract_fingerprint") or ""),
@@ -147,7 +154,7 @@ def inspect_seed_contract(root: Path, repo: Path, target_commit: str) -> Dict[st
         source_error = proc.stderr.strip() or "source_seed_lock_missing"
 
     project = _seed_lock_summary(project_payload)
-    source = _seed_lock_summary(source_payload)
+    source = _seed_lock_summary(source_payload, require_contract_fields=True)
     status = "unavailable"
     message = "Seed Contract comparison is unavailable."
     if source["available"] and not project["available"]:
@@ -162,15 +169,13 @@ def inspect_seed_contract(root: Path, repo: Path, target_commit: str) -> Dict[st
                 message = "Project Seed Contract version is behind the source template."
             elif project_version > source_version:
                 status = "ahead"
-                message = "Project Seed Contract version is ahead of the source template."
+                message = (
+                    "Project Seed Contract version is ahead of the source template."
+                )
             elif project["contract_version"] != source["contract_version"]:
                 status = "contract_drift"
                 message = "Seed versions match but contract versions differ."
-            elif (
-                project["contract_fingerprint"]
-                and source["contract_fingerprint"]
-                and project["contract_fingerprint"] != source["contract_fingerprint"]
-            ):
+            elif project["contract_fingerprint"] != source["contract_fingerprint"]:
                 status = "contract_drift"
                 message = "Seed versions match but contract fingerprints differ."
             else:
@@ -325,48 +330,95 @@ def compute_plan(args: argparse.Namespace) -> Dict[str, Any]:
 
 
 def add_prompt(plan: Dict[str, Any], max_commits: int) -> Dict[str, Any]:
-    if plan["status"] == "seed_contract_behind":
-        seed = plan.get("seed_contract") or {}
+    seed = plan.get("seed_contract") or {}
+    seed_status = seed.get("status")
+    plan["template_status"] = (
+        "up_to_date" if plan["status"] == "seed_contract_behind" else plan["status"]
+    )
+    if seed_status == "unavailable" and plan["status"] in {
+        "up_to_date", "behind", "baseline_missing"
+    }:
+        plan["status"] = "seed_contract_unavailable"
+        plan["message"] = (
+            "Source Seed Contract cannot be verified; stop automatic upgrade and "
+            "resolve the source .maw/seed.lock before claiming alignment."
+        )
+        plan["current_session_prompt"] = ""
+        return plan
+
+    migration_prompt = ""
+    if seed_status in {"behind", "missing", "contract_drift"}:
         project_seed = seed.get("project") or {}
         source_seed = seed.get("source") or {}
-        plan["current_session_prompt"] = f"""执行受控 Seed Contract 迁移：
-当前项目 Seed：{project_seed.get('seed_version') or '(missing)'}
-源模板 Seed：{source_seed.get('seed_version') or '(unavailable)'}
-Seed Contract 状态：{seed.get('status') or 'unknown'}
-目标项目仓库：当前 Codex 会话所在仓库
-执行方式：先生成迁移 preview 并完成隔离校验，再由当前用户确认应用；不要把 Seed Contract 迁移误当成模板 commit 漂移。
+        migration_prompt = f"""执行受控 Seed Contract 迁移：
+当前项目 Seed：{project_seed.get("seed_version") or "(missing)"}
+源模板 Seed：{source_seed.get("seed_version") or "(unavailable)"}
+源模板目标 commit：{plan["target_commit"]}
+目标契约版本：{source_seed.get("contract_version")}
+目标契约指纹：{source_seed.get("contract_fingerprint")}
+Seed Contract 状态：{seed_status}
+执行方式：必须将 .maw/seed.lock 和所需契约文件纳入迁移，先生成 preview 并完成隔离校验；按当前用户已有授权及目标项目确认机制应用，缺少必要授权时展示具体预览再确认。
+迁移目标：以本计划固定的源模板版本和指纹为准；先核对实际迁移工具的 Seed Kit 支持版本。工具无法迁移到目标契约时报告阻塞，不得只改锁文件版本号或宣称升级完成。
 保护边界：保留 README、code、真实 app_key、模块档案、发布配置、仓库映射、secrets、.local、较新的 schema_version、项目 profile/source 身份和项目生命周期 methodology。
-完成要求：应用后重新运行项目空间健康检测和本计划器，确认 Seed 不再落后；然后按目标项目规则提交、推送，并按仓库级 mirror 有效计划同步。"""
+契约验收：应用后回读 .maw/seed.lock，重新运行本计划器并要求 seed_contract.status 为 current 或 ahead；模板 commit 的 behind_count 为 0 不能代替契约验收。
+工作台验收：项目空间健康检测另行核对项目 Seed 与本机 Seed Kit 的版本。源模板对齐但本机版本不同应分别报告；健康检测不可用时明确未验证，不擅自更换模板来源、升级宿主机或回退项目。"""
+
+    if plan["status"] == "seed_contract_behind":
+        plan["current_session_prompt"] = f"""{migration_prompt}
+目标项目仓库：当前 Codex 会话所在仓库
+完成要求：当前会话继续执行；两条版本线验收后按目标项目规则提交、推送，并按仓库级 mirror 有效计划同步。"""
+        return plan
+
+    if plan["status"] == "baseline_missing" and migration_prompt:
+        plan["current_session_prompt"] = (
+            f"模板历史基线缺失：只将 {plan['target_commit']} 作为本次采用目标，"
+            "不追溯猜测历史差异。完成契约迁移与验证后初始化 "
+            "template_source.applied_version，并重新运行本计划器确认两条版本线。\n"
+            + migration_prompt
+        )
         return plan
 
     if plan["status"] != "behind":
         plan["current_session_prompt"] = ""
         return plan
 
-    commits = "\n".join(f"- {line}" for line in plan["commits"][:max_commits]) or "- none"
-    plan["current_session_prompt"] = f"""执行任务提示词工程：prompts/codex/task-packs/template-feature-upgrade-codex-tasks
-Seed 来源通道：{plan.get('source_channel') or 'unknown_legacy'}
+    commits = (
+        "\n".join(f"- {line}" for line in plan["commits"][:max_commits]) or "- none"
+    )
+    plan[
+        "current_session_prompt"
+    ] = f"""执行任务提示词工程：prompts/codex/task-packs/template-feature-upgrade-codex-tasks
+Seed 来源通道：{plan.get("source_channel") or "unknown_legacy"}
 源模板本机路径：<源模板本机路径，如本机会话可访问则填写；否则留空并使用 git 地址>
-源模板 git 地址：{plan['git_url']}
+源模板 git 地址：{plan["git_url"]}
 公开 Seed 仓：https://github.com/mawflow/mawflow-seed
-源模板版本：{plan['target_commit']}
-当前模板基线：{plan.get('applied_commit') or plan['applied_version']}
-模板落后提交数：{plan['behind_count']}
-Seed Contract 状态：{(plan.get('seed_contract') or {}).get('status') or 'unknown'}
-待同步提交范围：{plan['commit_range']}
+源模板版本：{plan["target_commit"]}
+当前模板基线：{plan.get("applied_commit") or plan["applied_version"]}
+模板落后提交数：{plan["behind_count"]}
+Seed Contract 状态：{(plan.get("seed_contract") or {}).get("status") or "unknown"}
+待同步提交范围：{plan["commit_range"]}
 待同步提交列表：
 {commits}
 源模板读取优先级：用户输入 > .local/.maw/template-source.yaml > .maw/template-source.yaml > 当前仓库；外部公开项目不得读取内部私有 Seed 源。
 目标项目仓库：当前 Codex 会话所在仓库
 执行方式：当前会话继续执行；不要只生成给另一个会话的提示词。
 升级范围：只同步上述提交范围内的模板能力；先审计仓库角色和 Seed 来源通道，再按取舍增量合并，不得整文件覆盖目标项目 README，不得误删目标项目已有 app_key、发布配置、仓库映射、secrets、.local 或项目私有规则。
-完成要求：升级和验证完成后，将 .maw/template-source.yaml 中的 template_source.applied_version 更新为 {plan['target_commit']}；然后按目标项目规则提交、推送，并按仓库级 mirror 有效计划同步。"""
+完成要求：采用模板能力后将 .maw/template-source.yaml 中的 template_source.applied_version 更新为 {plan["target_commit"]}；继续完成契约迁移及最终复检，两条版本线验收后按目标项目规则提交、推送，并按仓库级 mirror 有效计划同步。"""
+    if migration_prompt:
+        plan["current_session_prompt"] += "\n\n" + migration_prompt
+    plan["current_session_prompt"] += (
+        "\n最终复检：更新模板基线后重新运行本计划器，只有 status=up_to_date "
+        "且 seed_contract.status 为 current 或 ahead 才可声明升级完成；"
+        "若仍为 seed_contract_behind，当前会话继续完成上述契约迁移。"
+    )
     return plan
 
 
 def print_text(plan: Dict[str, Any]) -> None:
     print("Template drift plan")
     print(f"  status: {plan['status']}")
+    if plan.get("template_status"):
+        print(f"  template_status: {plan['template_status']}")
     print(f"  source_channel: {plan.get('source_channel') or '(missing)'}")
     print(f"  source_kind: {plan['source_kind']}")
     print(f"  git_url: {plan['git_url']}")
