@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "maw.test_evidence.v1",
+  "type": "object",
+  "required": ["schema", "source_revision", "test_plan_fingerprint", "started_at", "completed_at", "suites", "browser_journeys", "human_gates", "overall"],
+  "properties": {
+    "schema": {"const": "maw.test_evidence.v1"},
+    "task_key": {"type": "string"},
+    "task_version": {"type": "string"},
+    "source_revision": {"type": "string"},
+    "test_plan_fingerprint": {"type": "string"},
+    "started_at": {"type": "string"},
+    "completed_at": {"type": "string"},
+    "suites": {"type": "array", "items": {"type": "object"}},
+    "browser_journeys": {"type": "array", "items": {"type": "object"}},
+    "human_gates": {"type": "array", "items": {"type": "object"}},
+    "overall": {
+      "type": "object",
+      "required": ["automatic_status", "human_acceptance_required"],
+      "properties": {
+        "automatic_status": {"enum": ["passed", "failed", "blocked", "partial"]},
+        "human_acceptance_required": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "mawflow.document_source.v1",
+  "capture_id": "example-question-001",
+  "title": "示例：待澄清问题",
+  "captured_at": "2026-10-02T00:00:00+08:00",
+  "source": {"kind": "ai_analysis", "ref": "当前任务的范围澄清", "excerpt": "尚需明确的项目问题，不是用户决定。"},
+  "items": [{
+    "key": "scope-question", "kind": "question", "statement": "请替换为当前任务实际尚未确定的问题。",
+    "volume": "requirements", "modules": [], "owner": "项目负责人",
+    "decision_status": "pending", "implementation_status": "unknown", "audit_status": "not_assessed",
+    "evidence": [], "next_action": "由项目负责人澄清范围", "related_refs": []
+  }]
+}

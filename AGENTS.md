@@ -6,6 +6,7 @@ Read [AI_START_HERE.md](AI_START_HERE.md) before working in this project.
 不自动读取 prompts、归档、本机私有目录；不提交秘密或无关改动。
 工具、Skill、MCP、RTK 均非读取项目规则的前置条件；已有授权按任务范围延续。
 完成时区分已修改、已验证、已发布与真人验收，列出未验证项。
+长期结论与缺口按 docs/ai-coding/document-source-capture.md 收录最小来源及回执；只读任务不写入。
 <!-- mawflow:bootstrap:end -->
 
 
@@ -82,3 +83,7 @@ Read [AI_START_HERE.md](AI_START_HERE.md) before working in this project.
   - `bash ops/scripts/check-ai-framework-consistency.sh`
   - `bash ops/scripts/check-local-boundary.sh`
 - 产生实际改动后，按仓库规则提交并推送当前分支；推送成功后运行 `ops/scripts/sync-repository-mirror.sh plan`，按有效计划决定是否执行 `ops/scripts/sync-repository-mirror.sh push --execute`。
+
+## 文档来源积累
+
+产生长期结论或缺口时按 [交互来源收录规范](docs/ai-coding/document-source-capture.md)记录最小来源与回执；只读任务不写入。

@@ -32,3 +32,5 @@ python3 ops/scripts/extract-project-metadata.py --section signals --format json
 python3 ops/scripts/extract-project-metadata.py --section ai-preconditions --format markdown
 ```
 
+
+- `SIG-20261002-document-source-capture`：工作发生时按共享规范收录最小来源，遵守只读边界。

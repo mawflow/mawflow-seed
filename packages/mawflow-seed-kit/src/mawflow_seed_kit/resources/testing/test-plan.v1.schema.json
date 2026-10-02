@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "maw.test_plan.v1",
+  "type": "object",
+  "required": ["schema", "project", "changed_paths", "selected_suites", "skipped_suites", "manual_gates", "required_apps", "estimated_risk", "evidence_requirements", "blocked_by", "fingerprint"],
+  "properties": {
+    "schema": {"const": "maw.test_plan.v1"},
+    "project": {"type": "string"},
+    "changed_paths": {"type": "array", "items": {"type": "string"}},
+    "selected_suites": {"type": "array", "items": {"type": "object"}},
+    "skipped_suites": {"type": "array", "items": {"type": "object"}},
+    "manual_gates": {"type": "array", "items": {"type": "object"}},
+    "required_apps": {"type": "array", "items": {"type": "string"}},
+    "estimated_risk": {"enum": ["L0", "L1", "L2", "L3"]},
+    "evidence_requirements": {"type": "array", "items": {"type": "string"}},
+    "blocked_by": {"type": "array", "items": {"type": "string"}},
+    "fingerprint": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties": true
+}

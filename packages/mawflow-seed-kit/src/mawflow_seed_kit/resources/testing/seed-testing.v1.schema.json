@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "maw.seed.testing.v1",
+  "title": "MAWflow Seed Testing Contract V1",
+  "type": "object",
+  "required": ["schema", "contract_version", "project", "command_registry", "suites", "journeys", "human_gates", "artifacts", "test_data"],
+  "properties": {
+    "schema": {"const": "maw.seed.testing.v1"},
+    "contract_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "project": {
+      "type": "object",
+      "required": ["default_environment", "evidence_policy", "planner"],
+      "properties": {
+        "default_environment": {"enum": ["local", "test", "staging", "uat", "production"]},
+        "evidence_policy": {"const": "structured"},
+        "planner": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "command_registry": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["resolver"],
+        "properties": {
+          "resolver": {"enum": ["component_suite", "browser_journey"]},
+          "component": {"type": "string"},
+          "suite": {"enum": ["test", "lint", "typecheck", "build"]},
+          "journey": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "suites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "type", "component", "command_ref", "required", "risk"],
+        "properties": {
+          "key": {"type": "string", "minLength": 1},
+          "type": {"enum": ["static", "unit", "component", "contract", "integration", "migration", "browser", "visual", "accessibility", "performance", "security", "smoke", "acceptance-assist"]},
+          "component": {"type": "string", "minLength": 1},
+          "command_ref": {"type": "string", "minLength": 1},
+          "required": {"type": "boolean"},
+          "risk": {"enum": ["L0", "L1", "L2", "L3"]},
+          "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 7200},
+          "selection": {"type": "object"},
+          "evidence": {"type": "object"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "journeys": {"type": "array", "items": {"type": "object"}},
+    "human_gates": {"type": "array", "items": {"type": "object"}},
+    "artifacts": {"type": "object"},
+    "test_data": {"type": "object"}
+  },
+  "additionalProperties": false
+}

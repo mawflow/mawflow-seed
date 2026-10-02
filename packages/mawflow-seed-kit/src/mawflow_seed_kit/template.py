@@ -16,6 +16,8 @@ PROJECT_KEY_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,159}$")
 def _copy_tree(source: Any, destination: Path) -> None:
     destination.mkdir(parents=True, exist_ok=True)
     for item in source.iterdir():
+        if item.name in {".git", "__pycache__"}:
+            continue
         target = destination / item.name
         if item.is_dir():
             _copy_tree(item, target)
@@ -49,6 +51,9 @@ def materialize_project(
     classification: dict[str, Any] | None = None,
     technology: dict[str, Any] | None = None,
     credential_requirements: list[dict[str, Any]] | None = None,
+    template_root: Path | None = None,
+    seed_version: str = SEED_VERSION,
+    seed_fingerprint: str = "",
 ) -> dict[str, Any]:
     destination = Path(root).expanduser().resolve()
     if destination.exists() and any(destination.iterdir()):
@@ -58,7 +63,7 @@ def materialize_project(
     if profile not in {item["key"] for item in catalog()["profiles"]}:
         raise ValueError("seed_materialize_profile_invalid")
     destination.mkdir(parents=True, exist_ok=True)
-    _copy_tree(files("mawflow_seed_kit").joinpath("template"), destination)
+    _copy_tree(template_root or files("mawflow_seed_kit").joinpath("template"), destination)
     from .agent_context import portable_agent_files
 
     for source_ref, text in portable_agent_files(destination).items():
@@ -110,7 +115,7 @@ def materialize_project(
     source_payload = dict(source or {})
     source_payload.setdefault("kind", "package")
     source_payload.setdefault("package", "mawflow-seed-kit")
-    source_payload.setdefault("version", SEED_VERSION)
+    source_payload.setdefault("version", source_payload.get("template_version") or seed_version)
     _write_yaml(
         destination / ".maw/template-source.yaml",
         {
@@ -129,19 +134,19 @@ def materialize_project(
         {
             "schema": "mawflow.seed_lock.v2",
             "contract_version": CONTRACT_VERSION,
-            "contract_fingerprint": contract_fingerprint(),
-            "seed_version": SEED_VERSION,
+            "contract_fingerprint": seed_fingerprint or contract_fingerprint(),
+            "seed_version": seed_version,
             "profile": profile,
             "source": source_payload,
-            "bom": {"kit": f"mawflow-seed-kit=={SEED_VERSION}", "contract": "seed-contract-v2"},
+            "bom": {"kit": f"mawflow-seed-kit=={seed_version}", "contract": "seed-contract-v2"},
         },
     )
     return {
         "schema": "mawflow.seed_materialization.v2",
         "project_key": project_key,
         "profile": profile,
-        "seed_version": SEED_VERSION,
-        "contract_fingerprint": contract_fingerprint(),
+        "seed_version": seed_version,
+        "contract_fingerprint": seed_fingerprint or contract_fingerprint(),
         "root": str(destination),
     }
 

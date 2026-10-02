@@ -1,0 +1,20 @@
+schema: maw.seed.testing.v1
+contract_version: 1.0.0
+project:
+  default_environment: local
+  evidence_policy: structured
+# Register real component suites here. Empty means not_run, never passed.
+command_registry: {}
+suites: []
+journeys: []
+human_gates:
+  - key: business_acceptance
+    automatic: false
+    evidence_required: true
+artifacts:
+  junit: true
+  logs: redacted
+test_data:
+  default: fixture
+  cleanup_required: true
+  secrets_in_fixtures: forbidden

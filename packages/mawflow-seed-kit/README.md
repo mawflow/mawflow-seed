@@ -15,3 +15,9 @@ mawflow-seed-kit doctor credentials /path/to/project --fail-on-plaintext
 项目创建应通过 `mawflow project init`，已有项目迁移应通过 `mawflow project adopt/upgrade` 或本地工作台执行；不要直接复制包内模板覆盖现有仓库。
 
 迁移应用会生成仅保存在指定私有备份目录的哈希清单。需要回退时，调用 `rollback_migration(...)` 并提供迁移结果中的 `plan_key` 与精确确认串；回退前会校验当前文件仍等于迁移候选，避免覆盖迁移后的并发修改。
+
+## 2.9.0 候选：纯项目命令
+
+`mawflow_seed_kit.commands.cli` 与 `mawflow_seed_kit.testing` 是项目文件能力的唯一实现；主仓轻量 CLI 与 Host 共用。普通命令离线可用。升级执行须由官方入口提供在线账号授权；直接使用此模块不会默认授权升级。`project upgrade --template` 处理 package 来源模板，`--rollback` 恢复已保存的事务，Contract 迁移使用既有显式选项。
+
+本版本是未发布候选；首发操作说明随主仓 `code/npm-cli/README.md` 维护。源码仓 Git 漂移仍沿用原有受控流程，不能用 package 升级覆盖项目。

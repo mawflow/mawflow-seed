@@ -88,6 +88,13 @@ execution_contract:
     - local_environment_status
     - memory_update
     - local_update
+  document_source_capture:
+    schema: mawflow.document_source.v1
+    policy: docs/ai-coding/document-source-capture.md
+    directory: docs/intake
+    tool: ops/scripts/capture-document-source.py
+    read_only: deferred_read_only
+    closeout_field: document_source_capture
 tool_adapters:
   codex:
     file: AGENTS.md

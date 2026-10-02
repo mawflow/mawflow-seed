@@ -15,3 +15,7 @@ CLI、MCP、Skill 和 RTK 均可选；无工具集成时仍能直接读取本入
 ## 选择 Agent 入口
 
 [Codex / Cursor](AGENTS.md) · [Claude Code](CLAUDE.md) · [Gemini CLI](GEMINI.md) · [ChatGPT Web / GitHub 源码阅读](CHATGPT.md) · [通用入口](AI_START_HERE.md)。无法识别 Agent 时使用通用入口。网页 Agent 由用户显式提供入口链接与仓库目标分支或提交。
+
+## 文档来源积累
+
+产生长期结论或缺口时按 [交互来源收录规范](docs/ai-coding/document-source-capture.md)记录最小来源与回执；只读任务不写入。

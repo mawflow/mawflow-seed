@@ -53,6 +53,14 @@
           "risks",
           "release_impact"
         ]
+      },
+      "document_source_capture": {
+        "schema": "mawflow.document_source.v1",
+        "policy": "docs/ai-coding/document-source-capture.md",
+        "directory": "docs/intake",
+        "tool": "ops/scripts/capture-document-source.py",
+        "read_only": "deferred_read_only",
+        "closeout_field": "document_source_capture"
       }
     },
     "task_routes": {
@@ -174,6 +182,11 @@
       "id": "respect_authorization",
       "severity": "required",
       "summary": "沿用当前任务已有授权；发布、外部写入与破坏性操作按项目策略和实际授权执行。"
+    },
+    {
+      "id": "capture_document_sources",
+      "severity": "required",
+      "summary": "需求澄清、用户决定、纠偏、关键发现和验证收口时，按 docs/ai-coding/document-source-capture.md 收录最小来源及回执；只读任务只输出待收录摘要，AI 推断不得自动确认。"
     }
   ],
   "task_kinds": [
