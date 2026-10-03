@@ -72,3 +72,39 @@ python3 ops/scripts/capture-document-source.py record --root . --input <临时�
 本规范负责工作过程中捕获来源；`.maw/health/` 负责可导入的健康上下文；正式 docs 负责人工整理的项目结论；PM、Task、Audit、Release 保留执行和审批权。来源条目可通过 `related_refs` 连接已有编号。文档中心从这些对象计算视图，推进任务、审计和发布仍进入原有入口。
 
 Git Seed 和 Kit 必须同时包含此文档、输入模板、采集脚本和 Agent 触发规则；升级只增量合并共享规则，不覆盖项目身份或导入源仓的真实记录。验收至少包括空项目收录、重复与冲突、只读拒绝、秘密/路径拒绝、并发写入、更正和 Git/Kit 资产一致性。
+
+## v2：业务口径与 AI 工作过程
+
+新收录使用 `mawflow.document_source.v2`，旧 v1 原文仍然有效，不批量改写。v2 在原字段上增加可选 `business`、`activity`、`resolves` 和事件 `context`。没有业务事项标识的旧来源不能仅凭标题相似升级成当前业务口径；先通过明确的迁移/确认记录关联。
+
+`business` 只能用于 requirement/decision，包含：
+
+| 字段 | 规则 |
+| --- | --- |
+| `key` | 稳定业务事项标识，如 `document-center.reading-model`；修订时复用，不使用时间戳 |
+| `scope` | 稳定适用范围，如 `project`、`merchant`、`production`；与 key 共同确定身份 |
+| `title` | 给人阅读的业务主题名称 |
+| `effect` | `define` 定义/修订；`retire` 撤销，只有确认后才生效 |
+| `change_reason` | 首次定义的来源、这次纠偏或修订的具体原因，不得留空 |
+
+同一事项每次变化追加新版本。`supersedes` 指向旧条目；解决并行冲突时，已确认条目用 `resolves` 列出全部被解决的版本。引用必须存在且业务 key/scope 一致，不能用另一个事项的决定消除当前冲突。
+
+**当前口径由确认与继承关系决定，不由时间决定。** 待确认提案、AI 建议或被否定提案不覆盖已有确认；确认后继版本可通过提案追溯至原确认。若存在多个互不继承的已确认版本，所有候选均显示冲突，等待明确裁决；只解决部分分支仍是冲突。确认撤销不恢复祖先版本。当前版本证据变动时显示待复核，不静默回退旧口径。实现/审计仍是独立轴。
+
+`activity` 记录工作过程：`task_ref`、`session_ref`、`phase`（started/progress/completed/blocked/cancelled）、`goal`、`actions`、`result`、`validation`。它只能用于 implementation 条目，决定状态为 not_applicable。任务完成只表示本次工作阶段结束，不自动确认业务规则、发布或真人验收。实际发生的测试写出结果，未执行写明未验证；引用已有任务/证据编号，不创建影子任务账本，不导入完整聊天和隐藏推理。
+
+## 默认事件工作流与收口检查
+
+有修改授权的 Agent 在进入任务时确定稳定 task/session 引用，在澄清/决定/纠偏、可独立验证里程碑、阻塞/交接时，自动整理最小事件，不等待用户另行要求“记下来”。本步骤是 Agent 的日常任务职责，不是聊天客户端后台监听；无写入能力的网页 Agent 提供同格式待收录数据和未落盘说明。
+
+事件示例见 [工作事件模板](../intake/event-template.json)。`event_id` 对应一个已发生事件，重试复用同一 ID 与时间；`items` 记录业务结论、问题或已有主账引用；可选 `work` 自动生成 AI 工作记录。事件不是任意文本的智能分类器，记录者必须根据当前可见来源明确类型、确认范围、状态及证据。
+
+```bash
+python3 ops/scripts/capture-document-source.py preview-event --root . --input <事件.json>
+python3 ops/scripts/capture-document-source.py record-event --root . --input <事件.json> --work-intent modify
+python3 ops/scripts/capture-document-source.py check-event --root . --input <事件.json>
+```
+
+自动化执行顺序：有界核对当前主题及引用 → 按真实触发生成事件 → 脱敏/预览 → 落盘 → `check-event` 回读 → 最终答复引用回执。需要实现的工作必须至少留下工作过程事件，阶段开始可以与首次需求来源合并；长任务在里程碑追加，不能只在最后依赖会话记忆补写。收口检查拒绝未落盘、同 ID 不同内容和证据变化；失败必须说明待收录项，不能报告收录完成。纯只读或明确禁记时跳过写入，按原规则给出 deferred_read_only/not_needed。
+
+文档中心以这一个来源集合生成四种阅读结果：当前口径（有效确认候选）、变化（前后内容/原因/确认范围）、待处理（问题/责任/下一步）、AI 开发记录（目标/动作/结果/验证）。生成页、索引和统计都不是新的权威源；修改必须回到具体来源或原有 PM/Task/Audit 入口。

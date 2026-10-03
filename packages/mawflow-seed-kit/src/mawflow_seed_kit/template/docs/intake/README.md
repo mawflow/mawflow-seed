@@ -14,3 +14,5 @@ read_contract:
 日常 AI 协作按 [收录规范](../ai-coding/document-source-capture.md)积累必要摘要、确认范围、未知、证据与下一步。具体记录由 `ops/scripts/capture-document-source.py` 生成；[JSON 模板](source-template.json)是格式示例，不是项目事实。
 
 来源文件只作为需求、任务、审计和文档的依据。未确认记录也应保留，但不能被当作已确认结论。敏感原文、完整聊天、本机路径不进入此目录。
+
+新任务默认使用 [工作事件模板](event-template.json) 与 `record-event` / `check-event`，在当前任务内自动积累业务口径和 AI 工作过程。v1 历史来源保持原文。

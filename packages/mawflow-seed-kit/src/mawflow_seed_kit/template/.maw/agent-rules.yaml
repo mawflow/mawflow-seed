@@ -18,3 +18,10 @@ rules:
 - id: respect_authorization
   severity: required
   summary: 沿用当前任务已有授权；发布、外部写入与破坏性操作按项目策略和实际授权执行。
+- id: capture_document_sources
+  severity: required
+  summary: 需求澄清、用户决定、纠偏、关键发现和验证收口时，按 docs/ai-coding/document-source-capture.md 收录最小来源及回执；只读任务只输出待收录摘要，AI
+    推断不得自动确认。
+- id: capture_business_and_work_events
+  severity: required
+  summary: 获准修改的任务在澄清、决定、纠偏和阶段收口时自动执行来源事件收录与 check-event 回读；业务 key/scope 保持稳定，待确认不覆盖已确认，工作记录不替代任务主账。只读或禁记时不写入。

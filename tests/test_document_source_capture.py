@@ -127,7 +127,7 @@ def test_git_and_kit_have_same_protocol_and_working_capture(tmp_path, payload):
     materialize_project(project, project_key="capture-acceptance", name="来源收录验收")
     assert inspect_agent_readiness(project)["status"] == "ready"
     manifest = json.loads((ROOT / "PUBLIC_PAYLOAD_MANIFEST.json").read_text())
-    for path in ("ops/scripts/capture-document-source.py", "docs/ai-coding/document-source-capture.md", "docs/intake/README.md", "docs/intake/source-template.json"):
+    for path in ("ops/scripts/capture-document-source.py", "docs/ai-coding/document-source-capture.md", "docs/intake/README.md", "docs/intake/source-template.json", "docs/intake/event-template.json"):
         assert path in manifest["required_paths"]
         assert (ROOT / path).read_bytes() == (project / path).read_bytes()
     assert "capture_document_sources" in (project / ".maw/agent-rules.yaml").read_text()
@@ -135,3 +135,78 @@ def test_git_and_kit_have_same_protocol_and_working_capture(tmp_path, payload):
     result = subprocess.run([sys.executable, str(project / "ops/scripts/capture-document-source.py"), "record", "--root", str(project), "--input", "-", "--work-intent", "modify"], input=json.dumps(payload), text=True, capture_output=True)
     assert result.returncode == 0, result.stdout
     assert json.loads(result.stdout)["status"] == "recorded"
+    event = json.loads((project / "docs/intake/event-template.json").read_text())
+    for action, status in [("record-event", "recorded"), ("record-event", "unchanged"), ("check-event", "verified")]:
+        result = subprocess.run([sys.executable, str(project / "ops/scripts/capture-document-source.py"), action, "--root", str(project), "--input", "-", "--work-intent", "modify"], input=json.dumps(event), text=True, capture_output=True)
+        assert result.returncode == 0, result.stdout
+        assert json.loads(result.stdout)["status"] == status
+
+
+def test_event_receipt_and_work_record_are_separate_from_business_confirmation(tmp_path):
+    event = json.loads((ROOT / "docs/intake/event-template.json").read_text())
+    with pytest.raises(ValueError, match="capture_receipt_missing"):
+        capture_source.capture(tmp_path, event, action="check-event")
+    with pytest.raises(ValueError, match="modify_intent_required"):
+        capture_source.capture(tmp_path, event, action="record-event")
+    assert not list(tmp_path.iterdir())
+    event["work"]["phase"] = "completed"
+    receipt = capture_source.capture(tmp_path, event, action="record-event", work_intent="modify")
+    data = json.loads((tmp_path / receipt["path"]).read_text().split("\n---", 1)[0][4:])["content_contract"]
+    assert receipt["business_count"] == receipt["activity_count"] == 1
+    assert data["items"][0]["decision_status"] == "pending"
+    work = data["items"][1]
+    assert work["decision_status"] == work["implementation_status"] == work["audit_status"] == "not_applicable"
+    assert work["activity"]["phase"] == "completed"
+    assert capture_source.capture(tmp_path, event, action="check-event")["status"] == "verified"
+    event["work"]["result"] = "更改同一个事件"
+    with pytest.raises(ValueError, match="capture_id_conflict"):
+        capture_source.capture(tmp_path, event, action="record-event", work_intent="modify")
+
+
+def test_business_corrections_and_conflict_resolution_require_same_identity(tmp_path):
+    event = json.loads((ROOT / "docs/intake/event-template.json").read_text())
+    event.pop("work")
+    capture_source.capture(tmp_path, event, action="record-event", work_intent="modify")
+    event["event_id"] = "correction"
+    item = event["items"][0]
+    item["supersedes"] = "example-work-event-001#reading-model"
+    item["business"]["scope"] = "another-scope"
+    with pytest.raises(ValueError, match="business_identity_mismatch"):
+        capture_source.capture(tmp_path, event, action="record-event", work_intent="modify")
+    item["business"]["scope"] = "project"
+    item["resolves"] = [item.pop("supersedes")]
+    with pytest.raises(ValueError, match="resolution_requires_confirmed_business"):
+        capture_source.capture(tmp_path, event, action="record-event", work_intent="modify")
+    item["decision_status"] = "confirmed"
+    item["confirmation"] = {"basis": "explicit_user", "ref": "用户明确裁决", "scope": "仅当前事项"}
+    with pytest.raises(ValueError, match="confirmation_evidence_required"):
+        capture_source.capture(tmp_path, event, action="record-event", work_intent="modify")
+    event["source"]["kind"] = "user_statement"
+    assert capture_source.capture(tmp_path, event, action="record-event", work_intent="modify")["status"] == "recorded"
+
+
+def test_v1_cannot_silently_ignore_v2_business_fields(tmp_path, payload):
+    payload["items"][0]["business"] = {"key": "rule", "scope": "project", "title": "规则", "change_reason": "来源", "effect": "define"}
+    with pytest.raises(ValueError, match="v2_required"):
+        record(tmp_path, payload)
+
+
+def test_business_cannot_skip_decision_or_retire_without_a_predecessor(tmp_path):
+    event = json.loads((ROOT / "docs/intake/event-template.json").read_text())
+    event["items"][0]["decision_status"] = "not_applicable"
+    with pytest.raises(ValueError, match="invalid_business_item_kind"):
+        capture_source.capture(tmp_path, event, action="record-event", work_intent="modify")
+    event["items"][0]["decision_status"] = "pending"
+    event["items"][0]["business"]["effect"] = "retire"
+    with pytest.raises(ValueError, match="retirement_predecessor_required"):
+        capture_source.capture(tmp_path, event, action="record-event", work_intent="modify")
+
+
+def test_malformed_predecessor_is_rejected_with_safe_error(tmp_path, payload):
+    record(tmp_path, payload)
+    path = tmp_path / "docs/intake" / f"{payload['capture_id']}.md"
+    path.write_text('---\n{"content_contract": null}\n---\n')
+    payload["items"][0]["supersedes"] = payload["capture_id"] + "#scope-question"
+    payload["capture_id"] = "safe-error"
+    with pytest.raises(ValueError, match="supersedes_source_invalid"):
+        record(tmp_path, payload)

@@ -95,6 +95,19 @@ execution_contract:
     tool: ops/scripts/capture-document-source.py
     read_only: deferred_read_only
     closeout_field: document_source_capture
+    preferred_schema: mawflow.document_source.v2
+    event_schema: mawflow.document_work_event.v1
+    event_template: docs/intake/event-template.json
+    record_action: record-event
+    closeout_check: check-event
+    automatic_triggers:
+    - clarification
+    - decision
+    - correction
+    - progress
+    - blocked
+    - verification
+    - handoff
 tool_adapters:
   codex:
     file: AGENTS.md

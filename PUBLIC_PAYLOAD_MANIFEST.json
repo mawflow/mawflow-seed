@@ -1,10 +1,10 @@
 {
   "schema": "mawflow.seed_public_payload.v2",
-  "seed_version": "2.9.0",
+  "seed_version": "2.10.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:6ac1c2050213fbf9fce37f442e3f90200034d66257a473f1b8cdadbf67087abb",
+  "contract_fingerprint": "sha256:eaf3e79968855bacf5881b653e383718c12f28cb79868b9810dae659c7432977",
   "bom": {
-    "kit": "mawflow-seed-kit==2.9.0",
+    "kit": "mawflow-seed-kit==2.10.0",
     "contract": "seed-contract-v2"
   },
   "required_paths": [
@@ -141,7 +141,8 @@
     "docs/intake/README.md",
     "docs/intake/source-template.json",
     "ops/scripts/capture-document-source.py",
-    "tests/test_document_source_capture.py"
+    "tests/test_document_source_capture.py",
+    "docs/intake/event-template.json"
   ],
   "forbidden_paths": [
     ".maw/secrets.yaml",

@@ -1,9 +1,9 @@
 {
   "schema": "mawflow.seed_kit.manifest.v2",
   "name": "mawflow-seed-kit",
-  "version": "2.9.0",
+  "version": "2.10.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:6ac1c2050213fbf9fce37f442e3f90200034d66257a473f1b8cdadbf67087abb",
+  "contract_fingerprint": "sha256:eaf3e79968855bacf5881b653e383718c12f28cb79868b9810dae659c7432977",
   "template_root": "template",
   "profiles": [
     "blank",

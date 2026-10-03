@@ -1,0 +1,33 @@
+schema_version: 1
+upgrade_key: 20261003-document-business-events
+title: 业务口径和 AI 工作事件的自动来源积累
+risk_level: T2
+status: active
+summary:
+  - 在已授权的澄清、决定、纠偏和里程碑中自动收录并回读最小事件。
+  - 用稳定业务 key/scope 和追加修订保留当前口径、提案、变化与冲突裁决。
+  - 工作记录与业务确认、PM/Task 状态、发布和真人验收分别表达。
+source_template_files:
+  - docs/ai-coding/document-source-capture.md
+  - docs/intake/README.md
+  - docs/intake/event-template.json
+  - ops/scripts/capture-document-source.py
+  - tests/test_document_source_capture.py
+  - .maw/agent-entry.yaml
+  - .maw/agent-rules.yaml
+  - docs/template-migrations/20261003-document-business-events.md
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect: [README.md, code/, app_key, release configuration, repository mappings, real secrets, .local/, module dossiers, existing intake records]
+  forbidden:
+    - 自动读取客户端私有会话或批量确认历史资料
+    - 用待确认提案、最新时间或工作完成替代业务确认
+    - 覆盖现有来源、项目规则或直接推进完整模板版本
+validation:
+  - git diff --check
+  - python3 -m pytest tests/test_document_source_capture.py tests/test_agent_portability.py -q
+  - bash ops/scripts/check-ai-framework-consistency.sh
+  - bash ops/scripts/check-local-boundary.sh
+propagation:
+  migration_note: docs/template-migrations/20261003-document-business-events.md

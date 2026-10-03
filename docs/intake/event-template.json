@@ -1,0 +1,20 @@
+{
+  "schema": "mawflow.document_work_event.v1",
+  "event_id": "example-work-event-001",
+  "title": "示例：需求澄清和阶段工作",
+  "occurred_at": "2026-10-03T00:00:00+08:00",
+  "source": {"kind": "ai_analysis", "ref": "当前任务可见交互", "excerpt": "仅收录最小来源摘要；本示例不是项目决定。"},
+  "context": {"session_ref": "当前会话定位", "task_ref": "当前任务定位或真实任务编号", "trigger": "clarification"},
+  "items": [{
+    "key": "reading-model", "kind": "requirement", "statement": "请替换为待确认业务规则。",
+    "business": {"key": "example.reading-model", "scope": "project", "title": "示例业务主题", "effect": "define", "change_reason": "首次提出，尚待负责人确认"},
+    "volume": "requirements", "modules": [], "owner": "项目负责人",
+    "decision_status": "pending", "implementation_status": "not_started", "audit_status": "not_assessed",
+    "evidence": [], "next_action": "明确业务规则及适用范围", "related_refs": []
+  }],
+  "work": {
+    "phase": "started", "goal": "按真实任务替换目标", "actions": ["核对已知依据和待确认事项"],
+    "result": "已识别问题，尚未确认或实现", "validation": "未执行测试；当前仅完成范围分析",
+    "owner": "AI 执行者", "modules": [], "evidence": [], "next_action": "根据真实确认继续实施"
+  }
+}
