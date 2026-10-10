@@ -461,3 +461,5 @@ bash ops/scripts/export-code-only.sh --mode customer --zip --dry-run
 - 涉及项目健康问题池、健康上下文、需求事实、决策记录、调研会话摘要、验收缺口或主项目导入 `.maw/health/` 时，使用 `#项目健康`；跨模块被依赖待办仍走 `#待办任务`，完整评审/审计报告仍走 `#项目评审/#项目审计`。
 - 涉及跨模块复用、公共 API、功能基类、项目审计元数据、巡检或数据大屏时，优先使用 `#技术地图`；机器可读提取入口是 `ops/scripts/extract-project-metadata.py`。用户给出 `#项目审计：<评审报告路径>` 或 `项目审计:<评审报告路径>` 时，明确走 `#项目审计` / `TINST-037`。
 - 涉及发布、镜像仓库、客户仓库、密钥或生产数据时，让 AI 先执行脱敏和风险检查。
+
+- `#更新动态` / `#T043`：按 [TINST-043](docs/ai-instructions/instructions/generate-update-notes.md) 默认生成最近100条；`#更新动态 --all` 或 `#更新动态：全部` 生成全部已记录历史；日常更新追加权威片段，支持云端 Markdown 分页。

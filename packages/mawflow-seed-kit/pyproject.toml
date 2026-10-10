@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mawflow-seed-kit"
-version = "2.10.0"
+version = "2.12.0"
 description = "Canonical MAWflow Seed contract, compiler, reconciler, and project template"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -31,5 +31,6 @@ mawflow_seed_kit = [
   "template/**/.*",
   "template/.maw/*",
   "template/.maw/**/*",
+  "template/.maw-template/**/*",
   "template/.local/.maw/*.example.yaml",
 ]

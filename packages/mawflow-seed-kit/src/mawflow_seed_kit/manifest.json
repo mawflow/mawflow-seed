@@ -1,9 +1,9 @@
 {
   "schema": "mawflow.seed_kit.manifest.v2",
   "name": "mawflow-seed-kit",
-  "version": "2.10.0",
+  "version": "2.12.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:eaf3e79968855bacf5881b653e383718c12f28cb79868b9810dae659c7432977",
+  "contract_fingerprint": "sha256:99160f68c6d4da2c6b1d98c2d310d4cfc076ce68c42b350840364dcb1b477b14",
   "template_root": "template",
   "profiles": [
     "blank",
@@ -41,7 +41,19 @@
     "GEMINI.md",
     ".maw/agent-rules.yaml",
     ".maw/agent-context.md",
-    "CHATGPT.md"
+    "CHATGPT.md",
+    "docs/ai-instructions/instructions/generate-update-notes.md",
+    "docs/ai-coding/update-notes.md",
+    "docs/updates/README.md",
+    "docs/updates/note-template.yaml",
+    ".maw/schemas/update-note.schema.json",
+    ".maw/changes/README.md",
+    "ops/scripts/generate-update-notes.py",
+    "ops/scripts/update_notes/__init__.py",
+    "ops/scripts/update_notes/store.py",
+    "ops/scripts/update_notes/render.py",
+    "ops/scripts/plan-template-drift.py",
+    "docs/ai-instructions/instructions/derived-template-drift-upgrade.md"
   ],
   "quick_check": [
     "python3",

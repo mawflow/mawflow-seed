@@ -98,8 +98,13 @@ def test_materialized_project_is_complete_and_editable(tmp_path: Path) -> None:
     assert projection["configs"][".maw/app-runtime.yaml"]["app_runtime"]["apps"] == {}
     assert projection["configs"][".maw/components.yaml"]["components"] == []
     assert yaml.safe_load((root / ".maw/module-candidates.yaml").read_text(encoding="utf-8"))["module_candidates"] == []
-    assert yaml.safe_load((root / ".maw/capabilities.yaml").read_text(encoding="utf-8"))["capabilities"] == []
-    assert yaml.safe_load((root / ".maw/project-signals.yaml").read_text(encoding="utf-8"))["signals"] == []
+    capabilities = yaml.safe_load((root / ".maw/capabilities.yaml").read_text(encoding="utf-8"))["capabilities"]
+    assert [item["key"] for item in capabilities] == ["development-resource-coordination"]
+    assert capabilities[0]["owner_module"] == "not_identified"
+    assert capabilities[0]["related_app_keys"] == []
+    signals = yaml.safe_load((root / ".maw/project-signals.yaml").read_text(encoding="utf-8"))["signals"]
+    assert [item["id"] for item in signals] == ["SIG-20261010-development-resources"]
+    assert signals[0]["related_modules"] == []
     for source_ref in ("code/README.md", "docs/README.md", "MAWFLOW_CLI.md", "PROJECT_COMMANDS.md", "CHATGPT_TO_AI.md"):
         assert (root / source_ref).is_file()
     assert public_catalog()["trust_boundary"]["arbitrary_paths_writable"] is False
@@ -284,6 +289,11 @@ def test_subprojects_and_shared_code_source_use_one_device_binding(tmp_path: Pat
 
     topology = inspect_project_sources(project)
     assert topology["status"] == "ready"
+    local_records = list((project / ".local/maw/changes").glob("*.yaml"))
+    assert len(local_records) == 1
+    assert str(source) in local_records[0].read_text()
+    assert local_records[0].stat().st_mode & 0o777 == 0o600
+    assert all(str(source) not in path.read_text() for path in (project / ".maw/changes").glob("*.yaml"))
     assert topology["summary"] == {
         "subprojects": 2,
         "code_sources": 1,

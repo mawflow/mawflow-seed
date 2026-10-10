@@ -1,4 +1,4 @@
-# Public-safe empty capability index for fresh derived projects.
+# Fresh projects contain shared Seed governance only; no source-project capability facts.
 schema_version: 1
 capability_registry:
   purpose: "Machine-readable reusable capability index for technical-map lookup, audit, and AI preconditions."
@@ -31,4 +31,25 @@ capability_registry:
     module_reference_policy: "Module dossiers reference capability_key; capability facts remain in the capability index and docs."
   closeout_metadata_key: capability_map_update_status
 
-capabilities: []
+capabilities:
+  - key: development-resource-coordination
+    name: 对话开发资源协调
+    type: governance_protocol
+    status: candidate
+    origin: seed_repository
+    owner_module: not_identified
+    owner_component: ''
+    related_app_keys: []
+    summary: 新鲜设备状态与工作台CLI回读、按需环境及同用户跨项目重任务串行。
+    implementation_paths:
+    - docs/ai-coding/development-resources.md
+    - ops/scripts/development-resources.py
+    provided_contracts:
+    - mawflow.development_resources.v1
+    - mawflow.development_resource_policy.v1
+    reusable_entrypoints:
+    - python3 ops/scripts/development-resources.py check
+    consumed_by_modules: []
+    validation:
+    - python3 ops/scripts/development-resources.py check
+    last_verified_commit: ''

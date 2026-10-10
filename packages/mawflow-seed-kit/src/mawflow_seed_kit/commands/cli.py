@@ -94,6 +94,8 @@ def build_parser() -> argparse.ArgumentParser:
     project_drift.add_argument("--applied-version", default="", help="Override the recorded applied commit.")
     project_drift.add_argument("--target-version", default="", help="Override the configured target ref.")
     project_drift.add_argument("--git-url", default="", help="Override the configured Seed Git URL.")
+    project_drift.add_argument("--source-path", default=None, help="Main repository: registered Seed working copy only.")
+    project_drift.add_argument("--profile", default=None, help="Project configuration profile.")
     project_drift.add_argument("--max-commits", type=int, default=20, help="Maximum commit summaries to include.")
     project_doctor_parser = project_sub.add_parser("doctor", help="Compile and validate Seed Contract v2.")
     project_doctor_parser.add_argument("--root", default=".")
@@ -701,11 +703,13 @@ def main(argv: list[str] | None = None, *, authorize_upgrade: Callable[[], objec
                         applied_version=args.applied_version,
                         target_version=args.target_version,
                         git_url=args.git_url,
+                        source_path=args.source_path,
+                        profile=args.profile,
                         max_commits=args.max_commits,
                     )
                 )
                 _json_print(result)
-                return 1 if result["status"] in {"source_channel_unconfirmed", "baseline_invalid", "diverged"} else 0
+                return 0 if result["status"] in {"up_to_date", "behind", "ahead", "baseline_missing", "seed_contract_behind"} else 1
             except TemplateDriftError as exc:
                 _json_print({"schema": "mawflow.template_drift.plan.v2", "status": "failed", "error": str(exc)})
                 return 1

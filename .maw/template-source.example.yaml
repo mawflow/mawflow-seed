@@ -4,7 +4,7 @@ template_source:
   source_channel: public_seed
   local_path: ""
   git_url: "https://github.com/mawflow/mawflow-seed.git"
-  version: "main"
+  version: latest_verified_stable
 
   public_source:
     role: public_seed_distribution_repository
@@ -20,5 +20,5 @@ template_source:
   local_override: ".local/.maw/template-source.yaml"
 
   notes:
-    - "This file is a public example. Real local paths and private template sources belong in .local/.maw/template-source.yaml."
+    - "This file is a public example. Other derived projects use verified public stable releases; local paths and private sources cannot override this route."
     - "Public Seed users do not need access to the private Seed development repository."

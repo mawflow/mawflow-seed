@@ -12,3 +12,7 @@
 跨 AI 工具转交任务时使用 `CHATGPT_TO_AI.md` 的通用格式。
 
 - `#Seed反馈` / `#Seed复盘` / `#Seed优化报告`：按 [TINST-042](docs/ai-instructions/instructions/seed-feedback.md) 从可访问的任务经验生成脱敏建议报告；`#Seed反馈：评审 <报告>` 接入既有种子仓回流流程。
+
+- `#更新动态` / `#T043`：按 [TINST-043](docs/ai-instructions/instructions/generate-update-notes.md) 默认生成最近100条；`#更新动态 --all` 或 `#更新动态：全部` 生成全部已记录历史；日常更新追加权威片段，支持云端 Markdown 分页。
+
+模板升级统一采用已验证公共稳定 tag 与同版本 Kit；仅平台主仓由自身项目身份及源码绑定读取独立 Seed Git 目录。`mawflow project drift` 与项目计划脚本共用 Seed Kit >=2.12.0 实现。来源或基线迁移必须先预览并验证，不能只换 URL 或清空旧基线。

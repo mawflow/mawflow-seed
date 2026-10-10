@@ -200,7 +200,7 @@ def _source_mode(value: str) -> str:
 
 def _repository_identity(value: str) -> str:
     text = value.strip()
-    scp = SCP_REPOSITORY_PATTERN.fullmatch(text)
+    scp = SCP_REPOSITORY_PATTERN.fullmatch(text) if "://" not in text else None
     if scp:
         host, repository_path = scp.group(1), scp.group(2)
     else:

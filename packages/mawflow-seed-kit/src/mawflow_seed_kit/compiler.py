@@ -114,7 +114,7 @@ def _absolute_path_valid(value: str) -> bool:
 
 
 def _repository_url_valid(value: str) -> bool:
-    scp = SCP_REPOSITORY_PATTERN.fullmatch(value)
+    scp = SCP_REPOSITORY_PATTERN.fullmatch(value) if "://" not in value else None
     if scp:
         return bool(scp.group(1) and scp.group(2).strip("/")) and ".." not in Path(scp.group(2)).parts
     try:
@@ -130,7 +130,7 @@ def _repository_url_valid(value: str) -> bool:
 
 
 def _repository_identity(value: str) -> str:
-    scp = SCP_REPOSITORY_PATTERN.fullmatch(value)
+    scp = SCP_REPOSITORY_PATTERN.fullmatch(value) if "://" not in value else None
     if scp:
         host, repository_path = scp.group(1), scp.group(2)
     else:

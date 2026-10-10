@@ -1,5 +1,8 @@
 # 指令：使用内置模板任务提示词工程
 
+
+模板来源统一按 TINST-026 解析：仅主仓可使用已注册 code-source binding 的独立 Seed Git 目录和固定提交；其它所有派生项目使用验证过的公共稳定 tag 与同版本 Kit。旧私有配置、不可达基线和部分发行先停止并保留项目状态，不使用本机、私有、main 或当前仓库兜底。手动历史任务包中的来源字段不得覆盖该策略。
+
 ## 元信息
 
 - ID：TINST-009
@@ -37,10 +40,10 @@
 执行任务提示词工程：prompts/codex/task-packs/template-feature-upgrade-codex-tasks
 Seed 来源通道：<内部来源通道 | public_seed | unknown_legacy>
 源模板本机路径：<源模板本机路径>
-源模板 git 地址：<按 Seed 来源通道填写；外部公开项目使用 https://github.com/mawflow/mawflow-seed.git>
+源模板 git 地址：<仅主仓使用注册代码源；其它所有派生项目 https://github.com/mawflow/mawflow-seed.git>
 公开 Seed 仓：https://github.com/mawflow/mawflow-seed
-源模板版本：main；未提供本机路径时可从 git 地址读取 main
-源模板读取优先级：用户输入 > .local/.maw/template-source.yaml > .maw/template-source.yaml > 当前仓库；外部公开项目不得读取内部私有 Seed 源。
+源模板版本：<主仓固定提交；其它项目 latest_verified_stable 解析出的稳定 tag>
+源模板读取优先级：统一 drift 策略；主仓注册绑定，其它项目验证公共稳定发行，无本机或私有兜底。
 目标项目仓库：当前 Codex 会话所在仓库
 升级范围：同步最新模板能力；必须先审计取舍再增量合并，不得整文件覆盖目标项目 README，不得误删目标项目已有 app_key、发布配置或项目私有规则。
 ```
@@ -51,10 +54,10 @@ Seed 来源通道：<内部来源通道 | public_seed | unknown_legacy>
 执行任务提示词工程：prompts/codex/task-packs/adopt-maw-project-template-codex-tasks
 Seed 来源通道：<内部来源通道 | public_seed | unknown_legacy>
 源模板本机路径：<源模板本机路径>
-源模板 git 地址：<按 Seed 来源通道填写；外部公开项目使用 https://github.com/mawflow/mawflow-seed.git>
+源模板 git 地址：<仅主仓使用注册代码源；其它所有派生项目 https://github.com/mawflow/mawflow-seed.git>
 公开 Seed 仓：https://github.com/mawflow/mawflow-seed
-源模板版本：main；未提供本机路径时可从 git 地址读取 main
-源模板读取优先级：用户输入 > .local/.maw/template-source.yaml > .maw/template-source.yaml > 当前仓库；外部公开项目不得读取内部私有 Seed 源。
+源模板版本：<主仓固定提交；其它项目 latest_verified_stable 解析出的稳定 tag>
+源模板读取优先级：统一 drift 策略；主仓注册绑定，其它项目验证公共稳定发行，无本机或私有兜底。
 目标项目仓库：当前 Codex 会话所在仓库
 改造范围：增量接入 MAW 模板规范；先盘点项目事实和风险边界，不移动业务源码，不覆盖目标项目 README，不复制模板仓库远端、镜像目标、密钥或本机 .local 配置。
 ```

@@ -74,3 +74,25 @@ project_lifecycle:
         sensitive: false
         required: true
         risk: critical
+  change_fragments:
+    source_glob: .maw/changes/*.yaml
+    generated_index: .maw/generated/change-index.yaml
+    sort_keys:
+    - record_key
+    - task_key
+    - source_path
+    semantic_identity_key: record_key
+    same_identity_different_payload: preserve_all_and_require_human_review
+    generated_files_are_authoritative: false
+    update_notes:
+      record_type: update_note
+      schema: .maw/schemas/update-note.schema.json
+      documentation: docs/ai-coding/update-notes.md
+      recorder: ops/scripts/generate-update-notes.py
+      latest_document: docs/updates/updates.md
+      history_document: docs/updates/CHANGELOG.md
+      default_limit: 100
+      cloud_document: docs/handbooks/release-ops/updates.md
+      cloud_receipt: .maw/generated/update-notes-cloud.json
+      source_is_append_only: true
+      generated_documents_are_authoritative: false

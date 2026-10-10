@@ -76,3 +76,7 @@ docs/capabilities/<capability-key>.md
 - [跨 Agent 入口与任务上下文](agent-portability.md)：专用入口、未知 Agent 回退、独立就绪检查及受控迁移。
 
 - [日常交互来源收录](document-source-capture.md)：最小来源、状态、证据与幂等回执。
+
+- [长期更新动态](update-notes.md)：`project-update-notes`，Seed 内置动态记录和生成协议。
+
+- [对话开发资源协调](development-resource-coordination.md)：新鲜资源检查、工作台/CLI 握手及跨项目串行入口。

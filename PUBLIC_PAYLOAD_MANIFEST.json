@@ -1,13 +1,19 @@
 {
   "schema": "mawflow.seed_public_payload.v2",
-  "seed_version": "2.10.0",
+  "seed_version": "2.12.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:eaf3e79968855bacf5881b653e383718c12f28cb79868b9810dae659c7432977",
+  "contract_fingerprint": "sha256:99160f68c6d4da2c6b1d98c2d310d4cfc076ce68c42b350840364dcb1b477b14",
   "bom": {
-    "kit": "mawflow-seed-kit==2.10.0",
+    "kit": "mawflow-seed-kit==2.12.0",
     "contract": "seed-contract-v2"
   },
   "required_paths": [
+    "docs/ai-coding/development-resources.md",
+    "docs/capabilities/development-resource-coordination.md",
+    "docs/template-migrations/20261010-development-resource-coordination.md",
+    ".maw-template/upgrades/20261010-development-resource-coordination.yaml",
+    "ops/scripts/development-resources.py",
+    "tests/test_development_resources.py",
     "README.md",
     "AI_START_HERE.md",
     "MAWFLOW_CLI.md",
@@ -142,7 +148,22 @@
     "docs/intake/source-template.json",
     "ops/scripts/capture-document-source.py",
     "tests/test_document_source_capture.py",
-    "docs/intake/event-template.json"
+    "docs/intake/event-template.json",
+    "docs/ai-instructions/instructions/generate-update-notes.md",
+    "docs/ai-coding/update-notes.md",
+    "docs/updates/README.md",
+    "docs/updates/note-template.yaml",
+    ".maw/schemas/update-note.schema.json",
+    ".maw/changes/README.md",
+    "ops/scripts/generate-update-notes.py",
+    "ops/scripts/update_notes/__init__.py",
+    "ops/scripts/update_notes/store.py",
+    "ops/scripts/update_notes/render.py",
+    "tests/test_update_notes.py",
+    "tests/test_update_notes_distribution.py",
+    "docs/capabilities/update-notes.md",
+    "docs/template-migrations/20261004-update-notes.md",
+    ".maw-template/upgrades/20261004-update-notes.yaml"
   ],
   "forbidden_paths": [
     ".maw/secrets.yaml",
@@ -204,7 +225,9 @@
       "tests/test_local_dev_runner.py",
       "tests/test_script_contract.py",
       "tests/test_agent_portability.py",
-      "tests/test_seed_version_alignment.py"
+      "tests/test_seed_version_alignment.py",
+      "tests/test_update_notes.py",
+      "tests/test_update_notes_distribution.py"
     ],
     [
       "python3",

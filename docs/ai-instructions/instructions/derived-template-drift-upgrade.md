@@ -19,8 +19,8 @@
 
 - 是否指定 commit 不决定在哪个仓库执行；当前 Codex 会话所在仓库的角色才决定路由。
 - 当前仓库是派生项目时，`#模版升级/#模板升级` 在当前派生项目执行本指令；不会改去源模板仓库生成资产。
-- 未指定 commit、branch 或 tag 时，先读取 `.maw/template-source.yaml` 的 `template_source.source_channel`，再读取 `template_source.version` 作为目标模板版本；该字段缺省时按 `main` 解析源模板目标 commit。
-- `source_channel=public_seed` 时，公开派生项目只使用公开 Seed 仓 `https://github.com/mawflow/mawflow-seed` 或公开升级资产；`source_channel=unknown_legacy` 或证据冲突时，先输出证据并要求人工确认，不自动漂移升级。
+- 先检测仓库身份。只有平台主仓从登记并绑定的独立 Seed Git 目录取源，默认冻结当前已提交 `HEAD`；其它所有派生项目（包括内部开发仓）只采用公共稳定发布，默认 `latest_verified_stable`，显式指定时只接受稳定 `vX.Y.Z` tag，不跟随 main、rc、开发分支或任意 commit。
+- 主仓专用目录通道必须同时通过共享项目身份、仓库身份、Git origin、代码源绑定、外层 ignore 和干净工作区检查。其它项目使用 `public_seed`；命令行参数、本机覆盖和旧内部通道不能越过此规则。历史来源不明或基线属于内部历史时先输出迁移预览，不自动换源或猜测基线。
 - 如果 `template_source.applied_version` 为空，只把本次目标模板 commit 初始化为从当前版本开始的基线，不追溯猜测历史差异。
 - 当前仓库其实是源模板仓库时，同一触发词走 `TINST-024`；如果无法判断仓库角色，先向用户确认。
 
@@ -38,17 +38,29 @@
 
 ```yaml
 template_source:
-  source_channel: "public_seed | unknown_legacy"
+  source_channel: public_seed
   git_url: "<internal seed git url or public seed git url>"
-  version: "main"
+  version: latest_verified_stable
   applied_version: "<当前项目已实际采用的源模板 commit SHA>"
 ```
 
-- `source_channel` 表示模板来源通道。`public_seed` 使用公开 Seed 分发源；`unknown_legacy` 是旧项目兼容值，必须人工确认后再自动升级。
-- `version` 表示本次对齐的源模板目标，可以是 branch、tag 或 commit，默认 `main`；用户未指定 commit 时使用该字段解析目标模板 commit。
+- `source_channel` 表示来源通道；普通派生项目固定公共发布路线，平台主仓专用目录模式由自身仓库事实明确，旧未知来源保留人工核对入口。
+- `version`：主仓默认 `HEAD` 并在计划内冻结 commit；其它项目为 `latest_verified_stable` 或已发布稳定 tag。公共解析回读 tag、版本文件、Payload Manifest、Seed lock 和同版本 Kit 的 checksum/manifest，任一不一致停止。
 - `applied_version` 表示当前项目上一次成功采用并提交的源模板 commit。
 - 完成一次模板漂移升级后，必须把 `applied_version` 更新为本次目标模板 commit。
 - 如果 `applied_version` 为空，本指令只初始化当前版本基线，不追溯历史提交差异；这是从本版本开始生效的前提。
+
+## 来源与旧基线保护
+
+计划器、兼容版本的 `mawflow project drift` 和独立 `mawflow-seed-kit project drift` 共用 Seed Kit 实现，要求 Kit >=2.12.0。独立入口使用用户级 Kit，不依赖 Host；旧 Host 固定的 Kit 必须经匹配包升级后才获得新规则，不手改 Host 依赖。主仓目录缺失不临时克隆私有源，也不使用主仓自身代替 Seed；其它项目公共回读失败不回退内部候选。
+
+- `source_policy_violation / public_release_required`：来源或 ref 不符合当前项目规则，停止。
+- `seed_source_unbound / seed_source_invalid / seed_source_dirty`：只阻断主仓模板升级；按登记来源修复绑定或提交候选。
+- `public_release_unavailable`：公共 tag、契约、校验值或同版本 Kit 未通过回读，保持原项目。
+- `public_source_migration_required / source_baseline_migration_required`：内部与公开导出历史不同，保留旧来源和基线；先依据已发布版本、契约指纹和公开载荷作取舍/差异预览，经验证再记录对应公开 commit，禁止只换 URL、清空基线或虚报已对齐。
+- `public_release_behind_project`：项目高于公共稳定版，保留当前项目，等待同版本或更高公共发布，禁止降级。
+
+新项目包基线的完整 SemVer 只在官方同版本公共 tag、Kit 和契约校验后解析为公开 commit；其它非 commit 基线不猜测。迁移涉及实际业务文件时继续受原取舍、哈希备份、隔离验证、授权和回读机制约束。
 
 ## 执行步骤
 
@@ -74,7 +86,7 @@ rtk proxy python3 ops/scripts/plan-template-drift.py
 ```
 
 4. 按计划结果处理：
-   - `status: source_channel_unconfirmed`：停止自动升级，输出 `.maw/template-source.yaml`、Git remote 和仓库身份检测摘要，等待人工确认 `public_seed`。
+   - `status: source_channel_unconfirmed`：停止自动升级，输出 `.maw/template-source.yaml`、Git remote 和仓库身份检测摘要，核对后迁移到公共发布通道；主仓专用目录通道另行按身份及绑定验证。
    - `status: seed_contract_unavailable`：源模板 `.maw/seed.lock` 缺失、无法解析或版本/契约/指纹字段不完整；停止自动升级，先修复或确认源契约。`template_status` 保留模板提交关系，不能把契约不可验证判为已对齐，也不能直接推进基线。
    - `status: up_to_date`：说明当前模板基线已到目标模板 commit，且 Seed Contract 不落后；`seed_contract.status: ahead` 表示项目 Seed 比当前源模板记录更新，不回退项目版本。
    - `status: seed_contract_behind`：模板 commit 已对齐，但 `.maw/seed.lock` 缺失、版本落后或同版本指纹漂移；执行计划器输出的受控 Seed 迁移提示词，先 preview 和隔离校验，按当前用户已有授权及目标项目确认机制应用；缺少必要授权时展示具体预览再确认。迁移必须保留项目 profile/source 身份、较新的 schema、项目生命周期 methodology、README、code、app_key 和私有规则。
@@ -151,6 +163,8 @@ python3 ops/scripts/plan-template-drift.py
 ## 更新记录
 
 - 2026-06-14：创建派生项目模板漂移升级指令，基于 `template_source.applied_version` 计算落后提交数，并在当前会话执行升级提示词。
-- 2026-07-01：公开版补充 Seed 来源通道 `public_seed/unknown_legacy`；来源未确认时停止自动漂移升级。
+- 2026-07-01：补充 Seed 来源通道 `主仓专用目录通道/public_seed/unknown_legacy`，公开项目不得读取内部私有 Seed 源，来源未确认时停止自动漂移升级。
 - 2026-08-23：模板漂移计划增加 Seed Contract 独立比较与 `seed_contract_behind` 路由；受控迁移保护较新 schema、项目 Seed 身份和生命周期 methodology。
 - 2026-09-07：补齐模板与契约同时落后的迁移及最终复检；源契约不可验证时停止自动升级，明确源模板与本机 Seed Kit 的比较边界。
+
+- 2026-10-08：统一主仓独立 Git 目录与其它项目公共稳定发布路线；脚本/CLI 共用计划器，增加来源、发布校验和旧基线保护。

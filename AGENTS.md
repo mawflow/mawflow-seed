@@ -5,8 +5,10 @@ Read [AI_START_HERE.md](AI_START_HERE.md) before working in this project.
 只读取本任务所需的模块和文档；先确认允许路径、禁止路径及验证命令。
 不自动读取 prompts、归档、本机私有目录；不提交秘密或无关改动。
 工具、Skill、MCP、RTK 均非读取项目规则的前置条件；已有授权按任务范围延续。
+本地开发按 docs/ai-coding/development-resources.md 检查资源与工作台/CLI，按需复用服务，跨项目重任务串行。
 完成时区分已修改、已验证、已发布与真人验收，列出未验证项。
 长期结论与缺口按 docs/ai-coding/document-source-capture.md 收录最小来源及回执；只读任务不写入。
+实际用户可见变化按 docs/ai-coding/update-notes.md 追加权威动态；默认100条，--all 保留全部已记录历史。
 <!-- mawflow:bootstrap:end -->
 
 
@@ -37,7 +39,7 @@ Read [AI_START_HERE.md](AI_START_HERE.md) before working in this project.
 - `#模版升级/#模板升级`：
   - 未指定 commit 时，不改变执行仓库；先按当前仓库角色路由。
   - 在源模板仓库中生成升级资产、迁移说明或派生项目提示词。
-  - 在派生项目中按 `template_source.version`（默认 `main`）解析目标模板 commit，与 `template_source.applied_version` 计算模板漂移，并在当前会话执行升级提示词。
+  - 只有经身份确认的主仓读取已绑定 Seed 独立 Git 目录的固定 commit；其它所有派生项目只读取经校验公共稳定 tag 与同版本 Kit，禁止 main、rc、私有源和本机目录覆盖。旧内部基线先作来源迁移预览。
   - 不要把派生项目的模板升级误路由到 `#项目升级`。
 - `#项目升级`：在目标项目按取舍矩阵同步模板能力，必须先审计目标项目事实。
 - `#种子仓库升级`：在派生项目中记录可回流候选能力，并生成一段在种子仓库执行的任务提示词；在种子仓库中接收提示词后再评估并增量实现。
@@ -87,3 +89,8 @@ Read [AI_START_HERE.md](AI_START_HERE.md) before working in this project.
 ## 文档来源积累
 
 产生长期结论或缺口时按 [交互来源收录规范](docs/ai-coding/document-source-capture.md)记录最小来源与回执；只读任务不写入。
+
+
+## 日常更新动态
+
+获准修改且形成用户可见变化时，按 [更新动态规范](docs/ai-coding/update-notes.md) 追加 `.maw/changes/` 权威片段并刷新生成视图；只读不落盘。`#更新动态` 默认最近100条，`--all` 生成完整已记录历史；云端准备、实际发布与真人验收分别说明。

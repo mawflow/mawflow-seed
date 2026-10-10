@@ -1,0 +1,24 @@
+# 示例输入，不是项目事实；请据本任务真实变化替换 ID、文案和来源。
+schema_version: 1
+record_key: example.update-note
+task_key: example-task
+record_type: update_note
+operation: append
+payload:
+  schema: mawflow.update_note.v1
+  occurred_at: '2026-10-04T12:00:00+08:00'
+  title: 更新动态机制
+  summary: 支持按需生成最近100条和完整历史更新文档
+  category: added
+  module_key: project-governance
+  module_name: 项目治理
+  delivery_state: implemented
+  validation_state: unverified
+  importance: normal
+  audience: project
+  details:
+    - label: 说明
+      path: docs/ai-coding/update-notes.md
+evidence_refs:
+  - path: docs/ai-coding/update-notes.md
+    kind: repository_path

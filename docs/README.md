@@ -131,3 +131,7 @@ AI/Codex 不应在任务开始时全量读取 `docs/**`。本目录采用“总�
 - [跨 Agent 入口与任务上下文](capabilities/agent-portability.md)：专用入口、未知 Agent 回退、独立就绪检查及受控迁移。
 
 - [Seed 经验反馈报告](ai-instructions/instructions/seed-feedback.md)：任务经验采样、脱敏建议报告与接收评审。
+
+- [更新动态](updates/README.md)：权威片段、最近100条、完整历史及云端分页。
+
+- [开发资源与本机通信](ai-coding/development-resources.md)：按需环境、设备重任务串行及工作台/CLI回读。

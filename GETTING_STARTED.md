@@ -53,7 +53,7 @@
 
 本模板内置两份给 Codex 执行的任务提示词工程，用于模板能力升级和模板化改造。它们不依赖本机 Codex skill，目标是让其它项目也能按仓库内文件继续执行。
 
-执行任务包时必须给 Codex 提供源模板来源和 Seed 来源通道，或让 Codex 按“用户输入 > `.local/.maw/template-source.yaml` > `.maw/template-source.yaml` > 当前仓库”的顺序解析。下面的提示词使用 `<源模板本机路径>` 占位；真实本机路径和内部私有源只作为当次执行输入、受控内部配置或本机 `.local` 配置，不应写入目标项目的长期可提交文档。外部公开项目使用 `public_seed` 和公开 Seed 仓 `https://github.com/mawflow/mawflow-seed`。
+Seed 来源通道统一按 TINST-026 解析：仅主仓可使用已注册 code-source binding 的独立 Seed Git 目录和固定提交；其它所有派生项目使用验证过的公共稳定 tag 与同版本 Kit。旧私有配置、不可达基线和部分发行先停止并保留项目状态，不使用本机、私有、main 或当前仓库兜底。手动历史任务包中的来源字段不得覆盖该策略。
 
 极简口令优先记这三个：
 
@@ -85,9 +85,9 @@
 #项目升级：执行模板派生项目升级任务包
 任务包：prompts/codex/task-packs/template-feature-upgrade-codex-tasks
 源模板本机路径：<源模板本机路径>
-源模板 git 地址：<受控内部项目使用本机或团队配置；公开项目使用 https://github.com/mawflow/mawflow-seed.git>
-源模板版本：main
-源模板读取优先级：用户输入 > .local/.maw/template-source.yaml > .maw/template-source.yaml > 当前仓库。
+源模板 git 地址：<仅主仓使用注册代码源；其它所有派生项目 https://github.com/mawflow/mawflow-seed.git>
+源模板版本：<主仓固定提交；其它项目 latest_verified_stable 解析出的稳定 tag>
+源模板读取优先级：统一 drift 策略；主仓注册绑定，其它项目验证公共稳定发行，无本机或私有兜底。
 目标项目仓库：当前 Codex 会话所在仓库
 升级范围：同步最新模板能力；必须先审计取舍再增量合并，不得整文件覆盖目标项目 README，不得误删目标项目已有 app_key、发布配置或项目私有规则。
 ```
@@ -109,9 +109,9 @@
 #模板化：执行任意项目模板化改造任务包
 任务包：prompts/codex/task-packs/adopt-maw-project-template-codex-tasks
 源模板本机路径：<源模板本机路径>
-源模板 git 地址：<受控内部项目使用本机或团队配置；公开项目使用 https://github.com/mawflow/mawflow-seed.git>
-源模板版本：main
-源模板读取优先级：用户输入 > .local/.maw/template-source.yaml > .maw/template-source.yaml > 当前仓库。
+源模板 git 地址：<仅主仓使用注册代码源；其它所有派生项目 https://github.com/mawflow/mawflow-seed.git>
+源模板版本：<主仓固定提交；其它项目 latest_verified_stable 解析出的稳定 tag>
+源模板读取优先级：统一 drift 策略；主仓注册绑定，其它项目验证公共稳定发行，无本机或私有兜底。
 目标项目仓库：当前 Codex 会话所在仓库
 改造范围：增量接入 MAW 模板规范；先盘点项目事实和风险边界，不移动业务源码，不覆盖目标项目 README，不复制模板仓库远端、镜像目标、密钥或本机 .local 配置。
 ```

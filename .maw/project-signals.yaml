@@ -1,4 +1,4 @@
-# Public-safe empty project-signal index for fresh derived projects.
+# Fresh projects contain shared Seed AI preconditions only; no source-project signals.
 schema_version: 1
 project_signal_registry:
   purpose: "Machine-readable human and AI hints for audits, dashboards, and development preconditions."
@@ -45,4 +45,28 @@ project_signal_registry:
     - "Active or monitoring signals for AI or dashboard audiences should be read before related work."
     - "Signals reference TODO-ID, capability_key, module_key, and evidence paths instead of duplicating facts."
 
-signals: []
+signals:
+  - id: SIG-20261010-development-resources
+    type: ai_precondition
+    status: active
+    severity: medium
+    audience:
+    - human
+    - ai
+    - reviewer
+    title: 对话开发共享设备资源并回读本机通信
+    human_summary: 开工与阶段检查消费实时资源及工作台CLI；重任务默认串行，旧项目等待自身升级。
+    ai_preconditions:
+    - 按 docs/ai-coding/development-resources.md 执行；历史采样和CLI存在均不能代替实时验证。
+    - 只读不写入，资源工具不扩大服务控制或发布授权；无CLI时按项目文件继续。
+    related_modules: []
+    related_capabilities:
+    - development-resource-coordination
+    related_todos: []
+    evidence_paths:
+    - docs/ai-coding/development-resources.md
+    - ops/scripts/development-resources.py
+    owner_role: platform-engineering
+    created_at: '2026-10-10'
+    last_updated: '2026-10-10'
+    resolution: ''

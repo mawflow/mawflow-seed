@@ -88,6 +88,21 @@ execution_contract:
     - local_environment_status
     - memory_update
     - local_update
+
+  development_resources:
+    device_policy_schema: mawflow.development_resource_policy.v1
+    device_policy_location: user_home/.local/config/maw-development-resources.json
+    host_capability: host.development_resources
+    docker_runner: python3 ops/scripts/development-resources.py run --workload docker --execute -- <authorized-command>
+    policy: docs/ai-coding/development-resources.md
+    checker: python3 ops/scripts/development-resources.py check
+    heavy_runner: python3 ops/scripts/development-resources.py run --execute -- <authorized-command>
+    checkpoints: [task_start, session_resume, service_start, before_heavy_job, after_heavy_job, milestone]
+    communication: capability_negotiated_cli_or_authorized_local_mcp
+    default_heavy_job_limit: 1
+    coordination_scope: same_user_same_device
+    unavailable_cli: project_files_fallback
+    read_only_check_no_writes: true
   document_source_capture:
     schema: mawflow.document_source.v1
     policy: docs/ai-coding/document-source-capture.md
@@ -108,6 +123,16 @@ execution_contract:
     - blocked
     - verification
     - handoff
+  update_notes:
+    policy: docs/ai-coding/update-notes.md
+    source: .maw/changes/*.yaml
+    record_type: update_note
+    command: python3 ops/scripts/generate-update-notes.py
+    default_limit: 100
+    trigger: verified_user_visible_change
+    append_only: true
+    read_only: deferred_read_only
+    closeout_field: update_notes_status
 tool_adapters:
   codex:
     file: AGENTS.md

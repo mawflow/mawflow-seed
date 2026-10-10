@@ -74,7 +74,7 @@ upgrade_policy:
     notes:
       - "This route is for derived projects. Source template repositories still use template_upgrade to generate migration assets."
       - "If applied_version is empty, initialize the baseline from the current target commit and do not backfill old history."
-      - "Resolve template_source.source_channel before drift execution: controlled internal projects use a trusted source or local overlay, public_seed uses the public mawflow/mawflow-seed source, and unknown_legacy requires human confirmation."
+      - "Only a verified platform main repository uses its registered Seed Git directory; all other derived projects use verified public stable releases. Local overrides cannot bypass routing; legacy provenance requires a baseline migration preview."
   seed_feedback:
     trigger_keywords: ["#Seed反馈", "#Seed复盘", "#Seed优化报告"]
     strategy: evidence_report_then_existing_seed_feedback_loop
@@ -143,3 +143,13 @@ upgrade_policy:
       - "In maw-project-template, consume the generated prompt, evaluate reuse value, and if accepted produce template upgrade assets through template_upgrade."
       - "Missing capability origin fields in older derived projects must be treated as unknown_legacy and must not block the current task."
       - "When the feedback comes from a CI/pytest failure after terminology, copy, API, status, PM source, or command-output changes, treat it as test-contract-drift-guard evidence and require assertion sync guidance."
+
+template_source_routing:
+  implementation: mawflow_seed_kit.commands.template_policy
+  minimum_kit_version: 2.12.0
+  main_repository: registered_seed_git_directory
+  other_derived_projects: verified_public_stable_release
+  public_default: latest_verified_stable
+  candidate_validation: main_repository_and_isolated_test_projects
+  private_source_fallback: forbidden
+  legacy_baseline_policy: preserve_provenance_then_preview_and_verify

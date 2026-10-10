@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mawflow.update_note.v1",
+  "title": "任务级更新动态片段",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "record_key",
+    "task_key",
+    "record_type",
+    "operation",
+    "payload",
+    "evidence_refs"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "record_key": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,159}$"
+    },
+    "task_key": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,159}$"
+    },
+    "record_type": {
+      "const": "update_note"
+    },
+    "operation": {
+      "const": "append"
+    },
+    "payload": {
+      "type": "object",
+      "required": [
+        "schema",
+        "occurred_at",
+        "title",
+        "summary",
+        "category",
+        "module_key",
+        "module_name",
+        "delivery_state",
+        "validation_state",
+        "importance",
+        "audience",
+        "details"
+      ],
+      "properties": {
+        "schema": {
+          "const": "mawflow.update_note.v1"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "category": {
+          "enum": [
+            "added",
+            "changed",
+            "fixed",
+            "removed",
+            "security",
+            "docs"
+          ]
+        },
+        "module_key": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,159}$"
+        },
+        "module_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "delivery_state": {
+          "enum": [
+            "implemented",
+            "released",
+            "historical"
+          ]
+        },
+        "validation_state": {
+          "enum": [
+            "unverified",
+            "automated_passed",
+            "human_accepted"
+          ]
+        },
+        "importance": {
+          "enum": [
+            "normal",
+            "important"
+          ]
+        },
+        "audience": {
+          "enum": [
+            "project",
+            "public"
+          ]
+        },
+        "details": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": [
+              "label"
+            ],
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "oneOf": [
+              {
+                "required": [
+                  "path"
+                ]
+              },
+              {
+                "required": [
+                  "url"
+                ]
+              }
+            ],
+            "additionalProperties": false
+          }
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "supersedes": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,159}$"
+        },
+        "provenance": {
+          "type": "object",
+          "required": [
+            "kind",
+            "source_path",
+            "source_sha256"
+          ],
+          "properties": {
+            "kind": {
+              "const": "module_changelog_table"
+            },
+            "source_path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            "source_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "kind"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

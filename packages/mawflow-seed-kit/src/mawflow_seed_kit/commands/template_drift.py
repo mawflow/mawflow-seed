@@ -1,13 +1,475 @@
+#!/usr/bin/env python3
+"""Plan MAW template drift upgrades for derived projects."""
+
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pathlib import Path
+import argparse
+import json
 import shutil
 import subprocess
+import sys
 import tempfile
-from typing import Any
+from pathlib import Path
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 import yaml
+
+
+from .template_policy import load_domain, resolve_source, PolicyBlocked
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Resolve source-template drift from template_source.applied_version to target version.",
+    )
+    parser.add_argument(
+        "--root", default=".", help="Project root. Default: current directory."
+    )
+    parser.add_argument(
+        "--profile", default=None, help="Config profile. Default: project default."
+    )
+    parser.add_argument(
+        "--applied-version", help="Override template_source.applied_version."
+    )
+    parser.add_argument("--target-version", help="Override template_source.version.")
+    parser.add_argument("--source-path", help="Override template_source.local_path.")
+    parser.add_argument("--git-url", help="Override template_source.git_url.")
+    parser.add_argument(
+        "--max-commits", type=int, default=20, help="Max commits to print. Default: 20."
+    )
+    parser.add_argument("--format", choices=["text", "json"], default="text")
+    return parser
+
+
+def run_git(args: List[str], cwd: Optional[Path] = None, check: bool = True) -> str:
+    proc = subprocess.run(
+        ["git", *args],
+        cwd=str(cwd) if cwd else None,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if check and proc.returncode != 0:
+        raise RuntimeError(
+            proc.stderr.strip() or proc.stdout.strip() or f"git {' '.join(args)} failed"
+        )
+    return proc.stdout.strip()
+
+
+def resolve_commit(repo: Path, ref: str) -> str:
+    candidates = [
+        ref,
+        f"refs/heads/{ref}",
+        f"refs/remotes/origin/{ref}",
+        f"refs/tags/{ref}",
+    ]
+    for candidate in candidates:
+        proc = subprocess.run(
+            ["git", "rev-parse", "--verify", f"{candidate}^{{commit}}"],
+            cwd=str(repo),
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if proc.returncode == 0:
+            return proc.stdout.strip()
+    raise RuntimeError(f"Cannot resolve template ref: {ref}")
+
+
+def is_probably_commit(value: str) -> bool:
+    return len(value) >= 7 and all(ch in "0123456789abcdefABCDEF" for ch in value)
+
+
+def _seed_version_tuple(value: Any) -> Optional[tuple[int, int, int]]:
+    parts = str(value or "").strip().split(".")
+    if len(parts) != 3 or not all(part.isdigit() for part in parts):
+        return None
+    return tuple(int(part) for part in parts)
+
+
+def _seed_lock_summary(
+    payload: Any, *, require_contract_fields: bool = False
+) -> Dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {
+            "available": False,
+            "seed_version": "",
+            "contract_version": None,
+            "contract_fingerprint": "",
+        }
+    return {
+        "available": not require_contract_fields or bool(
+            _seed_version_tuple(payload.get("seed_version")) is not None
+            and type(payload.get("contract_version")) is int
+            and payload["contract_version"] > 0
+            and str(payload.get("contract_fingerprint") or "").strip()
+        ),
+        "seed_version": str(payload.get("seed_version") or ""),
+        "contract_version": payload.get("contract_version"),
+        "contract_fingerprint": str(payload.get("contract_fingerprint") or ""),
+    }
+
+
+def inspect_seed_contract(root: Path, repo: Path, target_commit: str) -> Dict[str, Any]:
+    project_path = root / ".maw" / "seed.lock"
+    project_payload: Any = None
+    project_error = ""
+    if project_path.is_file() and not project_path.is_symlink():
+        try:
+            project_payload = yaml.safe_load(project_path.read_text(encoding="utf-8"))
+        except (OSError, yaml.YAMLError) as exc:
+            project_error = str(exc)
+
+    proc = subprocess.run(
+        ["git", "show", f"{target_commit}:.maw/seed.lock"],
+        cwd=str(repo),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    source_payload: Any = None
+    source_error = ""
+    if proc.returncode == 0:
+        try:
+            source_payload = yaml.safe_load(proc.stdout)
+        except yaml.YAMLError as exc:
+            source_error = str(exc)
+    else:
+        source_error = proc.stderr.strip() or "source_seed_lock_missing"
+
+    project = _seed_lock_summary(project_payload)
+    source = _seed_lock_summary(source_payload, require_contract_fields=True)
+    status = "unavailable"
+    message = "Seed Contract comparison is unavailable."
+    if source["available"] and not project["available"]:
+        status = "missing"
+        message = "Project .maw/seed.lock is missing or invalid."
+    elif source["available"] and project["available"]:
+        project_version = _seed_version_tuple(project["seed_version"])
+        source_version = _seed_version_tuple(source["seed_version"])
+        if project_version is not None and source_version is not None:
+            if project_version < source_version:
+                status = "behind"
+                message = "Project Seed Contract version is behind the source template."
+            elif project_version > source_version:
+                status = "ahead"
+                message = (
+                    "Project Seed Contract version is ahead of the source template."
+                )
+            elif project["contract_version"] != source["contract_version"]:
+                status = "contract_drift"
+                message = "Seed versions match but contract versions differ."
+            elif project["contract_fingerprint"] != source["contract_fingerprint"]:
+                status = "contract_drift"
+                message = "Seed versions match but contract fingerprints differ."
+            else:
+                status = "current"
+                message = "Project Seed Contract matches the source template."
+        else:
+            status = "contract_drift"
+            message = "Seed Contract version cannot be compared as semantic x.y.z."
+
+    return {
+        "status": status,
+        "message": message,
+        "project": {
+            **project,
+            "source_ref": ".maw/seed.lock",
+            "error": project_error,
+        },
+        "source": {
+            **source,
+            "source_ref": f"{target_commit}:.maw/seed.lock",
+            "error": source_error,
+        },
+    }
+
+
+def compute_plan(args: argparse.Namespace) -> Dict[str, Any]:
+    root = Path(args.root).expanduser().resolve()
+    source = load_domain(root, "template-source", profile=args.profile).get("template_source", {})
+    try:
+        resolved = resolve_source(root, source, target_version=args.target_version or "",
+                                  source_path=args.source_path, git_url=args.git_url or "", profile=args.profile)
+    except PolicyBlocked as exc:
+        return {"schema": "mawflow.template_drift.plan.v2", "status": exc.status,
+                "source_channel": exc.channel, "source_kind": "blocked", "git_url": "",
+                "target_version": args.target_version or str(source.get("version") or ""),
+                "target_commit": "", "applied_version": str(source.get("applied_version") or ""),
+                "behind_count": None, "ahead_count": None, "commit_range": None,
+                "commits": [], "current_session_prompt": "", "message": str(exc), "evidence": exc.evidence}
+    repo, tmp = resolved["repo"], resolved.get("temporary_directory")
+    source_channel, source_kind = resolved["source_channel"], resolved["source_kind"]
+    git_url, public_git_url = resolved["git_url"], resolved.get("public_git_url", "")
+    target_version = resolved["target_version"]
+    applied_version = args.applied_version or str(source.get("applied_version") or "")
+    try:
+        target_commit = resolve_commit(repo, target_version)
+        plan: Dict[str, Any] = {
+            "schema": "mawflow.template_drift.plan.v2",
+            "source_channel": source_channel,
+            "source_kind": source_kind,
+            "git_url": git_url,
+            "public_git_url": public_git_url,
+            "target_version": target_version,
+            "target_commit": target_commit,
+            "applied_version": applied_version,
+            "status": "unknown",
+            "behind_count": None,
+            "ahead_count": None,
+            "commit_range": None,
+            "commits": [],
+            "seed_contract": inspect_seed_contract(root, repo, target_commit),
+        }
+
+        plan["release"] = resolved.get("release", {})
+        if source_channel == "public_seed" and plan["seed_contract"].get("status") == "ahead":
+            plan.update(status="public_release_behind_project", message="项目 Seed 高于公共稳定版；保留现有版本，等待公共发布，不回退项目或转用内部源。", current_session_prompt="")
+            return plan
+
+        if source.get("kind") == "package" and _seed_version_tuple(applied_version):
+            applied_version = "v" + applied_version
+            plan["applied_version"] = applied_version
+        if not applied_version:
+            plan["status"] = "baseline_missing"
+            plan["message"] = (
+                "template_source.applied_version is empty; initialize it after this template version is adopted."
+            )
+            return add_prompt(plan, args.max_commits)
+
+        if not is_probably_commit(applied_version) and not (source_channel == "public_seed" and applied_version.startswith("v")):
+            plan["status"] = "baseline_invalid"
+            plan["message"] = (
+                "template_source.applied_version must be a commit SHA from this version onward."
+            )
+            return add_prompt(plan, args.max_commits)
+
+        try:
+            applied_commit = resolve_commit(repo, applied_version)
+        except RuntimeError:
+            plan.update(status="source_baseline_migration_required", current_session_prompt="",
+                        message="当前基线不属于目标公开历史；先按版本、契约及发布载荷证据预览迁移，验证后再记录公开 commit，不猜测或清空旧基线。")
+            return plan
+        plan["applied_commit"] = applied_commit
+
+        if applied_commit == target_commit:
+            seed_status = str(plan["seed_contract"].get("status") or "")
+            plan["status"] = (
+                "seed_contract_behind"
+                if seed_status in {"behind", "missing", "contract_drift"}
+                else "up_to_date"
+            )
+            plan["behind_count"] = 0
+            plan["ahead_count"] = 0
+            plan["commit_range"] = f"{applied_commit}..{target_commit}"
+            if plan["status"] == "seed_contract_behind":
+                plan["message"] = (
+                    "Template commit baseline is current, but the project Seed "
+                    "Contract requires a controlled migration."
+                )
+            return add_prompt(plan, args.max_commits)
+
+        applied_is_ancestor = (
+            subprocess.run(
+                ["git", "merge-base", "--is-ancestor", applied_commit, target_commit],
+                cwd=str(repo),
+                check=False,
+            ).returncode
+            == 0
+        )
+        target_is_ancestor = (
+            subprocess.run(
+                ["git", "merge-base", "--is-ancestor", target_commit, applied_commit],
+                cwd=str(repo),
+                check=False,
+            ).returncode
+            == 0
+        )
+
+        if applied_is_ancestor:
+            plan["status"] = "behind"
+            plan["behind_count"] = int(
+                run_git(
+                    ["rev-list", "--count", f"{applied_commit}..{target_commit}"],
+                    cwd=repo,
+                )
+            )
+            plan["ahead_count"] = 0
+            plan["commit_range"] = f"{applied_commit}..{target_commit}"
+            log = run_git(
+                [
+                    "log",
+                    "--oneline",
+                    "--decorate",
+                    f"--max-count={args.max_commits}",
+                    f"{applied_commit}..{target_commit}",
+                ],
+                cwd=repo,
+            )
+            plan["commits"] = [line for line in log.splitlines() if line]
+        elif target_is_ancestor:
+            plan["status"] = "ahead"
+            plan["behind_count"] = 0
+            plan["ahead_count"] = int(
+                run_git(
+                    ["rev-list", "--count", f"{target_commit}..{applied_commit}"],
+                    cwd=repo,
+                )
+            )
+            plan["commit_range"] = f"{applied_commit}..{target_commit}"
+        else:
+            left_right = run_git(
+                [
+                    "rev-list",
+                    "--left-right",
+                    "--count",
+                    f"{applied_commit}...{target_commit}",
+                ],
+                cwd=repo,
+            )
+            left, right = [int(part) for part in left_right.split()]
+            plan["status"] = "diverged"
+            plan["ahead_count"] = left
+            plan["behind_count"] = right
+            plan["commit_range"] = f"{applied_commit}...{target_commit}"
+        return add_prompt(plan, args.max_commits)
+    finally:
+        if tmp is not None:
+            tmp.cleanup()
+
+
+def add_prompt(plan: Dict[str, Any], max_commits: int) -> Dict[str, Any]:
+    seed = plan.get("seed_contract") or {}
+    seed_status = seed.get("status")
+    plan["template_status"] = (
+        "up_to_date" if plan["status"] == "seed_contract_behind" else plan["status"]
+    )
+    if seed_status == "unavailable" and plan["status"] in {
+        "up_to_date", "behind", "baseline_missing"
+    }:
+        plan["status"] = "seed_contract_unavailable"
+        plan["message"] = (
+            "Source Seed Contract cannot be verified; stop automatic upgrade and "
+            "resolve the source .maw/seed.lock before claiming alignment."
+        )
+        plan["current_session_prompt"] = ""
+        return plan
+
+    migration_prompt = ""
+    if seed_status in {"behind", "missing", "contract_drift"}:
+        project_seed = seed.get("project") or {}
+        source_seed = seed.get("source") or {}
+        migration_prompt = f"""执行受控 Seed Contract 迁移：
+当前项目 Seed：{project_seed.get("seed_version") or "(missing)"}
+源模板 Seed：{source_seed.get("seed_version") or "(unavailable)"}
+源模板目标 commit：{plan["target_commit"]}
+目标契约版本：{source_seed.get("contract_version")}
+目标契约指纹：{source_seed.get("contract_fingerprint")}
+Seed Contract 状态：{seed_status}
+执行方式：必须将 .maw/seed.lock 和所需契约文件纳入迁移，先生成 preview 并完成隔离校验；按当前用户已有授权及目标项目确认机制应用，缺少必要授权时展示具体预览再确认。
+迁移目标：以本计划固定的源模板版本和指纹为准；先核对实际迁移工具的 Seed Kit 支持版本。工具无法迁移到目标契约时报告阻塞，不得只改锁文件版本号或宣称升级完成。
+保护边界：保留 README、code、真实 app_key、模块档案、发布配置、仓库映射、secrets、.local、较新的 schema_version、项目 profile/source 身份和项目生命周期 methodology。
+契约验收：应用后回读 .maw/seed.lock，重新运行本计划器并要求 seed_contract.status 为 current 或 ahead；模板 commit 的 behind_count 为 0 不能代替契约验收。
+工作台验收：项目空间健康检测另行核对项目 Seed 与本机 Seed Kit 的版本。源模板对齐但本机版本不同应分别报告；健康检测不可用时明确未验证，不擅自更换模板来源、升级宿主机或回退项目。"""
+
+    if plan["status"] == "seed_contract_behind":
+        plan["current_session_prompt"] = f"""{migration_prompt}
+目标项目仓库：当前 Codex 会话所在仓库
+完成要求：当前会话继续执行；两条版本线验收后按目标项目规则提交、推送，并按仓库级 mirror 有效计划同步。"""
+        return plan
+
+    if plan["status"] == "baseline_missing" and migration_prompt:
+        plan["current_session_prompt"] = (
+            f"模板历史基线缺失：只将 {plan['target_commit']} 作为本次采用目标，"
+            "不追溯猜测历史差异。完成契约迁移与验证后初始化 "
+            "template_source.applied_version，并重新运行本计划器确认两条版本线。\n"
+            + migration_prompt
+        )
+        return plan
+
+    if plan["status"] != "behind":
+        plan["current_session_prompt"] = ""
+        return plan
+
+    commits = (
+        "\n".join(f"- {line}" for line in plan["commits"][:max_commits]) or "- none"
+    )
+    plan[
+        "current_session_prompt"
+    ] = f"""执行当前会话模板增量升级（按项目长期指令，不自动读取 prompts）
+Seed 来源通道：{plan.get("source_channel") or "unknown_legacy"}
+源模板本机路径：<源模板本机路径，如本机会话可访问则填写；否则留空并使用 git 地址>
+源模板 git 地址：{plan["git_url"]}
+公开 Seed 仓：https://github.com/mawflow/mawflow-seed
+源模板版本：{plan["target_commit"]}
+当前模板基线：{plan.get("applied_commit") or plan["applied_version"]}
+模板落后提交数：{plan["behind_count"]}
+Seed Contract 状态：{(plan.get("seed_contract") or {}).get("status") or "unknown"}
+待同步提交范围：{plan["commit_range"]}
+待同步提交列表：
+{commits}
+来源规则：仅经身份校验的主仓读取已绑定 Seed 独立 Git 目录；其它项目只读取已验证公共稳定 tag 与同版本 Kit，本机覆盖和命令行参数不能越过此边界。
+目标项目仓库：当前 Codex 会话所在仓库
+执行方式：当前会话继续执行；不要只生成给另一个会话的提示词。
+升级范围：只同步上述提交范围内的模板能力；先审计仓库角色和 Seed 来源通道，再按取舍增量合并，不得整文件覆盖目标项目 README，不得误删目标项目已有 app_key、发布配置、仓库映射、secrets、.local 或项目私有规则。
+完成要求：采用模板能力后将 .maw/template-source.yaml 中的 template_source.applied_version 更新为 {plan["target_commit"]}；继续完成契约迁移及最终复检，两条版本线验收后按目标项目规则提交、推送，并按仓库级 mirror 有效计划同步。"""
+    if migration_prompt:
+        plan["current_session_prompt"] += "\n\n" + migration_prompt
+    plan["current_session_prompt"] += (
+        "\n最终复检：更新模板基线后重新运行本计划器，只有 status=up_to_date "
+        "且 seed_contract.status 为 current 或 ahead 才可声明升级完成；"
+        "若仍为 seed_contract_behind，当前会话继续完成上述契约迁移。"
+    )
+    return plan
+
+
+def print_text(plan: Dict[str, Any]) -> None:
+    print("Template drift plan")
+    print(f"  status: {plan['status']}")
+    if plan.get("template_status"):
+        print(f"  template_status: {plan['template_status']}")
+    print(f"  source_channel: {plan.get('source_channel') or '(missing)'}")
+    print(f"  source_kind: {plan['source_kind']}")
+    print(f"  git_url: {plan['git_url']}")
+    if plan.get("public_git_url"):
+        print(f"  public_git_url: {plan['public_git_url']}")
+    print(f"  target_version: {plan['target_version']}")
+    print(f"  target_commit: {plan['target_commit']}")
+    print(f"  applied_version: {plan['applied_version'] or '(empty)'}")
+    if plan.get("applied_commit"):
+        print(f"  applied_commit: {plan['applied_commit']}")
+    print(f"  behind_count: {plan['behind_count']}")
+    print(f"  ahead_count: {plan['ahead_count']}")
+    if plan.get("commit_range"):
+        print(f"  commit_range: {plan['commit_range']}")
+    if plan.get("message"):
+        print(f"  message: {plan['message']}")
+    if plan.get("seed_contract"):
+        seed = plan["seed_contract"]
+        print(f"  seed_contract_status: {seed.get('status')}")
+        print(
+            "  project_seed_version: "
+            f"{(seed.get('project') or {}).get('seed_version') or '(missing)'}"
+        )
+        print(
+            "  source_seed_version: "
+            f"{(seed.get('source') or {}).get('seed_version') or '(unavailable)'}"
+        )
+    if plan.get("commits"):
+        print()
+        print("Commits to review:")
+        for line in plan["commits"]:
+            print(f"  {line}")
+    if plan.get("current_session_prompt"):
+        print()
+        print("Current-session execution prompt:")
+        print("```text")
+        print(plan["current_session_prompt"])
+        print("```")
 
 
 class TemplateDriftError(RuntimeError):
@@ -21,186 +483,28 @@ class TemplateDriftConfig:
     target_version: str = ""
     git_url: str = ""
     max_commits: int = 20
-
-
-def _merge(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
-    result = dict(base)
-    for key, value in overlay.items():
-        if isinstance(value, dict) and isinstance(result.get(key), dict):
-            result[key] = _merge(result[key], value)
-        else:
-            result[key] = value
-    return result
-
-
-def _load_yaml(path: Path) -> dict[str, Any]:
-    if not path.is_file():
-        return {}
-    try:
-        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    except yaml.YAMLError as exc:
-        raise TemplateDriftError(f"template_source_yaml_invalid:{path}") from exc
-    if not isinstance(data, dict):
-        raise TemplateDriftError(f"template_source_yaml_not_mapping:{path}")
-    return data
-
-
-def load_template_source(root: Path) -> dict[str, Any]:
-    base_path = root / ".maw" / "template-source.yaml"
-    if not base_path.is_file():
-        raise TemplateDriftError("template_source_not_found:.maw/template-source.yaml")
-    data = _load_yaml(base_path)
-    local_path = root / ".local" / ".maw" / "template-source.yaml"
-    if local_path.is_file():
-        data = _merge(data, _load_yaml(local_path))
-    source = data.get("template_source")
-    if not isinstance(source, dict):
-        raise TemplateDriftError("template_source_mapping_missing")
-    return source
-
-
-def _git(args: list[str], cwd: Path | None = None, *, check: bool = True) -> str:
-    completed = subprocess.run(
-        ["git", *args],
-        cwd=cwd,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
-    if check and completed.returncode != 0:
-        raise TemplateDriftError(completed.stderr.strip() or completed.stdout.strip() or "git_command_failed")
-    return completed.stdout.strip()
-
-
-def _resolve_commit(repo: Path, ref: str) -> str:
-    for candidate in (ref, f"refs/heads/{ref}", f"refs/remotes/origin/{ref}", f"refs/tags/{ref}"):
-        completed = subprocess.run(
-            ["git", "rev-parse", "--verify", f"{candidate}^{{commit}}"],
-            cwd=repo,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-        )
-        if completed.returncode == 0:
-            return completed.stdout.strip()
-    raise TemplateDriftError(f"template_ref_not_found:{ref}")
-
-
-def _is_commit(value: str) -> bool:
-    return len(value) >= 7 and all(character in "0123456789abcdefABCDEF" for character in value)
-
-
-def _execution_prompt(plan: dict[str, Any]) -> str:
-    if plan["status"] != "behind":
-        return ""
-    commits = "\n".join(f"- {item}" for item in plan["commits"]) or "- none"
-    return f"""在当前项目继续执行 Seed 模板增量升级。
-Seed 来源通道：{plan['source_channel']}
-源模板 git 地址：{plan['git_url']}
-当前模板基线：{plan['applied_commit']}
-目标模板 commit：{plan['target_commit']}
-待同步范围：{plan['commit_range']}
-待同步提交：
-{commits}
-先创建升级分支并审计上述提交的文件和语义差异；只增量采用适合当前项目的变更。保护 README.md、code/、app_key、发布配置、仓库映射、secrets、.local 和模块档案，禁止整仓覆盖。运行项目自身检查并确认业务事实未丢失后，才把 .maw/template-source.yaml 的 template_source.applied_version 更新为 {plan['target_commit']}。再次运行 mawflow project drift，必须得到 up_to_date。"""
+    source_path: str | None = None
+    profile: str | None = None
 
 
 def plan_template_drift(config: TemplateDriftConfig) -> dict[str, Any]:
-    if shutil.which("git") is None:
-        raise TemplateDriftError("git_not_available")
-    root = config.root.expanduser().resolve()
-    source = load_template_source(root)
-    source_channel = str(source.get("source_channel") or "unknown_legacy").strip() or "unknown_legacy"
-    public_source = source.get("public_source") if isinstance(source.get("public_source"), dict) else {}
-    git_url = config.git_url or str(source.get("git_url") or "").strip()
-    if source_channel == "public_seed" and not git_url:
-        git_url = str(public_source.get("default_git_url") or "").strip()
-    target_version = config.target_version or str(source.get("version") or "main").strip() or "main"
-    applied_version = config.applied_version or str(source.get("applied_version") or "").strip()
-    base: dict[str, Any] = {
-        "schema": "mawflow.template_drift.plan.v2",
-        "source_channel": source_channel,
-        "git_url": git_url,
-        "target_version": target_version,
-        "target_commit": "",
-        "applied_version": applied_version,
-        "applied_commit": "",
-        "status": "unknown",
-        "behind_count": None,
-        "ahead_count": None,
-        "commit_range": "",
-        "commits": [],
-        "current_session_prompt": "",
-    }
-    if source_channel not in {"public_seed", "public_seed"}:
-        return {
-            **base,
-            "status": "source_channel_unconfirmed",
-            "message": "Confirm template_source.source_channel as public_seed or public_seed before drift execution.",
-        }
-    if not git_url:
-        raise TemplateDriftError("template_source_git_url_missing")
+    try:
+        return compute_plan(argparse.Namespace(**config.__dict__))
+    except (RuntimeError, ValueError, OSError) as exc:
+        raise TemplateDriftError(str(exc)) from exc
 
-    with tempfile.TemporaryDirectory(prefix="mawflow-template-drift-") as tmp:
-        repo = Path(tmp) / "source.git"
-        _git(["clone", "--quiet", "--bare", "--filter=blob:none", git_url, str(repo)])
-        target_commit = _resolve_commit(repo, target_version)
-        plan = {**base, "target_commit": target_commit}
-        if not applied_version:
-            return {
-                **plan,
-                "status": "baseline_missing",
-                "message": "Adopt and verify the target version before recording it as the initial baseline.",
-            }
-        if not _is_commit(applied_version):
-            return {
-                **plan,
-                "status": "baseline_invalid",
-                "message": "template_source.applied_version must be a commit SHA.",
-            }
-        applied_commit = _resolve_commit(repo, applied_version)
-        plan["applied_commit"] = applied_commit
-        if applied_commit == target_commit:
-            return {
-                **plan,
-                "status": "up_to_date",
-                "behind_count": 0,
-                "ahead_count": 0,
-                "commit_range": f"{applied_commit}..{target_commit}",
-            }
 
-        applied_is_ancestor = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", applied_commit, target_commit], cwd=repo, check=False
-        ).returncode == 0
-        target_is_ancestor = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", target_commit, applied_commit], cwd=repo, check=False
-        ).returncode == 0
-        if applied_is_ancestor:
-            commit_range = f"{applied_commit}..{target_commit}"
-            log = _git(["log", "--oneline", "--decorate", f"--max-count={config.max_commits}", commit_range], repo)
-            plan.update(
-                status="behind",
-                behind_count=int(_git(["rev-list", "--count", commit_range], repo)),
-                ahead_count=0,
-                commit_range=commit_range,
-                commits=[line for line in log.splitlines() if line],
-            )
-        elif target_is_ancestor:
-            plan.update(
-                status="ahead",
-                behind_count=0,
-                ahead_count=int(_git(["rev-list", "--count", f"{target_commit}..{applied_commit}"], repo)),
-                commit_range=f"{applied_commit}..{target_commit}",
-            )
-        else:
-            ahead, behind = [int(value) for value in _git(["rev-list", "--left-right", "--count", f"{applied_commit}...{target_commit}"], repo).split()]
-            plan.update(
-                status="diverged",
-                behind_count=behind,
-                ahead_count=ahead,
-                commit_range=f"{applied_commit}...{target_commit}",
-            )
-        plan["current_session_prompt"] = _execution_prompt(plan)
-        return plan
+def main(argv: Optional[List[str]] = None) -> int:
+    args = build_parser().parse_args(argv)
+    if not shutil.which("git"):
+        raise RuntimeError("git is required")
+    plan = compute_plan(args)
+    if args.format == "json":
+        print(json.dumps(plan, ensure_ascii=False, indent=2))
+    else:
+        print_text(plan)
+    return 0 if plan["status"] in {"up_to_date", "behind", "ahead", "baseline_missing", "seed_contract_behind"} else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -170,7 +170,7 @@ def _absolute_path_valid(value: str) -> bool:
 
 
 def _repository_url_valid(value: str) -> bool:
-    scp = SCP_REPOSITORY_PATTERN.fullmatch(value)
+    scp = SCP_REPOSITORY_PATTERN.fullmatch(value) if "://" not in value else None
     if scp:
         return bool(scp.group(1) and scp.group(2).strip("/")) and ".." not in Path(scp.group(2)).parts
     try:
@@ -960,7 +960,10 @@ def apply_change_plan(root: Path | str, plan: dict[str, Any], confirmation: str,
         if projection["status"] != "ready":
             raise ValueError("seed_change_validation_failed")
         change_key = f"seed-change-{secrets.token_hex(10)}"
-        record_path = project_root / ".maw" / "changes" / f"{change_key}.yaml"
+        # Local bindings contain machine paths and must not become shared audit text.
+        local_record = any(operation.get("scope") == "local" for operation in plan["operations"])
+        record_directory = ".local/maw/changes" if local_record else ".maw/changes"
+        record_path = project_root / record_directory / f"{change_key}.yaml"
         record = {
             "schema": "mawflow.seed_change_record.v2",
             "change_key": change_key,
@@ -972,7 +975,7 @@ def apply_change_plan(root: Path | str, plan: dict[str, Any], confirmation: str,
             "projection_fingerprint": projection["fingerprint"],
             "applied_at": _utcnow(),
         }
-        _atomic_write(record_path, yaml.safe_dump(record, allow_unicode=True, sort_keys=False), 0o644)
+        _atomic_write(record_path, yaml.safe_dump(record, allow_unicode=True, sort_keys=False), 0o600 if local_record else 0o644)
     except Exception:
         for write in reversed(private_writes):
             path = project_root / str(write["source_ref"])
@@ -986,7 +989,7 @@ def apply_change_plan(root: Path | str, plan: dict[str, Any], confirmation: str,
         "status": "applied",
         "change_key": change_key,
         "plan_key": plan["plan_key"],
-        "record_ref": f".maw/changes/{record_path.name}",
+        "record_ref": record_path.relative_to(project_root).as_posix(),
         "projection": projection,
         "rollback": {"available": True, "backup_ref": f"private-backup:{plan['plan_key']}"},
         "applied_at": _utcnow(),

@@ -75,6 +75,38 @@
           "verification",
           "handoff"
         ]
+      },
+      "update_notes": {
+        "policy": "docs/ai-coding/update-notes.md",
+        "source": ".maw/changes/*.yaml",
+        "record_type": "update_note",
+        "command": "python3 ops/scripts/generate-update-notes.py",
+        "default_limit": 100,
+        "trigger": "verified_user_visible_change",
+        "append_only": true,
+        "read_only": "deferred_read_only",
+        "closeout_field": "update_notes_status"
+      },
+      "development_resources": {
+        "policy": "docs/ai-coding/development-resources.md",
+        "checker": "python3 ops/scripts/development-resources.py check",
+        "default_heavy_job_limit": 1,
+        "coordination_scope": "same_user_same_device",
+        "checkpoints": [
+          "task_start",
+          "session_resume",
+          "service_start",
+          "before_heavy_job",
+          "after_heavy_job",
+          "milestone"
+        ],
+        "communication": "capability_negotiated_cli_or_authorized_local_mcp",
+        "unavailable_cli": "project_files_fallback",
+        "read_only_check_no_writes": true,
+        "device_policy_schema": "mawflow.development_resource_policy.v1",
+        "device_policy_location": "user_home/.local/config/maw-development-resources.json",
+        "host_capability": "host.development_resources",
+        "docker_runner": "python3 ops/scripts/development-resources.py run --workload docker --execute -- <authorized-command>"
       }
     },
     "task_routes": {
@@ -206,6 +238,16 @@
       "id": "capture_business_and_work_events",
       "severity": "required",
       "summary": "获准修改的任务在澄清、决定、纠偏和阶段收口时自动执行来源事件收录与 check-event 回读；业务 key/scope 保持稳定，待确认不覆盖已确认，工作记录不替代任务主账。只读或禁记时不写入。"
+    },
+    {
+      "id": "record_project_update_notes",
+      "severity": "required",
+      "summary": "获准修改且形成对使用者有意义的新增、优化、修复、安全或使用文档变化时，按 docs/ai-coding/update-notes.md 追加 update_note 权威片段并生成最近100条、完整历史与云端分页；只读不落盘，开发、发布、验证和真人验收独立标注。"
+    },
+    {
+      "id": "coordinate_development_resources",
+      "severity": "required",
+      "summary": "本地对话开发开工、恢复及重任务前后按 docs/ai-coding/development-resources.md 检查资源和已装工作台/CLI；按需复用服务，同一用户跨项目重任务默认串行，离线回退项目文件，不自动安装、调参、停服务或上传会话。"
     }
   ],
   "task_kinds": [

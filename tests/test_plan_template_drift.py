@@ -51,15 +51,34 @@ def _write_yaml(path: Path, payload: dict[str, object]) -> None:
     )
 
 
+def _configure_main_project(project: Path, source: Path) -> None:
+    _git(project, "init", "-b", "dev")
+    _git(project, "remote", "add", "origin", "https://example.invalid/platform.git")
+    (project / "code/orchestrator").mkdir(parents=True)
+    (project / "code/node-runner").mkdir(parents=True)
+    _write_yaml(project / ".maw/project.yaml", {"project": {"key": "multiagentworker", "type": "maw_control_plane"}})
+    _write_yaml(project / ".maw/repository-identity.yaml", {"current_repository": {"primary_role": "main_repository", "repository_key": "multiagentworker"}})
+    _write_yaml(project / ".maw/repositories.yaml", {"repositories": {"internal": {"url": "https://example.invalid/platform.git"}}})
+    _write_yaml(project / ".maw/components.yaml", {"components": [{"key": "mawflow-seed", "source": {"mode": "external_git", "repository_ref": "seed"}}]})
+    _write_yaml(project / ".maw/code-sources.yaml", {"code_sources": {"seed": {"repository_url": "https://example.invalid/seed.git"}}})
+    _write_yaml(project / ".local/.maw/code-source-bindings.yaml", {"code_source_bindings": {"seed": {"directory_path": str(source)}}})
+    path = project / ".maw/template-source.yaml"
+    payload = yaml.safe_load(path.read_text())
+    payload["template_source"]["repository_ref"] = "seed"
+    _write_yaml(path, payload)
+
+
 def test_current_template_commit_exposes_seed_contract_drift(tmp_path: Path) -> None:
     source = tmp_path / "seed"
     source.mkdir()
     _git(source, "init", "-b", "main")
+    _git(source, "remote", "add", "origin", "git@example.invalid:seed.git")
+    _write_yaml(source / ".maw-template/template.yaml", {"template": {"repository_role": "maw_project_seed_repository"}})
     _write_yaml(
         source / ".maw/seed.lock",
         _seed_lock("2.3.1", "sha256:source"),
     )
-    _git(source, "add", ".maw/seed.lock")
+    _git(source, "add", ".")
     _git(
         source,
         "-c",
@@ -78,7 +97,7 @@ def test_current_template_commit_exposes_seed_contract_drift(tmp_path: Path) -> 
         {
             "schema_version": 2,
             "template_source": {
-                "source_channel": "public_seed",
+                "source_channel": "internal_seed",
                 "local_path": str(source),
                 "git_url": "",
                 "version": "main",
@@ -90,6 +109,7 @@ def test_current_template_commit_exposes_seed_contract_drift(tmp_path: Path) -> 
         project / ".maw/seed.lock",
         _seed_lock("2.0.0", "sha256:legacy"),
     )
+    _configure_main_project(project, source)
     args = MODULE.build_parser().parse_args(
         ["--root", str(project), "--format", "json"]
     )
@@ -125,11 +145,13 @@ def test_newer_project_seed_does_not_mask_template_alignment(tmp_path: Path) -> 
     source = tmp_path / "seed"
     source.mkdir()
     _git(source, "init", "-b", "main")
+    _git(source, "remote", "add", "origin", "git@example.invalid:seed.git")
+    _write_yaml(source / ".maw-template/template.yaml", {"template": {"repository_role": "maw_project_seed_repository"}})
     _write_yaml(
         source / ".maw/seed.lock",
         _seed_lock("2.2.0", "sha256:source"),
     )
-    _git(source, "add", ".maw/seed.lock")
+    _git(source, "add", ".")
     _git(
         source,
         "-c",
@@ -148,7 +170,7 @@ def test_newer_project_seed_does_not_mask_template_alignment(tmp_path: Path) -> 
         {
             "schema_version": 2,
             "template_source": {
-                "source_channel": "public_seed",
+                "source_channel": "internal_seed",
                 "local_path": str(source),
                 "version": "main",
                 "applied_version": target_commit,
@@ -159,6 +181,7 @@ def test_newer_project_seed_does_not_mask_template_alignment(tmp_path: Path) -> 
         project / ".maw/seed.lock",
         _seed_lock("2.3.1", "sha256:newer"),
     )
+    _configure_main_project(project, source)
     args = MODULE.build_parser().parse_args(["--root", str(project)])
 
     plan = MODULE.compute_plan(args)
@@ -172,6 +195,8 @@ def drift_project(tmp_path: Path):
     source = tmp_path / "seed"
     source.mkdir()
     _git(source, "init", "-b", "main")
+    _git(source, "remote", "add", "origin", "git@example.invalid:seed.git")
+    _write_yaml(source / ".maw-template/template.yaml", {"template": {"repository_role": "maw_project_seed_repository"}})
 
     def commit_source():
         _git(source, "add", ".")
@@ -195,7 +220,7 @@ def drift_project(tmp_path: Path):
         project / ".maw/template-source.yaml",
         {
             "template_source": {
-                "source_channel": "public_seed",
+                "source_channel": "internal_seed",
                 "local_path": str(source),
                 "version": "main",
                 "applied_version": baseline,
@@ -203,6 +228,7 @@ def drift_project(tmp_path: Path):
         },
     )
     _write_yaml(project / ".maw/seed.lock", _seed_lock("2.8.2", "sha256:target"))
+    _configure_main_project(project, source)
     args = MODULE.build_parser().parse_args(["--root", str(project)])
     return source, project, args, commit_source
 

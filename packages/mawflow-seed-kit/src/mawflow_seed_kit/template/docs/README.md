@@ -4,3 +4,7 @@
 - 根目录 `MAWFLOW_CLI.md`：面向终端用户的确定性命令。
 - 根目录 `PROJECT_COMMANDS.md`：面向 AI 对话的意图指令。
 - [Seed 经验反馈报告](ai-instructions/instructions/seed-feedback.md)：当前对话即可使用，无需安装 Skill 或 CLI。
+
+- [更新动态](updates/README.md)：权威片段、最近100条、完整历史及云端分页。
+
+- [开发资源与本机通信](ai-coding/development-resources.md)：按需环境、设备重任务串行及工作台/CLI回读。

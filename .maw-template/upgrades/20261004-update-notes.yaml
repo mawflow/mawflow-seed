@@ -1,0 +1,48 @@
+schema_version: 1
+upgrade_key: 20261004-update-notes
+title: 更新动态内置指令、权威片段与长期文档
+risk_level: T2
+status: active
+summary:
+  - 内置 TINST-043，默认生成最近100条，支持全部已记录历史。
+  - 日常已授权实际变化追加 update_note 权威片段，保留更正与状态依据。
+  - 云端仅准备分页，实际同步沿用项目发布入口和权限。
+source_template_files:
+  - docs/ai-instructions/instructions/generate-update-notes.md
+  - docs/ai-instructions/README.md
+  - PROJECT_COMMANDS.md
+  - docs/ai-coding/update-notes.md
+  - docs/ai-coding/project-workflow.md
+  - docs/updates/README.md
+  - docs/updates/note-template.yaml
+  - .maw/schemas/update-note.schema.json
+  - .maw/changes/README.md
+  - ops/scripts/generate-update-notes.py
+  - ops/scripts/update_notes/__init__.py
+  - ops/scripts/update_notes/store.py
+  - ops/scripts/update_notes/render.py
+  - tests/test_update_notes.py
+  - .maw/agent-entry.yaml
+  - .maw/agent-rules.yaml
+  - .maw/project-lifecycle.yaml
+  - package.json
+  - docs/capabilities/update-notes.md
+  - .maw/capabilities.yaml
+  - docs/template-migrations/20261004-update-notes.md
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect: [README.md, code/, app_key, module dossiers, release configuration, repository mappings, real secrets, .local/, existing update fragments, cloud publication permissions]
+  forbidden:
+    - 导入源仓或其它项目的真实动态、来源记录及已生成视图
+    - 覆盖项目自定义指令、已有历史或伪造发布和真人验收
+    - 自动上传云端或通过手改锁文件宣称全量升级
+validation:
+  - git diff --check
+  - python3 -m pytest tests/test_update_notes.py -q
+  - python3 ops/scripts/generate-update-notes.py check
+  - bash ops/scripts/check-ai-framework-consistency.sh
+  - bash ops/scripts/check-local-boundary.sh
+propagation:
+  instruction: docs/ai-instructions/instructions/derived-template-drift-upgrade.md
+  migration_note: docs/template-migrations/20261004-update-notes.md

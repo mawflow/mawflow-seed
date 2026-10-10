@@ -1,0 +1,170 @@
+# 指令：派生项目模板漂移升级
+
+## 元信息
+
+- ID：TINST-026
+- 类型：项目指令
+- 状态：启用
+- 维护位置：`docs/ai-instructions/instructions/derived-template-drift-upgrade.md`
+- 触发词：#模版升级、#模板升级、派生项目模板升级、模板漂移升级、当前模板落后多少提交、落后模板仓库多少提交、按模板仓库最新提交升级、模板差异提示词并执行
+- 适用范围：在模板派生项目中，基于 `.maw/template-source.yaml` 记录的已应用模板基线，计算当前项目落后源模板仓库多少提交，生成当前会话执行提示词，并直接在当前 Codex 会话执行。
+
+## 目标
+
+当用户在派生项目中执行 `#模版升级/#模板升级` 时，AI 不走 `#项目升级` 的泛化策略入口，也不只生成给另一个会话复制的提示词。AI 必须同时计算模板 commit 漂移和 Seed Contract 漂移，再根据结果生成本轮当前会话执行提示词，并继续执行该提示词。两条版本线独立治理，模板 commit 已对齐不等于 `.maw/seed.lock` 已对齐。
+
+本指令从包含 `template_source.applied_version` 的模板版本开始生效；不追溯兼容此前没有记录模板基线的旧项目。
+
+## 未指定 commit 时的默认路由
+
+- 是否指定 commit 不决定在哪个仓库执行；当前 Codex 会话所在仓库的角色才决定路由。
+- 当前仓库是派生项目时，`#模版升级/#模板升级` 在当前派生项目执行本指令；不会改去源模板仓库生成资产。
+- 先检测仓库身份。只有平台主仓从登记并绑定的独立 Seed Git 目录取源，默认冻结当前已提交 `HEAD`；其它所有派生项目（包括内部开发仓）只采用公共稳定发布，默认 `latest_verified_stable`，显式指定时只接受稳定 `vX.Y.Z` tag，不跟随 main、rc、开发分支或任意 commit。
+- 主仓专用目录通道必须同时通过共享项目身份、仓库身份、Git origin、代码源绑定、外层 ignore 和干净工作区检查。其它项目使用 `public_seed`；命令行参数、本机覆盖和旧内部通道不能越过此规则。历史来源不明或基线属于内部历史时先输出迁移预览，不自动换源或猜测基线。
+- 如果 `template_source.applied_version` 为空，只把本次目标模板 commit 初始化为从当前版本开始的基线，不追溯猜测历史差异。
+- 当前仓库其实是源模板仓库时，同一触发词走 `TINST-024`；如果无法判断仓库角色，先向用户确认。
+
+## 路由判定
+
+1. 如果当前仓库是源模板仓库本身，且存在 `.maw-template/template.yaml` 并标记 `repository_role: maw_project_seed_repository`，并且仓库身份检测确认当前 Git `origin`、`.maw/template-source.yaml` 的 `template_source.git_url` 和 `template_source.source_channel` 与源模板仓证据一致，`#模版升级/#模板升级` 仍走 `TINST-024 模板升级策略`，用于生成可传播升级资产。
+2. 如果当前仓库是派生项目，且存在 `.maw/template-source.yaml`，`#模版升级/#模板升级` 走本指令。
+3. 如果当前仓库是从 `maw-project-template` 直接 fork 出来的派生项目，可能仍保留 `.maw/repository-identity.yaml` 和 `.maw-template/template.yaml` 里的 `seed_repository` 声明。此时不能只凭这些可复制声明走 `TINST-024`；若用户说明该仓库就是派生项目，或仓库身份检测发现 Git `origin` 不等于源模板 `template_source.git_url`，应先按 `TINST-031` 修正/记录仓库身份，再按本指令执行模板漂移升级。
+4. 如果用户明确说 `#项目升级`，仍走 `TINST-023 项目升级策略`；本指令不得抢占。
+5. 如果无法判断当前仓库角色，先读取 `.maw/template-source.yaml`、`.maw-template/template.yaml`、`docs/ai-instructions/README.md` 和 `PROJECT_COMMANDS.md`，再运行 `python3 ops/scripts/extract-project-metadata.py --section repository-identity --format markdown` 辅助判断；仍无法判断时向用户说明缺少模板来源或基线。
+
+## 模板基线字段
+
+派生项目必须维护：
+
+```yaml
+template_source:
+  source_channel: public_seed
+  git_url: "<internal seed git url or public seed git url>"
+  version: latest_verified_stable
+  applied_version: "<当前项目已实际采用的源模板 commit SHA>"
+```
+
+- `source_channel` 表示来源通道；普通派生项目固定公共发布路线，平台主仓专用目录模式由自身仓库事实明确，旧未知来源保留人工核对入口。
+- `version`：主仓默认 `HEAD` 并在计划内冻结 commit；其它项目为 `latest_verified_stable` 或已发布稳定 tag。公共解析回读 tag、版本文件、Payload Manifest、Seed lock 和同版本 Kit 的 checksum/manifest，任一不一致停止。
+- `applied_version` 表示当前项目上一次成功采用并提交的源模板 commit。
+- 完成一次模板漂移升级后，必须把 `applied_version` 更新为本次目标模板 commit。
+- 如果 `applied_version` 为空，本指令只初始化当前版本基线，不追溯历史提交差异；这是从本版本开始生效的前提。
+
+## 来源与旧基线保护
+
+计划器、兼容版本的 `mawflow project drift` 和独立 `mawflow-seed-kit project drift` 共用 Seed Kit 实现，要求 Kit >=2.12.0。独立入口使用用户级 Kit，不依赖 Host；旧 Host 固定的 Kit 必须经匹配包升级后才获得新规则，不手改 Host 依赖。主仓目录缺失不临时克隆私有源，也不使用主仓自身代替 Seed；其它项目公共回读失败不回退内部候选。
+
+- `source_policy_violation / public_release_required`：来源或 ref 不符合当前项目规则，停止。
+- `seed_source_unbound / seed_source_invalid / seed_source_dirty`：只阻断主仓模板升级；按登记来源修复绑定或提交候选。
+- `public_release_unavailable`：公共 tag、契约、校验值或同版本 Kit 未通过回读，保持原项目。
+- `public_source_migration_required / source_baseline_migration_required`：内部与公开导出历史不同，保留旧来源和基线；先依据已发布版本、契约指纹和公开载荷作取舍/差异预览，经验证再记录对应公开 commit，禁止只换 URL、清空基线或虚报已对齐。
+- `public_release_behind_project`：项目高于公共稳定版，保留当前项目，等待同版本或更高公共发布，禁止降级。
+
+新项目包基线的完整 SemVer 只在官方同版本公共 tag、Kit 和契约校验后解析为公开 commit；其它非 commit 基线不猜测。迁移涉及实际业务文件时继续受原取舍、哈希备份、隔离验证、授权和回读机制约束。
+
+## 执行步骤
+
+1. 读取 `docs/ai-instructions/README.md`、`docs/ai-instructions/experience-index.md`、`.maw/template-source.yaml`、必要时读取 `.local/.maw/template-source.yaml`、本指令和 `docs/ai-instructions/instructions/create-task-prompt-project.md`。
+2. 检查工作区：
+
+```bash
+git status --short
+```
+
+   如果存在未提交改动，先判断是否与本次模板升级相关；无法安全区分时停止并说明风险，不要把用户其它改动混进模板升级。
+
+3. 运行模板漂移计划：
+
+```bash
+python3 ops/scripts/plan-template-drift.py
+```
+
+   如果项目要求使用 `rtk`，使用：
+
+```bash
+rtk proxy python3 ops/scripts/plan-template-drift.py
+```
+
+4. 按计划结果处理：
+   - `status: source_channel_unconfirmed`：停止自动升级，输出 `.maw/template-source.yaml`、Git remote 和仓库身份检测摘要，核对后迁移到公共发布通道；主仓专用目录通道另行按身份及绑定验证。
+   - `status: seed_contract_unavailable`：源模板 `.maw/seed.lock` 缺失、无法解析或版本/契约/指纹字段不完整；停止自动升级，先修复或确认源契约。`template_status` 保留模板提交关系，不能把契约不可验证判为已对齐，也不能直接推进基线。
+   - `status: up_to_date`：说明当前模板基线已到目标模板 commit，且 Seed Contract 不落后；`seed_contract.status: ahead` 表示项目 Seed 比当前源模板记录更新，不回退项目版本。
+   - `status: seed_contract_behind`：模板 commit 已对齐，但 `.maw/seed.lock` 缺失、版本落后或同版本指纹漂移；执行计划器输出的受控 Seed 迁移提示词，先 preview 和隔离校验，按当前用户已有授权及目标项目确认机制应用；缺少必要授权时展示具体预览再确认。迁移必须保留项目 profile/source 身份、较新的 schema、项目生命周期 methodology、README、code、app_key 和私有规则。
+   - `status: baseline_missing`：不补算旧历史；若契约需要迁移，先执行计划器的迁移提示词，再将本次目标模板 commit 作为起始基线写入 `template_source.applied_version`，重新检查两条版本线后提交交付。
+   - `status: behind`：读取 `behind_count`、`commit_range` 和 `Current-session execution prompt`，在当前会话继续执行该提示词。若 `seed_contract.status` 为 `behind/missing/contract_drift`，必须同时执行附带的契约迁移步骤；不能只合并模板、更新 `applied_version` 就结束。
+   - `status: ahead` 或 `diverged`：停止自动升级，说明当前项目记录的模板基线与目标模板不是简单落后关系，需要人工确认。
+   - `status: baseline_invalid`：停止并要求修正 `template_source.applied_version` 为 commit SHA。
+
+5. 执行当前会话提示词时，按 `TINST-007 创建和执行任务提示词工程` 处理：
+   - 如果目标项目已有 `prompts/codex/task-packs/template-feature-upgrade-codex-tasks/`，直接执行该任务包。
+   - 如果没有，从源模板复制该任务包目录到目标项目相同路径；只复制任务包文件，不复制源模板 `.git`、remote、镜像目标、secrets、`.local/` 或业务占位值。
+   - 保持 `same_session_auto_run`，从任务包 `SESSION_STATE.md` 继续，直到完成、阻塞或用户打断。
+
+6. 升级完成后，必须把 `.maw/template-source.yaml` 中的 `template_source.applied_version` 更新为计划中的 `target_commit`。
+7. 运行目标项目可用的最小验证；至少包含：
+
+```bash
+git diff --check
+python3 ops/scripts/plan-template-drift.py
+```
+
+   如果项目有对应检查脚本，按目标项目规则补充运行。
+
+8. 本次产生实际改动后，按目标项目规则提交并推送当前分支；推送后运行仓库级 mirror 计划命令，按有效计划同步镜像。
+
+### 契约迁移目标与完成门禁
+
+- 固定计划中的源模板 commit、Seed 版本、契约版本和指纹；先核对迁移工具的 Seed Kit 支持版本，无法迁移到目标契约时报告阻塞。不得只改 `.maw/seed.lock` 版本号伪造升级。
+- 更新模板基线后重新运行计划器；只有 `status: up_to_date` 且 `seed_contract.status: current/ahead` 才可声明升级完成。若仍为 `seed_contract_behind`，必须在当前会话继续迁移；若不可验证，保留未完成状态。
+- 模板计划器对比源模板，工作台健康检测对比本机 Seed Kit；验收时分别回读。两者目标不同应明确报告，不能为消除提示擅自更换模板来源、升级宿主机或回退项目；工作台不可用时标记未验证。
+
+## 当前会话提示词要求
+
+生成或使用的当前会话提示词必须包含：
+
+- 源模板 git 地址。
+- Seed 来源通道。
+- 公开 Seed 仓地址，用于外部公开项目兜底。
+- 源模板目标 commit。
+- 当前模板基线 commit。
+- 模板落后提交数。
+- 待同步提交范围。
+- 待同步提交列表。
+- 明确说明“当前会话继续执行；不要只生成给另一个会话的提示词”。
+- 明确升级完成后更新 `template_source.applied_version`。
+
+## 验证方式
+
+- `python3 ops/scripts/plan-template-drift.py` 能输出 `source_channel`、`target_commit`、`applied_version`、`behind_count`、`seed_contract` 和状态；契约不可验证时保留 `template_status` 并返回 `seed_contract_unavailable`。
+- 当 `behind_count > 0` 时，输出包含当前会话执行提示词。
+- 当升级完成后再次运行计划，应显示 `status: up_to_date`；仅有 `behind_count: 0` 不能证明 Seed Contract 已对齐。
+- `.maw/template-source.yaml` 已记录新的 `template_source.applied_version`。
+- 未覆盖目标项目 README、`code/`、app_key、发布配置、仓库映射、secrets、`.local/` 或项目私有规则。
+
+## 禁区
+
+- 不把本指令当作 `#项目升级` 的别名。
+- 不在派生项目里生成只给另一个会话复制的提示词后停止；必须在当前会话执行，除非用户明确要求只生成提示词。
+- 不把直接 fork 后继承的 `seed_repository` 声明当作不可推翻的事实；当前项目事实、用户明确说明和 Git 来源检测优先。
+- 不在 `applied_version` 为空时猜测历史模板基线；从本版本开始初始化即可。
+- 不复制源模板仓库的 `.git`、remote、镜像目标、真实 secrets 或 `.local/` 私有配置。
+- 不要求外部公开派生项目访问内部私有 Seed 源；公开项目只使用公开 Seed URL 或占位。
+- 不整文件覆盖目标项目 README、业务代码、app_key、发布配置或项目私有规则。
+- 不把较新的 `schema_version` 降到 2，不用通用 `profile/source` 覆盖项目 Seed 身份，不让默认 methodology 覆盖 `.maw/project-lifecycle.yaml` 的当前选择。
+
+## 冲突与覆盖规则
+
+- 用户最新明确要求优先。
+- 目标项目事实优先于模板默认值。
+- 与 `TINST-023` 冲突时：用户说 `#项目升级` 才走 TINST-023；用户说 `#模版升级/#模板升级` 且当前是派生项目时走本指令。
+- 与 `TINST-024` 冲突时：源模板仓库自身生成升级资产走 TINST-024；派生项目执行模板漂移升级走本指令。
+- 与 `TINST-007` 冲突时：本指令负责漂移检测和当前会话提示词生成；TINST-007 负责任务包执行协议。
+
+## 更新记录
+
+- 2026-06-14：创建派生项目模板漂移升级指令，基于 `template_source.applied_version` 计算落后提交数，并在当前会话执行升级提示词。
+- 2026-07-01：补充 Seed 来源通道 `主仓专用目录通道/public_seed/unknown_legacy`，公开项目不得读取内部私有 Seed 源，来源未确认时停止自动漂移升级。
+- 2026-08-23：模板漂移计划增加 Seed Contract 独立比较与 `seed_contract_behind` 路由；受控迁移保护较新 schema、项目 Seed 身份和生命周期 methodology。
+- 2026-09-07：补齐模板与契约同时落后的迁移及最终复检；源契约不可验证时停止自动升级，明确源模板与本机 Seed Kit 的比较边界。
+
+- 2026-10-08：统一主仓独立 Git 目录与其它项目公共稳定发布路线；脚本/CLI 共用计划器，增加来源、发布校验和旧基线保护。

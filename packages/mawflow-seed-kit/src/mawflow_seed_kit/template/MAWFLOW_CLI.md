@@ -66,3 +66,5 @@ mawflow-seed-kit context . --agent unknown --task-kind review --format json
 ```
 
 Agent 身份未知时统一使用 `AI_START_HERE.md`。静态 ready 只证明入口契约，通过真实会话验收后才能声明运行验证通过。
+
+模板升级统一采用已验证公共稳定 tag 与同版本 Kit；仅平台主仓由自身项目身份及源码绑定读取独立 Seed Git 目录。`mawflow project drift` 与项目计划脚本共用 Seed Kit >=2.12.0 实现。来源或基线迁移必须先预览并验证，不能只换 URL 或清空旧基线。

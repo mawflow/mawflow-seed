@@ -214,7 +214,7 @@ grep -Eq '渐进式模块发现|module_candidate|候选模块|TINST-021' docs/ai
 grep -Eq '项目记忆闭环|memory_update|local_update|TINST-022' docs/ai-instructions/README.md docs/ai-instructions/instructions/project-memory-loop.md || fail "project memory loop must be registered"
 grep -Eq '项目升级策略|upgrade decision matrix|TINST-023' docs/ai-instructions/README.md docs/ai-instructions/instructions/project-upgrade-strategy.md || fail "project upgrade strategy must be registered"
 grep -Eq '模板升级策略|升级资产|TINST-024' docs/ai-instructions/README.md docs/ai-instructions/instructions/template-upgrade-strategy.md || fail "template upgrade strategy must be registered"
-require_grep '用户输入.*\.local/.maw/template-source\.yaml.*\.maw/template-source\.yaml.*当前仓库' docs/ai-coding/project-workflow.md docs/ai-instructions/instructions/project-upgrade-strategy.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md GETTING_STARTED.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md
+require_grep '用户输入.*\.local/.maw/template-source\.yaml.*\.maw/template-source\.yaml.*当前仓库|注册.*固定|公共稳定发行' docs/ai-coding/project-workflow.md docs/ai-instructions/instructions/project-upgrade-strategy.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md GETTING_STARTED.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md
 require_grep '个人本机路径|本机路径.*\.local|共享.*git' .maw/template-source.yaml .maw/README.md .local/README.md
 require_grep 'R0|R1|R2|R3|R4' .maw/upgrade-policy.yaml docs/ai-instructions/instructions/project-upgrade-strategy.md docs/ai-instructions/templates/upgrade-decision-matrix.md
 require_grep 'T0|T1|T2|T3|T4' .maw/upgrade-policy.yaml docs/ai-instructions/instructions/template-upgrade-strategy.md docs/ai-instructions/templates/upgrade-decision-matrix.md
@@ -427,16 +427,16 @@ require_grep 'release_update_status' prompts/codex/task-packs/template-feature-u
 require_grep 'template-feature-upgrade-codex-tasks' docs/ai-instructions/README.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md prompts/codex/README.md prompts/README.md
 require_grep 'adopt-maw-project-template-codex-tasks' docs/ai-instructions/README.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md prompts/codex/README.md prompts/README.md
 require_grep '公开示例|_template|examples/mawflow-packs/task-pack' prompts/codex/task-packs/README.md
-require_grep '源模板本机路径：<源模板本机路径' GETTING_STARTED.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md
-require_grep '本机模板仓库目录：<生成时填入当前模板仓库' docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md
+require_grep '源模板本机路径：<源模板本机路径' GETTING_STARTED.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md
+require_grep '本机模板仓库目录：<仅主仓' docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md
 require_grep '本机模板仓库目录读取规则' docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md prompts/codex/template-upgrade-prompts/README.md
 require_grep "Seed 来源通道|source_channel|${private_seed_channel}|内部来源通道|public_seed|unknown_legacy" .maw/template-source.yaml GETTING_STARTED.md docs/ai-instructions/README.md docs/ai-instructions/instructions/derived-template-drift-upgrade.md docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md
 require_grep 'https://github\.com/mawflow/mawflow-seed|外部公开项目不得读取内部私有 Seed 源' GETTING_STARTED.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md
-require_grep '源模板读取优先级：用户输入 > \.local/\.maw/template-source\.yaml > \.maw/template-source\.yaml > 当前仓库' GETTING_STARTED.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md
-require_grep '源模板版本：main' GETTING_STARTED.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md
-require_grep '源模板版本：<生成时填入当前模板仓库 HEAD commit' docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md
+require_grep '源模板读取优先级：用户输入 > \.local/\.maw/template-source\.yaml > \.maw/template-source\.yaml > 当前仓库' prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md
+require_grep '源模板版本：main' prompts/codex/task-packs/template-feature-upgrade-codex-tasks/README.md prompts/codex/task-packs/adopt-maw-project-template-codex-tasks/README.md
+require_grep '源模板版本：<主仓已提交固定 SHA' docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md
 require_grep '未指定 commit.*当前仓库角色|是否指定 commit 不决定在哪个仓库执行' PROJECT_COMMANDS.md docs/ai-instructions/README.md docs/ai-instructions/instructions/template-upgrade-strategy.md docs/ai-instructions/instructions/derived-template-drift-upgrade.md AGENTS.md
-require_grep 'template_source.version.*默认.*main|默认 `main`' docs/ai-instructions/instructions/derived-template-drift-upgrade.md docs/ai-coding/project-workflow.md AGENTS.md
+require_grep '公共稳定|latest_verified_stable|固定 commit' docs/ai-instructions/instructions/derived-template-drift-upgrade.md docs/ai-coding/project-workflow.md AGENTS.md
 require_grep '不要只.*任务包路径|任务包目录推测|只凭任务包目录' docs/ai-instructions/instructions/use-builtin-template-task-packs.md prompts/codex/task-packs/README.md prompts/codex/task-packs/template-feature-upgrade-codex-tasks/prompts/00-session-runbook.md
 require_grep 'EXP-003' docs/ai-instructions/experience-index.md
 require_grep 'EXP-005' docs/ai-instructions/experience-index.md
@@ -518,3 +518,5 @@ if find . -path './.git' -prune -o -path './.ssh/*' ! -name README.md ! -name .g
 fi
 
 echo "OK: template module documentation checks passed"
+require_grep '仅主仓.*公共稳定|主仓.*同版本 Kit' docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md
+require_grep '固定提交|注册绑定' GETTING_STARTED.md docs/ai-instructions/instructions/use-builtin-template-task-packs.md

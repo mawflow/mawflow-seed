@@ -1,0 +1,37 @@
+schema_version: 1
+upgrade_key: 20261008-seed-upgrade-source-routing
+title: 主仓独立 Seed Git 组件与公共稳定升级来源
+risk_level: T3
+status: active
+summary:
+  - 仅平台主仓使用注册独立 Git 目录及固定提交。
+  - 其它所有派生项目只采用经回读验证的公共稳定 tag 与同版本 Kit。
+  - 脚本、独立 Kit CLI 和兼容 Host 共用来源及漂移实现。
+source_template_files:
+  - .maw-template/template.yaml
+  - .maw/upgrade-policy.yaml
+  - docs/ai-instructions/instructions/derived-template-drift-upgrade.md
+  - docs/ai-instructions/instructions/generate-template-feature-upgrade-prompt.md
+  - docs/ai-instructions/instructions/template-upgrade-strategy.md
+  - docs/ai-instructions/instructions/seed-repository-upgrade.md
+  - docs/capabilities/seed-source-channel-publication.md
+  - docs/template-migrations/20261008-seed-upgrade-source-routing.md
+  - ops/scripts/plan-template-drift.py
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/commands/template_policy.py
+  - packages/mawflow-seed-kit/src/mawflow_seed_kit/commands/template_drift.py
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect: [README.md, code/, app_key, module dossiers, release configuration, repository mappings, real secrets, .local/]
+  forbidden:
+    - 将主仓目录例外授予其它派生项目
+    - 使用本机或私有源绕过公共发行验证
+    - 直接改写不可达 applied_version 或降级项目锁
+    - 用开发候选替代公开发行、Host 运行验收或真人验收
+validation:
+  - git diff --check
+  - python3 -m pytest tests/test_plan_template_drift.py tests/test_template_source_policy.py tests/test_seed_version_alignment.py tests/test_seed_kit_v2.py tests/test_portable_cli.py -q
+  - bash ops/scripts/check-seed-distribution-readiness.sh
+propagation:
+  instruction: docs/ai-instructions/instructions/derived-template-drift-upgrade.md
+  migration_note: docs/template-migrations/20261008-seed-upgrade-source-routing.md

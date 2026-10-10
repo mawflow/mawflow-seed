@@ -101,7 +101,7 @@ read_contract:
 - `#TINST-001/...`、`#PINST-001/...`：兼容识别完整 ID；新增文档和日常调用统一推荐 `#关键字`，精确调用使用 `#T001` 或 `#P001`。
 - 存在歧义时必须先向用户确认，不得自行猜测；尤其是同一习惯用语可能映射到客户仓库、组件镜像、仓库级 mirror、发布镜像、应用发布或模板升级双路由时。
 - 新增、改名、废弃指令，或调整推荐关键字、内部指令 ID、短编号、触发词、适用范围时，必须同步维护 `PROJECT_COMMANDS.md` 的快捷调用、概要和可复制调用示例。
-- `maw-project-template` 的主定位是 MAW 新项目种子仓库；`#项目升级` 只能在目标项目按取舍矩阵增量合并。`#模板升级/#模版升级` 未指定 commit 时，先按当前仓库角色路由：在源模板仓库中生成迁移说明、提示词或任务包；在派生项目中按 `TINST-026` 先识别 `template_source.source_channel`，再用 `template_source.version`（默认 `main`）解析目标模板 commit，计算模板漂移并在当前会话执行升级。
+- `maw-project-template` 的主定位是 MAW 新项目种子仓库；`#项目升级` 只能在目标项目按取舍矩阵增量合并。`#模板升级/#模版升级` 未指定 commit 时，先按当前仓库角色路由：在源模板仓库中生成迁移说明、提示词或任务包；在派生项目中按 `TINST-026` 先识别 `template_source.source_channel`，再用 `template_source.version` 解析已验证公共稳定 tag（主仓例外读取已绑定目录的固定 commit），计算模板漂移并在当前会话执行升级。
 - `#种子仓库升级` 是反向回流入口：在派生项目中记录候选能力、按 S0-S4 分级，并生成“在种子仓库执行”的提示词；提示词落库时放在 `prompts/codex/seed-repository-upgrade-prompts/`。在种子仓库中按提示词评估并输出接纳、拒绝或补证据结论，接纳后再生成模板升级资产。它不等同于 `#项目升级` 或 `#模板升级/#模版升级`。
 
 ## 指令编号命名空间
@@ -157,6 +157,8 @@ read_contract:
 | TINST-040 | MCP Knowledge Runtime | #MCP知识库、#MCP安装、#MCP更新、#MCP同步、#MCP审计、#技术选型、#框架包、#风格包、#项目蓝图、#提示词包、Framework Pack、Style Pack、Blueprint Pack、Prompt Pack、Pack Registry、Project Override | [instructions/mcp-knowledge-runtime.md](instructions/mcp-knowledge-runtime.md) |
 | TINST-041 | UAT 业务交付 | #UAT交付、UAT 交付、模块验收说明、业务验收文档、测试与审计版、逐模块交付测试 | [instructions/uat-business-handoff.md](instructions/uat-business-handoff.md) |
 | TINST-042 | Seed 经验反馈报告 | #Seed反馈、#Seed复盘、#Seed优化报告、Seed 经验反馈报告 | [instructions/seed-feedback.md](instructions/seed-feedback.md) |
+| TINST-043 | 生成更新动态 | #更新动态、#生成更新动态、更新记录、更新日志、最近100条、全部动态、release notes、update_note | [instructions/generate-update-notes.md](instructions/generate-update-notes.md) |
+
 
 ## 当前术语列表
 

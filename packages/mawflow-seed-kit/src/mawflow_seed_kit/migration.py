@@ -629,7 +629,23 @@ def _normalized_environments(root: Path, fallback_text: str) -> str:
 def _normalized_lifecycle(root: Path, fallback_text: str) -> str:
     path = root / ".maw/project-lifecycle.yaml"
     if path.is_file() and not path.is_symlink():
-        return path.read_text(encoding="utf-8")
+        text = path.read_text(encoding="utf-8")
+        existing = _read_mapping(path).get("project_lifecycle", {})
+        defaults = yaml.safe_load(fallback_text)["project_lifecycle"]["change_fragments"]
+        if "change_fragments" not in existing:
+            return _append_missing_mapping_fields(
+                text, ("project_lifecycle",), {"change_fragments": defaults}
+            )
+        fragments = existing["change_fragments"]
+        # Explicit project overrides remain authoritative. Only add the new
+        # namespace when an existing fragment mapping has no update-note policy.
+        if isinstance(fragments, dict) and fragments and "update_notes" not in fragments:
+            return _append_missing_mapping_fields(
+                text,
+                ("project_lifecycle", "change_fragments"),
+                {"update_notes": defaults["update_notes"]},
+            )
+        return text
     existing = _read_mapping(root / ".maw/project-lifecycle.yaml")
     fallback = yaml.safe_load(fallback_text)
     merged = _deep_merge(fallback, existing)

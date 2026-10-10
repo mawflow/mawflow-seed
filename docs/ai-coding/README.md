@@ -40,3 +40,7 @@ AI/Codex 不应默认全量读取 `docs/ai-coding/**`。先读取本 README，�
 - 如果用户要求记录项目指令、术语或经验，按 `docs/ai-instructions/README.md` 更新指令库。
 
 - [日常交互来源收录规范](document-source-capture.md)：在工作发生时保存确认范围、未知、证据和下一步。
+
+- [日常更新动态规范](update-notes.md)：实际用户可见变化在验证后追加权威片段，生成最近100条、完整历史及云端准备页。
+
+- [开发资源与本机通信](development-resources.md)：开工与阶段检查、按需环境及跨项目重任务串行。

@@ -1,7 +1,7 @@
 {
   "schema": "mawflow.seed_contract_catalog.v2",
   "contract_version": 2,
-  "seed_version": "2.10.0",
+  "seed_version": "2.12.0",
   "required_files": [
     ".maw/seed.lock",
     ".maw/project.yaml",
@@ -375,7 +375,7 @@
   "agent_bootstrap": {
     "protocol_version": 1,
     "resource": "resources/agent-contract.v1.json",
-    "resource_hash": "sha256:d109a577fbb14ed6b7fd9bb79e2a88be844d100c099760cf1a90929754f55f31",
+    "resource_hash": "sha256:39e17c5c5f29a75ba0da9cdb7e8628e0fdd4d93a9835fe51d533f127b08de497",
     "required_files": [
       "AGENTS.md",
       "CLAUDE.md",

@@ -5,8 +5,10 @@ Read [AI_START_HERE.md](AI_START_HERE.md) before working in this project.
 只读取本任务所需的模块和文档；先确认允许路径、禁止路径及验证命令。
 不自动读取 prompts、归档、本机私有目录；不提交秘密或无关改动。
 工具、Skill、MCP、RTK 均非读取项目规则的前置条件；已有授权按任务范围延续。
+本地开发按 docs/ai-coding/development-resources.md 检查资源与工作台/CLI，按需复用服务，跨项目重任务串行。
 完成时区分已修改、已验证、已发布与真人验收，列出未验证项。
 长期结论与缺口按 docs/ai-coding/document-source-capture.md 收录最小来源及回执；只读任务不写入。
+实际用户可见变化按 docs/ai-coding/update-notes.md 追加权威动态；默认100条，--all 保留全部已记录历史。
 
 ## 从 GitHub 读取源码的网页 Agent
 本文件是用户显式指定的网页入口，不假定 ChatGPT Web 或连接器自动加载 AGENTS.md、@ 导入或隐藏目录。

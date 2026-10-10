@@ -31,7 +31,7 @@
 - 每次实现、修 bug、测试、构建、发布、同步或执行脚本前，必须用任务关键词、路径、命令名、错误症状和 app_key 检索 `docs/ai-instructions/experience-index.md`；命中后才读取索引指向的 `lessons/**`、`solutions/**` 或指令全文。不得为了了解经验库主动全量读取 `docs/ai-instructions/solutions/**`。
 - 模块任务必须按需读取并遵守 `docs/ai-coding/module-dossier-rules.md`：页面、API、数据表、状态流、配置、发布或外部同步边界变化后，判断是否更新模块档案和集中 changelog；遇到旧格式先自动迁移到 `docs/changelogs/`。
 - 新项目或证据不足的模块拆分任务必须先走渐进式模块发现：候选写入 `.maw/module-candidates.yaml` 和 `docs/modules/_discovery/`，正式稳定模块才写入 `.maw/modules.yaml`。
-- 项目升级和模板升级必须策略先行、取舍矩阵先行。`#项目升级` 按用户输入、`.local/.maw/template-source.yaml`、`.maw/template-source.yaml`、当前仓库解析源模板；共享配置不得写个人本机模板路径。`#模版升级/#模板升级` 未指定 commit 时先按当前仓库角色路由：源模板仓库生成升级资产；派生项目走 `TINST-026`，先识别来源属于受控内部来源、`public_seed` 或 `unknown_legacy`，再用 `template_source.version`（默认 `main`）解析目标模板 commit，并与 `template_source.applied_version` 计算落后提交数，生成当前会话执行提示词并继续执行；外部公开项目不得读取内部私有 Seed 源，不要误走 `#项目升级`。如果仓库角色、来源通道或触发词含义有歧义，先问清楚再执行。
+- 项目升级和模板升级必须策略先行、取舍矩阵先行。`#项目升级` 按用户输入、`.local/.maw/template-source.yaml`、`.maw/template-source.yaml`、当前仓库解析源模板；共享配置不得写个人本机模板路径。`#模版升级/#模板升级` 未指定 commit 时先按当前仓库角色路由：源模板仓库生成升级资产；派生项目走 `TINST-026`，先识别来源属于受控内部来源、`public_seed` 或 `unknown_legacy`，再用 `template_source.version`（普通派生项目默认已验证公共稳定版本）解析目标模板 commit，并与 `template_source.applied_version` 计算落后提交数，生成当前会话执行提示词并继续执行；外部公开项目不得读取内部私有 Seed 源，不要误走 `#项目升级`。如果仓库角色、来源通道或触发词含义有歧义，先问清楚再执行。
 - “种子仓库”和“模板仓库”统一指 `maw-project-template`。派生项目应知道自己来自种子仓库，并尽量区分能力来源：`seed_repository`、`derived_project_custom`、`candidate_for_seed_repository` 或 `unknown_legacy`；旧项目缺少来源字段时按兼容处理，不阻塞开发。
 - 派生项目开发中如果发现适合回流到种子仓库的优化或新增能力，必须在收口中明确指出，并记录到 `docs/seed-repository-upgrade-candidates.md`，写清使用场景、优化/新增理由、证据路径和向下兼容要求。需要生成在种子仓库执行的提示词时，走 `#种子仓库升级` / `TINST-027`；该流程是派生项目到种子仓库的反向回流，不等同于 `#项目升级` 或 `#模板升级/#模版升级`。
 - `docs/archive/**` 是历史归档，AI/Codex 默认永不自动读取；只有用户明确给出具体归档文件路径或要求历史追溯时，才读取最小必要片段。
@@ -60,3 +60,7 @@
 - 每次 AI 完成一段任务、任务包子任务或其它可独立验证的里程碑后，只要产生了代码、配置、文档或脚本改动，就必须完成必要验证、提交并推送当前分支，并按仓库级 mirror 有效计划同步镜像；不要等用户再次要求“提交 push”。commit message 和提交内容说明必须使用中文，记录变更范围、验证结果和遗留风险。推送成功后必须先运行 `ops/scripts/sync-repository-mirror.sh plan`，以计划输出判断是否继续同步仓库级镜像。
 - 推送收口时必须先只暂存、提交、推送本次任务实际改动。该提交完成后重新运行 `git status --short`；若仍有其它文件变动，只有确认剩余变动全部位于 `code/**` 之外，且不属于 `.maw/*.local.yaml`、`.local/`、`.ssh/**`、日志、缓存、构建产物或真实密钥等禁提交范围时，才允许追加一个独立中文 commit message 的补充提交并推送。剩余 `code/**` 组件业务代码、组件运行配置或组件内文件变动不得顺手纳入补充提交，必须保持未暂存并在最终说明中列出。
 - 只有用户明确禁止 git 写入、没有实际变更、存在无法安全暂存的无关脏改动，或认证、网络、分支保护、远端拒绝导致无法 push 时，才可跳过提交或推送；最终说明必须写清失败原因、当前 commit hash 或未提交状态，以及需要人工处理的下一步。
+
+- 实际用户可见的新增、优化、修复、安全或使用文档变化在验证收口时按 [更新动态规范](update-notes.md) 追加权威片段并生成视图；`#更新动态` / TINST-043 是模板内置指令。其它仓库通过自己的 `#模板升级` 采用，不自动复制源仓记录。
+
+模板升级：只有经身份确认的主仓读取已绑定独立 Seed Git 目录的固定 commit；其它所有派生项目采用经验证的公共稳定版本，旧内部基线先作来源迁移预览。本机覆盖不得改变升级路线。

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from .catalog import public_catalog
@@ -37,6 +38,10 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "project":
+        from .commands.cli import main as project_main
+        return project_main(argv)
     args = _parser().parse_args(argv)
     if args.command == "catalog":
         payload = public_catalog()

@@ -1,6 +1,9 @@
 schema_version: 2
 template_source:
+  source_channel: public_seed
+  git_url: https://github.com/mawflow/mawflow-seed.git
+  version: latest_verified_stable
   kind: package
   package: mawflow-seed-kit
-  applied_version: 2.10.0
+  applied_version: 2.12.0
   contract_version: 2
