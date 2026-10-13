@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema",
+    "task_ref",
+    "phase",
+    "task_class",
+    "task_kind",
+    "states",
+    "scope",
+    "authorization",
+    "verification",
+    "evidence"
+  ],
+  "properties": {
+    "schema": {
+      "const": "mawflow.standard_task_snapshot.v1"
+    },
+    "task_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "phase": {
+      "enum": [
+        "initiation",
+        "design",
+        "development",
+        "testing",
+        "deployment",
+        "delivery"
+      ]
+    },
+    "task_class": {
+      "enum": [
+        "small_change",
+        "iteration",
+        "formal_delivery"
+      ]
+    },
+    "task_kind": {
+      "enum": [
+        "read_only",
+        "modify",
+        "test",
+        "deploy",
+        "deliver"
+      ]
+    },
+    "states": {
+      "type": "object",
+      "required": [
+        "implementation",
+        "verification",
+        "external_integration",
+        "delivery",
+        "deployment",
+        "human_acceptance"
+      ],
+      "properties": {
+        "implementation": {
+          "enum": [
+            "pending",
+            "partial",
+            "passed",
+            "failed",
+            "not_applicable"
+          ]
+        },
+        "verification": {
+          "enum": [
+            "pending",
+            "partial",
+            "passed",
+            "failed",
+            "not_applicable"
+          ]
+        },
+        "external_integration": {
+          "enum": [
+            "pending",
+            "partial",
+            "passed",
+            "failed",
+            "not_applicable"
+          ]
+        },
+        "delivery": {
+          "enum": [
+            "pending",
+            "partial",
+            "passed",
+            "failed",
+            "not_applicable"
+          ]
+        },
+        "deployment": {
+          "enum": [
+            "pending",
+            "partial",
+            "passed",
+            "failed",
+            "not_applicable"
+          ]
+        },
+        "human_acceptance": {
+          "enum": [
+            "pending",
+            "partial",
+            "passed",
+            "failed",
+            "not_applicable"
+          ]
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "source_revision",
+        "environment",
+        "module_keys",
+        "read_paths",
+        "write_paths",
+        "blocked_paths",
+        "target_baseline"
+      ],
+      "properties": {
+        "source_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_baseline": {
+          "type": "string"
+        },
+        "module_keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "read_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "write_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "blocked_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "required": [
+        "mode",
+        "source_ref",
+        "scope_ref",
+        "environments",
+        "allowed_actions"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "read_only",
+            "modify"
+          ]
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowed_actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": [
+        "suites"
+      ],
+      "properties": {
+        "suites": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "status",
+              "evidence_refs"
+            ],
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "pending",
+                  "partial",
+                  "passed",
+                  "failed",
+                  "not_applicable"
+                ]
+              },
+              "evidence_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "axis",
+          "status"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "content_hash": {
+            "type": "string"
+          },
+          "source_revision": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "scope_hash": {
+            "type": "string"
+          },
+          "record_ref": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "confirmation_ref": {
+            "type": "string"
+          },
+          "axis": {
+            "enum": [
+              "implementation",
+              "verification",
+              "external_integration",
+              "delivery",
+              "deployment",
+              "human_acceptance"
+            ]
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "partial",
+              "passed",
+              "failed",
+              "not_applicable"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

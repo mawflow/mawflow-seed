@@ -37,6 +37,7 @@ facts:
   runtime: .maw/app-runtime.yaml
   policies: .maw/policies.yaml
   interaction: .maw/interaction.yaml
+  standards: .maw/standards.yaml
 protected_paths:
   never_commit:
   - .local/**
@@ -88,16 +89,22 @@ execution_contract:
     - local_environment_status
     - memory_update
     - local_update
-
   development_resources:
     device_policy_schema: mawflow.development_resource_policy.v1
     device_policy_location: user_home/.local/config/maw-development-resources.json
     host_capability: host.development_resources
-    docker_runner: python3 ops/scripts/development-resources.py run --workload docker --execute -- <authorized-command>
+    docker_runner: python3 ops/scripts/development-resources.py run --workload docker
+      --execute -- <authorized-command>
     policy: docs/ai-coding/development-resources.md
     checker: python3 ops/scripts/development-resources.py check
     heavy_runner: python3 ops/scripts/development-resources.py run --execute -- <authorized-command>
-    checkpoints: [task_start, session_resume, service_start, before_heavy_job, after_heavy_job, milestone]
+    checkpoints:
+    - task_start
+    - session_resume
+    - service_start
+    - before_heavy_job
+    - after_heavy_job
+    - milestone
     communication: capability_negotiated_cli_or_authorized_local_mcp
     default_heavy_job_limit: 1
     coordination_scope: same_user_same_device
@@ -133,6 +140,15 @@ execution_contract:
     append_only: true
     read_only: deferred_read_only
     closeout_field: update_notes_status
+  standards:
+    policy: docs/standards/README.md
+    catalog: .maw/standards.yaml
+    checker: python3 ops/scripts/manage-project-standards.py check
+    context: python3 ops/scripts/manage-project-standards.py context --phase <phase>
+      --task-class <class> --task-kind <kind>
+    read_policy: catalog_then_selected_authority_only
+    authorization_granted: false
+    legacy_missing: not_adopted_no_development_block
 tool_adapters:
   codex:
     file: AGENTS.md
@@ -194,6 +210,8 @@ validation:
   - closeout contract
 agent_protocol_version: 1
 task_routes:
+  resource_libraries:
+  - docs/ai-coding/workspace-libraries.md
   development:
   - docs/ai-coding/README.md
   review:
@@ -202,7 +220,11 @@ task_routes:
   - MAWFLOW_CLI.md
   - docs/ai-coding/project-workflow.md
   governance:
+  - docs/standards/README.md
   - docs/ai-instructions/README.md
+  standards:
+  - docs/standards/README.md
+  - .maw/standards.yaml
 tool_preferences:
   rtk: optional_with_native_fallback
   mcp: optional

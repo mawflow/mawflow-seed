@@ -1,0 +1,33 @@
+schema_version: 1
+upgrade_key: 20261014-seed-source-policy
+title: 统一Seed来源路线与当前规范口径
+risk_level: T2
+status: active
+summary:
+- 只有主仓使用绑定内部Seed的已提交固定commit
+- 其它所有派生项目使用已验证公共稳定tag与同版本Kit；参数及本机覆盖不能改路线
+source_template_files:
+- .maw/upgrade-policy.yaml
+- docs/ai-instructions/instructions/derived-template-drift-upgrade.md
+- docs/template-migrations/20261014-seed-source-policy.md
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect:
+  - README.md
+  - code/
+  - app_key
+  - release configuration
+  - repository mappings
+  - real secrets
+  - .local/
+  - module dossiers
+  forbidden:
+  - 把Seed开发仓的内部来源通道身份当成业务项目内部源许可
+  - 绕过公共稳定版或清空旧applied_version
+  - 整文件覆盖项目事实或自动发布
+validation:
+  commands:
+  - python3 -m pytest -q tests/test_template_source_policy.py tests/test_plan_template_drift.py
+  - bash ops/scripts/check-ai-framework-consistency.sh
+  - bash ops/scripts/check-local-boundary.sh

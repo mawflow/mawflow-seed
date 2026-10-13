@@ -18,7 +18,7 @@
 - 是否指定 commit 不决定在哪个仓库执行；当前 Codex 会话所在仓库的角色才决定路由。
 - 当前仓库是源模板仓库时，`#模板升级/#模版升级` 仍在源模板仓库执行本指令，生成迁移说明、提示词或任务包；不切换到派生项目，也不直接修改目标项目。源模板仓判断不能只看 fork 后会被复制的 `.maw-template/template.yaml` 或 `.maw/repository-identity.yaml`，还应结合仓库身份检测、Git `origin`、`template_source.git_url` 和 `template_source.source_channel` 的证据。
 - 未指定 commit/range 时，先用当前源模板仓库的 `git status --short`、`git log -1 --oneline`、必要时 `git diff --name-only` 或用户刚才的说明识别本次模板变更；若仍无法判断具体新特性或传播范围，先向用户确认，不得编造升级内容。
-- 当前仓库是派生项目时，同一触发词不使用本指令，应走 `TINST-026`：先读取 `.maw/template-source.yaml` 的 `template_source.source_channel`，再按 `template_source.version`（默认 `main`）解析目标模板 commit，并与 `template_source.applied_version` 比较后执行。直接 fork 的派生项目即使继承了 `seed_repository` 声明，只要用户说明当前仓库作为派生项目使用，或 Git `origin` 不再是源模板 `template_source.git_url`，就不能默认走本指令。
+- 当前仓库是派生项目时，同一触发词不使用本指令，应走 `TINST-026`：先读取 `.maw/template-source.yaml` 的 `template_source.source_channel`，再按 `template_source.version`（其它派生项目默认 `latest_verified_stable`，主仓冻结注册绑定目录的已提交 commit）解析目标模板 commit，并与 `template_source.applied_version` 比较后执行。直接 fork 的派生项目即使继承了 `seed_repository` 声明，只要用户说明当前仓库作为派生项目使用，或 Git `origin` 不再是源模板 `template_source.git_url`，就不能默认走本指令。
 
 ## 输出资产
 
@@ -46,7 +46,7 @@
 4. 使用 `docs/ai-instructions/templates/upgrade-decision-matrix.md` 描述目标项目取舍建议。
 5. 生成升级资产，所有路径使用项目根相对路径。
   - 先确认目标角色；仅主仓提示词可填入已注册 Seed 目录的当次路径和固定 commit。其它派生项目不填写本机源路径，只填写已验证公共稳定 tag 与同版本 Kit。
-   - 生成给其它派生项目的提示词时，必须写明 `source_channel: public_seed` 和公开 Seed URL，不得要求外部项目访问内部私有 Seed 源。
+   - 生成给其它派生项目的提示词时，必须写明 `source_channel: public_seed` 和公开 Seed URL，不得要求其它派生项目（包括内部开发仓）访问内部私有 Seed 源。
 6. 对高风险项明确人工确认和不自动传播规则。
 7. 验证后按中文人类优先格式收口，并记录 `upgrade_strategy_update`。
    - 如果升级资产或提示词要求目标项目在完成升级后提交、推送并同步 mirror，必须写成“推送后先运行仓库级 mirror 计划命令，以有效计划判断是否同步”；不要让目标项目只读取原始 `repository_mirrors.enabled`。

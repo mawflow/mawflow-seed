@@ -44,3 +44,7 @@ AI/Codex 不应默认全量读取 `docs/ai-coding/**`。先读取本 README，�
 - [日常更新动态规范](update-notes.md)：实际用户可见变化在验证后追加权威片段，生成最近100条、完整历史及云端准备页。
 
 - [开发资源与本机通信](development-resources.md)：开工与阶段检查、按需环境及跨项目重任务串行。
+
+- [项目资源库与经验库](workspace-libraries.md)：按账号与项目权限发现安全索引，固定版本引用；用户内容不进入 Seed。
+
+- [六阶段规范导航](../standards/README.md)：阶段入口、项目采用、任务清单与独立证据；只读目录后按需读取正文。

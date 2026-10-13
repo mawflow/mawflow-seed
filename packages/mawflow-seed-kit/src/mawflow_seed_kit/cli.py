@@ -17,6 +17,8 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="mawflow-seed-kit")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("catalog")
+    standards = subparsers.add_parser("standards", help="六阶段规范导航、索引和任务声明")
+    standards.add_argument("args", nargs=argparse.REMAINDER)
     doctor = subparsers.add_parser("doctor")
     doctor.add_argument("target_or_root", nargs="?", default=".")
     doctor.add_argument("root", nargs="?", default=".")
@@ -39,6 +41,9 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "standards":
+        from .standards import main as standards_main
+        return standards_main(argv[1:])
     if argv and argv[0] == "project":
         from .commands.cli import main as project_main
         return project_main(argv)

@@ -18,14 +18,12 @@
 
 ## 源模板解析顺序
 
-1. 用户输入。
-2. `.local/.maw/template-source.yaml`。
-3. `.maw/template-source.yaml`。
-4. 当前仓库。
+1. 核验共享项目身份、仓库角色和 Git origin，不以本机 overlay 或名称声明授予主仓例外。
+2. 主仓从已注册 code-source binding 解析独立 Seed Git 目录，检查来源、独立 Git 根、干净工作区并冻结已提交 commit；缺失或不匹配时停止。
+3. 其它所有派生项目（包括内部开发仓）解析公共稳定 tag，核验 Payload、Seed lock 与同版本 Kit；不采用 main、rc、私有源、本机路径或当前仓库兜底。
+4. unknown_legacy、旧内部来源或不可达基线先保留项目状态，输出证据并预览来源迁移，不直接换 URL、清空或改写 applied_version。
 
-源模板读取优先级固定为：用户输入 > `.local/.maw/template-source.yaml` > `.maw/template-source.yaml` > 当前仓库。
-
-`.maw/template-source.yaml` 只保存共享占位或 git 来源；个人本机路径只能写入 `.local/.maw/template-source.yaml` 或当次用户输入。
+用户参数和 `.local` 配置只能在已核验的路线内提供当次信息，不能改变来源路线。主仓真实目录绑定只存于被忽略的 `.local/.maw/code-source-bindings.yaml`，不写入共享文档。
 
 ## 执行步骤
 

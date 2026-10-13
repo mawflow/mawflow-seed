@@ -16,3 +16,5 @@
 - `#更新动态` / `#T043`：按 [TINST-043](docs/ai-instructions/instructions/generate-update-notes.md) 默认生成最近100条；`#更新动态 --all` 或 `#更新动态：全部` 生成全部已记录历史；日常更新追加权威片段，支持云端 Markdown 分页。
 
 模板升级统一采用已验证公共稳定 tag 与同版本 Kit；仅平台主仓由自身项目身份及源码绑定读取独立 Seed Git 目录。`mawflow project drift` 与项目计划脚本共用 Seed Kit >=2.12.0 实现。来源或基线迁移必须先预览并验证，不能只换 URL 或清空旧基线。
+
+- `#规范` / `#阶段规范` / `#T044`：按 TINST-044 查询六阶段、项目适用规则、任务清单及证据声明；不授予执行或发布权限。

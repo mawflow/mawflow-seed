@@ -1,9 +1,9 @@
 {
   "schema": "mawflow.seed_kit.manifest.v2",
   "name": "mawflow-seed-kit",
-  "version": "2.12.0",
+  "version": "2.13.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:99160f68c6d4da2c6b1d98c2d310d4cfc076ce68c42b350840364dcb1b477b14",
+  "contract_fingerprint": "sha256:a5a7c7711a8f740021dfe050a2f088d226ac39a3113048dbcb46583ab5c13d27",
   "template_root": "template",
   "profiles": [
     "blank",
@@ -53,7 +53,25 @@
     "ops/scripts/update_notes/store.py",
     "ops/scripts/update_notes/render.py",
     "ops/scripts/plan-template-drift.py",
-    "docs/ai-instructions/instructions/derived-template-drift-upgrade.md"
+    "docs/ai-instructions/instructions/derived-template-drift-upgrade.md",
+    ".maw/standards.yaml",
+    ".maw/schemas/standards-catalog.schema.json",
+    ".maw/schemas/standard-task-snapshot.schema.json",
+    "docs/standards/README.md",
+    "docs/standards/index.md",
+    "docs/standards/general.md",
+    "docs/standards/project-adoption.md",
+    "docs/standards/task-checklists.md",
+    "docs/standards/knowledge-resources.md",
+    "docs/standards/01-initiation.md",
+    "docs/standards/02-design.md",
+    "docs/standards/03-development.md",
+    "docs/standards/04-testing.md",
+    "docs/standards/05-deployment.md",
+    "docs/standards/06-delivery.md",
+    "ops/scripts/manage-project-standards.py",
+    "docs/ai-instructions/instructions/stage-standards.md",
+    "docs/capabilities/stage-standards-governance.md"
   ],
   "quick_check": [
     "python3",

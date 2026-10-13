@@ -7,10 +7,10 @@ upgrade_policy:
       - "升级到最新模板"
     strategy: audit_matrix_then_apply
     source_resolution_order:
-      - user_input
-      - ".local/.maw/template-source.yaml"
-      - ".maw/template-source.yaml"
-      - current_repository
+      - verified_repository_identity
+      - registered_seed_git_binding_for_main_repository
+      - verified_public_stable_release_for_other_derived_projects
+    source_route_policy: "只有经仓库身份核验的主仓使用已绑定内部 Seed 独立 Git 目录的已提交固定 commit；其它所有派生项目（包括内部开发仓）使用经验证的公共稳定 tag 与同版本 Kit。本机覆盖、用户参数和历史来源字段不能改变路线；来源未知、证据冲突或旧基线不可达时保留原状态，先预览来源迁移。"
     required_steps:
       - confirm_upgrade_type
       - resolve_template_source

@@ -32,6 +32,7 @@ facts:
   components: .maw/components.yaml
   modules: .maw/modules.yaml
   runtime: .maw/app-runtime.yaml
+  standards: .maw/standards.yaml
 protected_paths:
   never_commit:
   - .local/**
@@ -86,7 +87,8 @@ execution_contract:
     device_policy_schema: mawflow.development_resource_policy.v1
     device_policy_location: user_home/.local/config/maw-development-resources.json
     host_capability: host.development_resources
-    docker_runner: python3 ops/scripts/development-resources.py run --workload docker --execute -- <authorized-command>
+    docker_runner: python3 ops/scripts/development-resources.py run --workload docker
+      --execute -- <authorized-command>
     policy: docs/ai-coding/development-resources.md
     checker: python3 ops/scripts/development-resources.py check
     default_heavy_job_limit: 1
@@ -101,7 +103,18 @@ execution_contract:
     communication: capability_negotiated_cli_or_authorized_local_mcp
     unavailable_cli: project_files_fallback
     read_only_check_no_writes: true
+  standards:
+    policy: docs/standards/README.md
+    catalog: .maw/standards.yaml
+    checker: python3 ops/scripts/manage-project-standards.py check
+    context: python3 ops/scripts/manage-project-standards.py context --phase <phase>
+      --task-class <class> --task-kind <kind>
+    read_policy: catalog_then_selected_authority_only
+    authorization_granted: false
+    legacy_missing: not_adopted_no_development_block
 task_routes:
+  resource_libraries:
+  - docs/ai-coding/workspace-libraries.md
   development:
   - docs/README.md
   review:
@@ -109,7 +122,11 @@ task_routes:
   delivery:
   - MAWFLOW_CLI.md
   governance:
+  - docs/standards/README.md
   - PROJECT_COMMANDS.md
+  standards:
+  - docs/standards/README.md
+  - .maw/standards.yaml
 tool_adapters:
   codex:
     file: AGENTS.md

@@ -11,7 +11,7 @@
 - `project.yaml`：项目基础信息和仓库模式。
 - `interaction.yaml`：人机交互默认值，记录默认中文输出、中文人类优先收口顺序、双受众 `i18n` 描述字段和发布确认文案。
 - `upgrade-policy.yaml`：项目升级和模板升级的风险分级、取舍矩阵和保护边界。
-- `template-source.yaml`：共享源模板来源占位、git 来源和 Seed 来源通道；统一“种子仓库/模板仓库”口径，并提供派生项目能力来源追踪字段；个人本机路径和内部私有源覆盖写入 `.local/.maw/template-source.yaml`。公开仓不会导出该文件；外部项目如需声明来源，可复制 `template-source.example.yaml` 为 `template-source.yaml` 后按项目事实修改。
+- `template-source.yaml`：共享源模板来源占位、git 来源和 Seed 来源通道；统一“种子仓库/模板仓库”口径，并提供派生项目能力来源追踪字段；只有主仓从 `.local/.maw/code-source-bindings.yaml` 解析已注册内部 Seed 目录；其它派生项目固定采用公共稳定版，本机覆盖不能改路线。公开仓不会导出该文件；外部项目如需声明来源，可复制 `template-source.example.yaml` 为 `template-source.yaml` 后按项目事实修改。
 - `template-source.example.yaml`：公开安全的 Seed 来源示例，默认指向 `https://github.com/mawflow/mawflow-seed`。
 - `components.yaml`：端和组件清单。
 - `modules.yaml`：功能模块机器索引，连接 module_key、模块档案、`changelog_path` / `changelog_time`、页面/API/数据表、配置、发布和测试边界。
@@ -56,9 +56,9 @@ SSH key 可以放在仓库根目录 `.ssh/`，也可以放在团队约定的任�
 
 `.maw/interaction.yaml` 用于统一项目内 AI/Codex 的人类可见输出、项目文档语言和最终收口形态。默认输出、任务提示词、提交信息、最终说明、新增或改写的项目文档、任务包正文、模块档案、component guide 和 README 补充段落均使用中文；配置描述采用“中文给人读、英文给 AI 读”的双受众策略，默认展示字段写中文，英文说明放入 `i18n.ai.en-US`，中文说明可放入 `i18n.human.zh-CN`。英文还可保留在代码标识、文件名/路径、命令、协议名、第三方库原文、机器字段 key、品牌/专有名词或用户明确要求的英文内容中。最终说明先展示结论、变更、验证、Git/镜像、模块与记忆、种子仓库升级建议、发布影响和 code 交付影响，再把稳定机器字段放入技术元数据。收口中如需用户补参数、回答问题或做确认，必须给出参数获取步骤、建议选项和填写格式；涉及敏感参数时，先在 `.local/` 下创建本机填写文件，让用户本机填写。
 
-`.maw/upgrade-policy.yaml` 和 `.maw/template-source.yaml` 用于升级策略。项目升级必须先解析源模板来源、盘点目标项目事实和源模板变化，再生成取舍矩阵；源模板仓库中的模板升级必须生成迁移说明、提示词或任务包等升级资产。派生项目中的 `#模版升级/#模板升级` 使用 `template_source.source_channel` 先判断来源通道，再用 `template_source.applied_version` 记录的已应用模板 commit 计算落后源模板多少提交，最后生成当前会话执行提示词并执行。个人本机源模板路径和内部私有源覆盖不写入公开文档，统一放 `.local/.maw/template-source.yaml` 或受控内部配置。
+`.maw/upgrade-policy.yaml` 和 `.maw/template-source.yaml` 用于升级策略。项目升级必须先解析源模板来源、盘点目标项目事实和源模板变化，再生成取舍矩阵；源模板仓库中的模板升级必须生成迁移说明、提示词或任务包等升级资产。派生项目中的 `#模版升级/#模板升级` 使用 `template_source.source_channel` 先判断来源通道，再用 `template_source.applied_version` 记录的已应用模板 commit 计算落后源模板多少提交，最后生成当前会话执行提示词并执行。只有经仓库身份核验的主仓使用已绑定内部 Seed 独立 Git 目录的已提交固定 commit；其它所有派生项目（包括内部开发仓）使用经验证的公共稳定 tag 与同版本 Kit。本机覆盖、用户参数和历史来源字段不能改变路线；来源未知、证据冲突或旧基线不可达时保留原状态，先预览来源迁移。
 
-`template_source.source_channel` 区分内部来源通道、`public_seed` 和 `unknown_legacy`。内部派生项目通过受控源或本机 overlay 读取升级资产；外部公开派生项目默认使用 `public_seed`，通过 `https://github.com/mawflow/mawflow-seed` 读取公开升级资产；历史项目缺少字段时按 `unknown_legacy` 兼容，输出证据并要求人工确认后再继续自动升级。
+`template_source.source_channel` 区分内部来源通道、`public_seed` 和 `unknown_legacy`。只有主仓使用绑定的内部 Seed；其它所有派生项目（包括内部开发仓）使用 `public_seed`，从 `https://github.com/mawflow/mawflow-seed` 核验公共稳定 tag、Payload、Seed lock 和同版本 Kit；历史项目缺少字段时按 `unknown_legacy` 兼容，输出证据并要求人工确认后再继续自动升级。
 
 “种子仓库”和“模板仓库”统一指 `maw-project-template`。派生项目可通过 `.maw/template-source.yaml` 的 `seed_repository_relationship.capability_origin_tracking` 追踪能力来源；旧项目缺字段时按兼容处理。派生项目开发中如果发现适合回流种子仓库的优化或新增能力，应记录到 `docs/seed-repository-upgrade-candidates.md`，并可通过 `#种子仓库升级` 生成一段在种子仓库执行的任务提示词。
 

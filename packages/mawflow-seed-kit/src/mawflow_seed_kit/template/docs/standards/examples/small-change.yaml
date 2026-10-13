@@ -1,0 +1,35 @@
+# 结构示例；不是授权、执行或验收事实。
+schema: mawflow.standard_task_snapshot.v1
+task_ref: example.small_change
+phase: development
+task_class: small_change
+task_kind: read_only
+scope:
+  source_revision: '0000000000000000000000000000000000000000'
+  environment: local
+  module_keys: []
+  read_paths:
+  - docs/standards
+  write_paths: []
+  blocked_paths: []
+  target_baseline: example_pending_confirmation
+authorization:
+  mode: read_only
+  source_ref: example_only_not_authorization
+  scope_ref: example_only_not_authorization
+  environments:
+  - local
+  allowed_actions:
+  - read_only
+states:
+  implementation: pending
+  verification: pending
+  external_integration: pending
+  delivery: pending
+  deployment: pending
+  human_acceptance: pending
+verification:
+  suites: []
+  uncovered:
+  - 示例尚未执行；填入真实任务与授权后使用。
+evidence: []

@@ -94,3 +94,5 @@ Read [AI_START_HERE.md](AI_START_HERE.md) before working in this project.
 ## 日常更新动态
 
 获准修改且形成用户可见变化时，按 [更新动态规范](docs/ai-coding/update-notes.md) 追加 `.maw/changes/` 权威片段并刷新生成视图；只读不落盘。`#更新动态` 默认最近100条，`--all` 生成完整已记录历史；云端准备、实际发布与真人验收分别说明。
+
+- [六阶段规范导航](docs/standards/README.md)：按项目适用条件、任务范围与风险选择规范，验证与交付状态分别记录。

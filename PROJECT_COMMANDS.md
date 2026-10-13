@@ -436,7 +436,7 @@ bash ops/scripts/export-code-only.sh --mode customer --zip --dry-run
 - 人类速记优先使用 `#关键字`；需要完全精确或同一关键词可能命中多条指令时，模板指令用 `#T001`，业务项目指令用 `#P001`。
 - AI 判断存在歧义时，必须先向用户确认要执行哪条指令。
 - 用户习惯用语、别称或项目内叫法一旦确认含义，后续收口主展示优先沿用用户口径；如果仍有歧义，先问清楚再执行或沉淀。
-- `#模板升级/#模版升级` 未指定 commit 时，不以“有没有 commit”决定源仓库或派生仓库；先按当前仓库角色路由。源模板仓库走 `TINST-024` 生成迁移说明、提示词或任务包；派生项目走 `TINST-026`，用 `.maw/template-source.yaml` 的 `template_source.version`（默认 `main`）解析目标模板 commit，再和 `applied_version` 比较并执行。
+- `#模板升级/#模版升级` 未指定 commit 时，不以“有没有 commit”决定源仓库或派生仓库；先按当前仓库角色路由。源模板仓库走 `TINST-024` 生成迁移说明、提示词或任务包；派生项目走 `TINST-026`，用 `.maw/template-source.yaml` 的 `template_source.version`（其它派生项目默认 `latest_verified_stable`，主仓冻结注册绑定目录的已提交 commit）解析目标模板 commit，再和 `applied_version` 比较并执行。
 - “种子仓库”和“模板仓库”统一指 `maw-project-template`。派生项目开发过程中发现适合回流到种子仓库的优化或新增能力时，使用 `#种子仓库升级`：先记录到 `docs/seed-repository-upgrade-candidates.md`，再按 S0-S4 分级，并把可落库提示词写入 `prompts/codex/seed-repository-upgrade-prompts/`；该流程只做增项和兼容增强，不覆盖历史派生项目事实。
 - 执行“模板派生项目升级”或“任意项目模板化改造”时，使用 `GETTING_STARTED.md` 中的完整 Codex 提示词，必须带源模板来源和版本；本机路径只作为当次输入或 `.local` 配置，不写入长期文档。
 - 在源模板仓库里，想把某个新特性同步给派生项目时说 `#模板升级/#模版升级`，AI 会生成迁移说明、提示词或任务包。在派生项目里，同样的触发词用于按 `template_source.applied_version` 计算落后源模板多少提交，生成当前会话执行提示词并执行。种子仓库默认组件为空，已有项目中的任何 app_key 都必须按项目事实保护。
@@ -463,3 +463,5 @@ bash ops/scripts/export-code-only.sh --mode customer --zip --dry-run
 - 涉及发布、镜像仓库、客户仓库、密钥或生产数据时，让 AI 先执行脱敏和风险检查。
 
 - `#更新动态` / `#T043`：按 [TINST-043](docs/ai-instructions/instructions/generate-update-notes.md) 默认生成最近100条；`#更新动态 --all` 或 `#更新动态：全部` 生成全部已记录历史；日常更新追加权威片段，支持云端 Markdown 分页。
+
+- `#规范` / `#阶段规范` / `#T044`：按 TINST-044 查询六阶段、项目适用规则、任务清单及证据声明；不授予执行或发布权限。

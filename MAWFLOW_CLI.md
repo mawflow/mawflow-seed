@@ -95,3 +95,14 @@ mawflow-seed-kit context . --agent unknown --task-kind review --format json
 ```
 
 Agent 身份未知时统一使用 `AI_START_HERE.md`。静态 ready 只证明入口契约，通过真实会话验收后才能声明运行验证通过。
+
+## 阶段规范
+
+```bash
+python3 ops/scripts/manage-project-standards.py context --phase testing --task-class small_change --task-kind test --format markdown
+python3 ops/scripts/manage-project-standards.py check
+python3 ops/scripts/manage-project-standards.py render
+python3 ops/scripts/manage-project-standards.py validate-task --input docs/standards/examples/small-change.yaml
+```
+
+同版Kit也支持 `mawflow-seed-kit standards context --phase testing --task-kind test --format markdown`；这不是Host CLI能力声明。

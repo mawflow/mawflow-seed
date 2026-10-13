@@ -47,7 +47,7 @@ read_contract:
 12. AI 不得为了“了解经验库”主动全量读取 `solutions/**`；`solutions/**` 只在 `experience-index.md`、候选台账、用户明确路径或已命中经验条目指向时读取。
 13. 本目录不得保存真实密钥、账号密码、客户隐私、生产连接串或不可外传资料；需要引用时只写配置位置或脱敏描述。
 14. 用户最新明确要求优先于本目录旧记录；发生冲突时更新对应文档的“冲突与覆盖规则”。
-15. “种子仓库”和“模板仓库”统一指 `maw-project-template`。Seed 来源通道分为 `内部来源通道`、`public_seed` 和 `unknown_legacy`：内部派生项目优先从内部种子开发源读取升级资产，外部公开派生项目优先从 `https://github.com/mawflow/mawflow-seed` 读取公开升级资产，来源不清时先输出证据并人工确认。派生项目开发中如果发现适合回流到种子仓库的优化或新增能力，最终说明必须明确指出，并记录到 `docs/seed-repository-upgrade-candidates.md`；需要生成种子仓库执行提示词时走 `TINST-027` / `#种子仓库升级`。
+15. “种子仓库”和“模板仓库”统一指 `maw-project-template`。Seed 来源通道分为 `内部来源通道`、`public_seed` 和 `unknown_legacy`：只有经仓库身份核验的主仓使用已绑定内部 Seed 独立 Git 目录的已提交固定 commit；其它所有派生项目（包括内部开发仓）使用经验证的公共稳定 tag 与同版本 Kit。本机覆盖、用户参数和历史来源字段不能改变路线；来源未知、证据冲突或旧基线不可达时保留原状态，先预览来源迁移。派生项目开发中如果发现适合回流到种子仓库的优化或新增能力，最终说明必须明确指出，并记录到 `docs/seed-repository-upgrade-candidates.md`；需要生成种子仓库执行提示词时走 `TINST-027` / `#种子仓库升级`。
 
 ## 快捷调用格式
 
@@ -211,3 +211,5 @@ read_contract:
 - 文件名使用英文小写短横线，例如 `customer-cloud-release.md`。
 - 每次新增、改名或废弃条目，都必须同步更新本总纲中的对应列表。
 - 每次新增、改名、废弃指令，或调整推荐关键字、内部指令 ID、短编号、触发词、适用范围，都必须同步更新根目录 `PROJECT_COMMANDS.md`，保证人类优先可用 `#关键字` 快速调用，必要时模板指令可用 `#T001` 精确调用，业务项目指令可用 `#P001` 精确调用，并能复制调用示例后只改参数就使用。
+
+| TINST-044 | 阶段规范与任务清单 | #规范、#阶段规范、#T044 | [instructions/stage-standards.md](instructions/stage-standards.md) |

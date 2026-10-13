@@ -32,3 +32,6 @@ rules:
 - id: coordinate_development_resources
   severity: required
   summary: 本地对话开发开工、恢复及重任务前后按 docs/ai-coding/development-resources.md 检查资源和已装工作台/CLI；按需复用服务，同一用户跨项目重任务默认串行，离线回退项目文件，不自动安装、调参、停服务或上传会话。
+- id: stage_standards_scoped_execution
+  severity: required
+  summary: 按docs/standards/README.md和规范目录选择六阶段及任务深度，只读命中权威；授权、模块边界、状态与证据独立。未采用/空测试/过期证据不称通过；规范快照不替代原任务、测试、发布或真人验收。

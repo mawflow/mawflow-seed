@@ -1,10 +1,10 @@
 {
   "schema": "mawflow.seed_public_payload.v2",
-  "seed_version": "2.12.0",
+  "seed_version": "2.13.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:99160f68c6d4da2c6b1d98c2d310d4cfc076ce68c42b350840364dcb1b477b14",
+  "contract_fingerprint": "sha256:a5a7c7711a8f740021dfe050a2f088d226ac39a3113048dbcb46583ab5c13d27",
   "bom": {
-    "kit": "mawflow-seed-kit==2.12.0",
+    "kit": "mawflow-seed-kit==2.13.0",
     "contract": "seed-contract-v2"
   },
   "required_paths": [
@@ -163,7 +163,33 @@
     "tests/test_update_notes_distribution.py",
     "docs/capabilities/update-notes.md",
     "docs/template-migrations/20261004-update-notes.md",
-    ".maw-template/upgrades/20261004-update-notes.yaml"
+    ".maw-template/upgrades/20261004-update-notes.yaml",
+    ".maw/standards.yaml",
+    ".maw/schemas/standards-catalog.schema.json",
+    ".maw/schemas/standard-task-snapshot.schema.json",
+    "docs/standards/README.md",
+    "docs/standards/index.md",
+    "docs/standards/general.md",
+    "docs/standards/project-adoption.md",
+    "docs/standards/task-checklists.md",
+    "docs/standards/knowledge-resources.md",
+    "docs/standards/01-initiation.md",
+    "docs/standards/02-design.md",
+    "docs/standards/03-development.md",
+    "docs/standards/04-testing.md",
+    "docs/standards/05-deployment.md",
+    "docs/standards/06-delivery.md",
+    "ops/scripts/manage-project-standards.py",
+    "docs/ai-instructions/instructions/stage-standards.md",
+    "docs/capabilities/stage-standards-governance.md",
+    "tests/test_stage_standards.py",
+    ".maw/generated/standards-index.json",
+    "docs/standards/examples/small-change.yaml",
+    "docs/standards/examples/iteration.yaml",
+    "docs/standards/examples/formal-delivery.yaml",
+    "docs/template-migrations/20261014-stage-standards-governance.md",
+    ".maw-template/upgrades/20261014-stage-standards-governance.yaml",
+    "docs/standards/examples/adoption-matrix.yaml"
   ],
   "forbidden_paths": [
     ".maw/secrets.yaml",
@@ -227,12 +253,18 @@
       "tests/test_agent_portability.py",
       "tests/test_seed_version_alignment.py",
       "tests/test_update_notes.py",
-      "tests/test_update_notes_distribution.py"
+      "tests/test_update_notes_distribution.py",
+      "tests/test_stage_standards.py"
     ],
     [
       "python3",
       "ops/scripts/check-agent-portability.py",
       "--check-distribution"
+    ],
+    [
+      "python3",
+      "ops/scripts/manage-project-standards.py",
+      "check"
     ]
   ]
 }

@@ -10,3 +10,5 @@ Read [AI_START_HERE.md](AI_START_HERE.md) before working in this project.
 长期结论与缺口按 docs/ai-coding/document-source-capture.md 收录最小来源及回执；只读任务不写入。
 实际用户可见变化按 docs/ai-coding/update-notes.md 追加权威动态；默认100条，--all 保留全部已记录历史。
 <!-- mawflow:bootstrap:end -->
+
+- [六阶段规范导航](docs/standards/README.md)：按项目适用条件、任务范围与风险选择规范，验证与交付状态分别记录。

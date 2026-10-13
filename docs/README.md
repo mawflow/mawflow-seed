@@ -135,3 +135,5 @@ AI/Codex 不应在任务开始时全量读取 `docs/**`。本目录采用“总�
 - [更新动态](updates/README.md)：权威片段、最近100条、完整历史及云端分页。
 
 - [开发资源与本机通信](ai-coding/development-resources.md)：按需环境、设备重任务串行及工作台/CLI回读。
+
+- [六阶段规范导航](standards/README.md)：阶段入口、项目采用、任务清单与独立证据；只读目录后按需读取正文。

@@ -148,7 +148,7 @@ python3 ops/scripts/plan-template-drift.py
 - 不把直接 fork 后继承的 `seed_repository` 声明当作不可推翻的事实；当前项目事实、用户明确说明和 Git 来源检测优先。
 - 不在 `applied_version` 为空时猜测历史模板基线；从本版本开始初始化即可。
 - 不复制源模板仓库的 `.git`、remote、镜像目标、真实 secrets 或 `.local/` 私有配置。
-- 不要求外部公开派生项目访问内部私有 Seed 源；公开项目只使用公开 Seed URL 或占位。
+- 只有主仓使用已绑定内部 Seed；其它所有派生项目（包括内部开发仓）只使用已验证公共稳定 tag 与同版本 Kit，不读取内部私有源或本机目录。
 - 不整文件覆盖目标项目 README、业务代码、app_key、发布配置或项目私有规则。
 - 不把较新的 `schema_version` 降到 2，不用通用 `profile/source` 覆盖项目 Seed 身份，不让默认 methodology 覆盖 `.maw/project-lifecycle.yaml` 的当前选择。
 

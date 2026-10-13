@@ -1,0 +1,12 @@
+# 采用矩阵示例；不是已确认采用。
+schema: mawflow.standards_adoption.v1
+project_profile: example_only
+rules:
+- rule_key: std.test-scope
+  decision: pending
+  project_authority: ''
+  confirmation_ref: ''
+  enforcement: manual
+  integration_status: not_connected
+  check_entrypoint: ''
+  gap_owner: project-owner

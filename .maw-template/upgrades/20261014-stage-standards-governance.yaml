@@ -1,0 +1,56 @@
+schema_version: 1
+upgrade_key: 20261014-stage-standards-governance
+title: 六阶段规范与任务证据治理
+risk_level: T2
+status: active
+summary:
+- 按阶段、项目适用条件和任务深度检索唯一权威规范
+- 空套件、证据失效与不同完成维度分别核验，任务声明不替代原主账
+source_template_files:
+- .maw/standards.yaml
+- .maw/schemas/standards-catalog.schema.json
+- .maw/schemas/standard-task-snapshot.schema.json
+- docs/standards/README.md
+- docs/standards/index.md
+- docs/standards/general.md
+- docs/standards/project-adoption.md
+- docs/standards/task-checklists.md
+- docs/standards/knowledge-resources.md
+- docs/standards/01-initiation.md
+- docs/standards/02-design.md
+- docs/standards/03-development.md
+- docs/standards/04-testing.md
+- docs/standards/05-deployment.md
+- docs/standards/06-delivery.md
+- ops/scripts/manage-project-standards.py
+- docs/ai-instructions/instructions/stage-standards.md
+- docs/capabilities/stage-standards-governance.md
+- docs/template-migrations/20261014-stage-standards-governance.md
+- .maw/generated/standards-index.json
+- docs/standards/examples/adoption-matrix.yaml
+- docs/standards/examples/small-change.yaml
+- docs/standards/examples/iteration.yaml
+- docs/standards/examples/formal-delivery.yaml
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect:
+  - README.md
+  - code/
+  - app_key
+  - release configuration
+  - repository mappings
+  - real secrets
+  - .local/
+  - module dossiers
+  forbidden:
+  - 导入源仓真实任务、验收、来源事件或更新动态
+  - 把规范快照作为执行授权或原任务主账
+  - 把项目私有经验/数据写入公开Seed
+  - 自动修改其它项目或Host安装
+validation:
+  commands:
+  - python3 ops/scripts/manage-project-standards.py check
+  - python3 -m pytest -q tests/test_stage_standards.py
+  - bash ops/scripts/check-ai-framework-consistency.sh
+  - bash ops/scripts/check-local-boundary.sh

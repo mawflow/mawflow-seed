@@ -53,3 +53,45 @@ capabilities:
     validation:
     - python3 ops/scripts/development-resources.py check
     last_verified_commit: ''
+
+  - key: workspace-libraries
+    name: 账号共享与项目资源及经验库
+    type: governance_protocol
+    status: candidate
+    origin: seed_repository
+    owner_module: not_identified
+    owner_component: ''
+    related_app_keys: []
+    summary: 安全索引发现、固定版本重新鉴权及本地增量同步；正文为数据，账号内容不进入Seed。
+    implementation_paths: [docs/ai-coding/workspace-libraries.md, docs/capabilities/workspace-libraries.md]
+    provided_contracts: [mawflow.resources.search.v1, mawflow.resources.resolve.v1]
+    reusable_entrypoints: [mawflow resources search, mawflow resources resolve, maw.resources.search, maw.resources.resolve]
+    consumed_by_modules: []
+    validation: [python3 -m pytest tests/test_workspace_library_protocol.py -q]
+    last_verified_commit: ''
+
+  - key: stage-standards-governance
+    name: 六阶段规范与任务证据治理
+    type: governance_protocol
+    status: stable
+    origin: seed_repository
+    owner_module: not_identified
+    owner_component: ''
+    related_app_keys: []
+    summary: 按阶段、项目适用条件和任务深度选择权威规范；检查目录、声明、空套件与证据失效，原任务/测试/发布保留各自主账。
+    implementation_paths:
+    - ops/scripts/manage-project-standards.py
+    - docs/standards/README.md
+    - .maw/standards.yaml
+    provided_contracts:
+    - mawflow.standards_catalog.v1
+    - mawflow.standard_task_snapshot.v1
+    reusable_entrypoints:
+    - python3 ops/scripts/manage-project-standards.py context
+    - python3 ops/scripts/manage-project-standards.py check
+    - python3 ops/scripts/manage-project-standards.py validate-task
+    consumed_by_modules: []
+    validation:
+    - python3 -m pytest -q tests/test_stage_standards.py
+    - python3 ops/scripts/manage-project-standards.py check
+    last_verified_commit: ''

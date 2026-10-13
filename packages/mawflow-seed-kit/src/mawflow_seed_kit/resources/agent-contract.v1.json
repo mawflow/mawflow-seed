@@ -26,7 +26,8 @@
       "deployment_targets": ".maw/deployments.yaml",
       "components": ".maw/components.yaml",
       "modules": ".maw/modules.yaml",
-      "runtime": ".maw/app-runtime.yaml"
+      "runtime": ".maw/app-runtime.yaml",
+      "standards": ".maw/standards.yaml"
     },
     "protected_paths": {
       "never_commit": [
@@ -107,6 +108,15 @@
         "device_policy_location": "user_home/.local/config/maw-development-resources.json",
         "host_capability": "host.development_resources",
         "docker_runner": "python3 ops/scripts/development-resources.py run --workload docker --execute -- <authorized-command>"
+      },
+      "standards": {
+        "policy": "docs/standards/README.md",
+        "catalog": ".maw/standards.yaml",
+        "checker": "python3 ops/scripts/manage-project-standards.py check",
+        "context": "python3 ops/scripts/manage-project-standards.py context --phase <phase> --task-class <class> --task-kind <kind>",
+        "read_policy": "catalog_then_selected_authority_only",
+        "authorization_granted": false,
+        "legacy_missing": "not_adopted_no_development_block"
       }
     },
     "task_routes": {
@@ -121,6 +131,10 @@
       ],
       "governance": [
         "PROJECT_COMMANDS.md"
+      ],
+      "standards": [
+        "docs/standards/README.md",
+        ".maw/standards.yaml"
       ]
     },
     "tool_adapters": {
@@ -248,6 +262,11 @@
       "id": "coordinate_development_resources",
       "severity": "required",
       "summary": "本地对话开发开工、恢复及重任务前后按 docs/ai-coding/development-resources.md 检查资源和已装工作台/CLI；按需复用服务，同一用户跨项目重任务默认串行，离线回退项目文件，不自动安装、调参、停服务或上传会话。"
+    },
+    {
+      "id": "stage_standards_scoped_execution",
+      "severity": "required",
+      "summary": "按docs/standards/README.md和规范目录选择六阶段及任务深度，只读命中权威；授权、模块边界、状态与证据独立。未采用/空测试/过期证据不称通过；规范快照不替代原任务、测试、发布或真人验收。"
     }
   ],
   "task_kinds": [
