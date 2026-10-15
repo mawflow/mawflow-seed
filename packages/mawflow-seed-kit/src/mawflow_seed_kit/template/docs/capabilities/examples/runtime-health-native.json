@@ -1,0 +1,10 @@
+{
+  "schema": "mawflow.runtime_health_contract.v1",
+  "enabled": true,
+  "mode": "native",
+  "native": {
+    "path": "/health/mawflow",
+    "scope": "application",
+    "response_envelope": "direct"
+  }
+}

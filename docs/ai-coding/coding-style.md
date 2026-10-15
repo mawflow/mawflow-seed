@@ -79,9 +79,9 @@ hit_code_components:
 release_update_status:
   - <本轮修改了 <app_key> 的 <代码/运行配置/发布覆盖/部署脚本/线上可见行为>，需要发布 <app_key> 才会生效，当前已发布/当前未发布/当前未发布或未验证；或未命中 code 组件应用，无需更新发布>
 release_commands:
-  - <app_key>: <按配置列出 #发布：发布 <app_key>（默认 <env>）、#发布：发布 <app_key> 到 <env_option> 以及可用中文口令 #发布测试/#发布上线/#发布生产/#发布生成；多个 app_key 分别列出，用户可复制其中一条或多条；或 none>
+  - <优先 #发布全部 到 <env> 并明确部署目标；保留已登记单组件指令；未采用时说明；或 not_required>
 release_confirmation_prompt:
-  - <本轮需要发布 <app_key 列表> 才会生效。是否确认发布全部？回复“确认发布全部/确认/是”将发布全部；如只发布部分，请复制上方对应组件的 #发布 指令；或 none>
+  - <需要新授权时，确认发布全部仅针对列明环境、目标、组件及候选提交；否则 not_required>
 todo_task_update_status:
   - <新增/完成/取消/查询了哪些 TODO-ID；或未涉及被依赖但暂不实现的待办任务>
 health_context_update_status:
@@ -104,7 +104,7 @@ seed_repository_upgrade_suggestions:
 
 经验命中只允许主动检索 `docs/ai-instructions/experience-index.md`、候选台账和总纲索引；`docs/ai-instructions/solutions/**` 只能在索引、候选台账、用户明确路径或当前错误精确命中后读取对应单个详情文件。
 
-发布状态只描述本轮任务后的状态：本轮执行并验证发布才写“当前已发布”；需要发布但未执行发布时写“当前未发布”；无法确认目标环境时写“当前未发布/未验证”。需要发布且当前未发布或未验证时，必须按 app_key 同步输出配置中登记的可复制 `#发布` 快捷指令，并在收口末尾询问是否“确认发布全部”；用户回复“确认发布全部/确认/是/全部发布”时发布全部待发布组件，复制其中一条或多条指令时只发布对应组件，包括 SQL/迁移。用户说 `发布测试`、`发布上线`、`发布生产` 或 `发布生成` 且未指定组件时，先读取 `releases.defaults.release_command_aliases` 和对应 `environments.<env>.remote_server.default_release_components`，再按发布版本状态和组件路径差异筛选实际发布名单。`发布测试` 是本地调试版本，需给可访问调试地址；`发布上线` 是部署到 `remote_staging_server` 的编译包部署测试，仍属于测试，需给线上可访问地址；`发布生产` 是部署到 `remote_production_server` 的生产发布，涉及生产环境安装或版本上线必须人工审计。`发布上线` 和 `发布生产` 执行前必须确认本地候选 commit 等于发布来源远端分支；发布成功后更新 `artifacts/release-state/<env>/<app_key>.json`。
+发布状态、统一入口、逐组件成功/候选提交和确认范围按 [发布收口规范](release-closeout.md) 执行；生产发布门继续按 TINST-014，只有真实发布并验证成功才推进该组件状态。
 
 ## Git 提交和推送
 

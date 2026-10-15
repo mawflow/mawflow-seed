@@ -95,3 +95,47 @@ capabilities:
     - python3 -m pytest -q tests/test_stage_standards.py
     - python3 ops/scripts/manage-project-standards.py check
     last_verified_commit: ''
+
+  - key: incremental-release-all
+    name: 发布全部与逐组件成功提交基线
+    type: script
+    status: candidate
+    origin: seed_repository
+    owner_module: template-release-governance
+    owner_component: ''
+    related_app_keys: []
+    summary: 发布全部在显式部署目标范围按组件上次成功Git提交筛选；部分成功仅更新成功者，失败与跳过保留基线。
+    implementation_paths:
+    - ops/scripts/plan-release-components.py
+    - docs/capabilities/incremental-release-all.md
+    - docs/ai-coding/release-closeout.md
+    provided_contracts:
+    - 每个environment/deployment_target/app_key独立成功提交与范围指纹
+    - 多组件successful-component显式成功声明与原子状态写入
+    reusable_entrypoints:
+    - '#发布全部'
+    - python3 ops/scripts/plan-release-components.py --all
+    consumed_by_modules: []
+    validation:
+    - tests/test_plan_release_deployment_targets.py
+    - docs/template-migrations/20261015-incremental-release-all.md
+    last_verified_commit: ''
+
+  - key: optional-runtime-health-contract
+    name: 可选项目运行健康声明
+    type: governance_protocol
+    status: candidate
+    origin: seed_repository
+    owner_module: ''
+    owner_component: ''
+    related_app_keys: []
+    summary: 仅提供原生或独立采集的可选协议；未接入不扣分，不安装服务或访问环境。
+    implementation_paths:
+      - docs/capabilities/runtime-health-contract.md
+      - ops/scripts/check-runtime-health.py
+      - .maw/schemas/runtime-health.schema.json
+    provided_contracts: [mawflow.runtime_health_contract.v1, mawflow.runtime_health.v1]
+    reusable_entrypoints: [python3 ops/scripts/check-runtime-health.py]
+    consumed_by_modules: []
+    validation: [python3 ops/scripts/check-runtime-health.py --format json]
+    last_verified_commit: ''

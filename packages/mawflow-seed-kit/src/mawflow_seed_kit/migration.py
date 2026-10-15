@@ -723,6 +723,8 @@ def plan_migration(
     if initialization_mode not in {"existing_repository", "empty_repository"}:
         raise ValueError("seed_migration_initialization_mode_invalid")
     project_root = Path(root).expanduser().resolve(strict=True)
+    from .compatibility import require_compatible_migration
+    require_compatible_migration(project_root)
     existing_project = _read_mapping(project_root / ".maw/project.yaml").get("project", {})
     legacy = existing_project.get("project", {}) if isinstance(existing_project, dict) else {}
     raw_project_key = (
@@ -886,6 +888,8 @@ def plan_migration(
 
 def apply_migration_plan(root: Path | str, plan: dict[str, Any], confirmation: str, *, backup_root: Path | str) -> dict[str, Any]:
     project_root = Path(root).expanduser().resolve(strict=True)
+    from .compatibility import require_compatible_migration
+    require_compatible_migration(project_root)
     if confirmation != plan.get("confirmation_required"):
         raise ValueError("seed_migration_confirmation_required")
     expires = datetime.fromisoformat(str(plan.get("expires_at") or ""))

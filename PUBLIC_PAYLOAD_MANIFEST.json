@@ -1,10 +1,10 @@
 {
   "schema": "mawflow.seed_public_payload.v2",
-  "seed_version": "2.13.0",
+  "seed_version": "2.14.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:a5a7c7711a8f740021dfe050a2f088d226ac39a3113048dbcb46583ab5c13d27",
+  "contract_fingerprint": "sha256:80fb3337f2f22c79a93d5afc81210c4f0d222bd8c1c78728860e27861673cfd0",
   "bom": {
-    "kit": "mawflow-seed-kit==2.13.0",
+    "kit": "mawflow-seed-kit==2.14.0",
     "contract": "seed-contract-v2"
   },
   "required_paths": [
@@ -189,7 +189,24 @@
     "docs/standards/examples/formal-delivery.yaml",
     "docs/template-migrations/20261014-stage-standards-governance.md",
     ".maw-template/upgrades/20261014-stage-standards-governance.yaml",
-    "docs/standards/examples/adoption-matrix.yaml"
+    "docs/standards/examples/adoption-matrix.yaml",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/cli_contract.py",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/compatibility.py",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/commands/cli.py",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/commands/readonly.py",
+    "tests/test_cli_contract.py",
+    "tests/test_cli_governance.py",
+    "docs/cli-governance.md",
+    "docs/cli-governance-p2.md",
+    "docs/cli-governance-release-preparation.md",
+    ".maw/runtime-health.example.json",
+    ".maw/schemas/runtime-health.schema.json",
+    ".maw/schemas/runtime-health-snapshot.schema.json",
+    "docs/capabilities/runtime-health-contract.md",
+    "docs/capabilities/examples/runtime-health-native.json",
+    "docs/capabilities/examples/runtime-health-sidecar.json",
+    "ops/scripts/check-runtime-health.py",
+    "tests/test_runtime_health_contract.py"
   ],
   "forbidden_paths": [
     ".maw/secrets.yaml",

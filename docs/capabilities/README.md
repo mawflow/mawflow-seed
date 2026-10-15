@@ -80,3 +80,7 @@ docs/capabilities/<capability-key>.md
 - [长期更新动态](update-notes.md)：`project-update-notes`，Seed 内置动态记录和生成协议。
 
 - [对话开发资源协调](development-resource-coordination.md)：新鲜资源检查、工作台/CLI 握手及跨项目串行入口。
+
+- [发布全部与逐组件基线](incremental-release-all.md)：按上次成功提交筛选、部分成功记录与失败重试。
+
+- [可选项目运行健康](runtime-health-contract.md)：原生接口或独立采集按需接入；不改变 Seed 健康评分。

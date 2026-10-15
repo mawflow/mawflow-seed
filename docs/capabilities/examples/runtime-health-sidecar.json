@@ -1,0 +1,43 @@
+{
+  "schema": "mawflow.runtime_health_contract.v1",
+  "enabled": true,
+  "mode": "sidecar",
+  "checks": [
+    {
+      "key": "ready",
+      "kind": "readiness",
+      "target": "application",
+      "path": "/health/ready",
+      "required": true,
+      "assertion": {
+        "type": "json_equals",
+        "pointer": "/ready",
+        "expected": true
+      }
+    },
+    {
+      "key": "backlog",
+      "kind": "backlog",
+      "target": "application",
+      "path": "/health/runtime",
+      "required": false,
+      "assertion": {
+        "type": "json_number_max",
+        "pointer": "/pending",
+        "maximum": 20
+      }
+    },
+    {
+      "key": "worker-heartbeat",
+      "kind": "heartbeat",
+      "target": "application",
+      "path": "/health/runtime",
+      "required": true,
+      "assertion": {
+        "type": "json_age_seconds",
+        "pointer": "/heartbeat_at",
+        "maximum": 120
+      }
+    }
+  ]
+}

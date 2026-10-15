@@ -1,0 +1,115 @@
+releases:
+  # 发布默认规则；各组件可覆盖，但生产项目建议保持严格。
+  defaults:
+    # 默认发布环境；#发布全部 也使用此环境，不会跨环境发布。
+    # 当用户只复制 `#发布：发布 <app_key>`、未显式指定环境时使用。
+    # 模板默认指向 test，业务项目可按实际改为 staging、production 或其它环境 key。
+    default_environment: test
+    # 发布环境选项；每个 code 组件的发布指令都应提供这些环境选项，并允许项目扩展其它环境。
+    environment_options:
+      test:
+        label: 测试环境
+        profile: dev
+        description: 发布测试/本地测试默认基于本地环境，自主完成目标组件环境安装、程序部署或启动，并提供可访问调试地址；需要编译后测试发布时按 staging/remote_staging_server 口径执行。
+      staging:
+        label: 预发环境
+        profile: pro
+        description: 发布上线目标，本质是线上服务器上的编译包部署测试；需要完成目标组件线上环境安装、编译后程序部署，并提供线上可访问地址，部署包和运行环境按生产发布标准对齐。
+      production:
+        label: 正式环境
+        profile: pro
+        description: 正式生产发布目标；生产服务器程序部署、生产环境安装和生产版本上线必须经过人工审计，并按项目审批、备份和回滚规则执行。
+    # 发布中文口令别名。2.6 起优先从 `.maw/deployments.yaml` 选择部署目标；
+    # 同一环境存在多个目标时必须显式传 `--deployment-target`，不再猜测服务器或组件范围。
+    release_command_aliases:
+      test:
+        command: "#发布测试"
+        phrases: ["发布测试"]
+        environment: test
+        remote_server: local_debug
+        execution_target: local_debug
+        default_components_ref: deployments.<deployment_target>.component_refs
+        classification: testing_debug
+        package_mode: local_environment_program_deploy
+        accessible_url_required: true
+        human_audit_required: false
+        description: 发布测试通常基于本地环境，自主完成目标组件环境安装、程序部署或启动，并提供可访问调试地址；默认不部署远端编译包，按本地 dev server、watch、热更新或等价入口验证，改动应尽量即改即生效。
+      staging:
+        command: "#发布上线"
+        phrases: ["发布上线"]
+        environment: staging
+        remote_server: remote_staging_server
+        default_components_ref: deployments.<deployment_target>.component_refs
+        classification: testing_compiled_package
+        package_mode: online_server_compiled_package_deployment_test
+        accessible_url_required: true
+        production_like_package: true
+        human_audit_required: false
+        description: 发布上线通常在线上服务器完成目标组件环境安装、编译后程序部署，并提供线上可访问地址；它仍属于测试，是模拟发布生产的程序包部署测试，部署包和运行环境按发布生产对齐，默认可与本地连接同一个数据库。
+      production:
+        command: "#发布生产"
+        phrases: ["发布生产", "发布生成"]
+        environment: production
+        remote_server: remote_production_server
+        default_components_ref: deployments.<deployment_target>.component_refs
+        classification: production_release
+        package_mode: production_server_deployment
+        accessible_url_required: true
+        human_audit_required: true
+        production_version_online_requires_audit: true
+        description: 发布生产是在生产服务器进行程序部署；涉及生产环境安装、生产版本上线或客户正式服务变更时必须人工审计，按项目/客户现有运行时、数据库、审批、备份和回滚规则执行，兼容识别用户误写的“发布生成”。
+    # 是否要求发布前复核。
+    require_review: true
+    # 是否要求发布前检查密钥、内部信息和客户不可见资料。
+    require_desensitize_check: true
+    # 是否要求发布前写明回滚方式。
+    require_rollback_plan: true
+    # 发布记录目录；每次发布应写入版本、目标、操作者、验证和回滚信息。
+    record_dir: artifacts/release-runs
+    # 发布版本状态；每个环境、部署目标、app_key 记录最近一次成功发布的版本标识。
+    # 真实发布后写入 artifacts/release-state/<env>/<deployment-target>/<app_key>.json。
+    version_tracking:
+      enabled: true
+      version_id_type: git_commit
+      candidate_ref: HEAD
+      state_dir: artifacts/release-state
+      state_file_template: "{state_dir}/{environment}/{deployment_target_key}/{app_key}.json"
+      planner: ops/scripts/plan-release-components.py
+      compare_strategy: git_ancestor_then_component_path_diff
+      # 如果目标环境 commit 落后本地候选 commit，只有这些路径发生变化的组件才纳入发布名单。
+      shared_tracked_paths:
+        - .maw/releases.yaml
+        - .maw/environments.yaml
+        - .maw/deployments.yaml
+        - release/rules.yaml
+      latest_code_required_environments:
+        - production
+      # 发布测试和发布上线都属于测试版本，允许当前工作区未提交改动参与发布；
+      # 发布状态必须记录 dirty snapshot，不能把它伪装成可复现的 clean commit。
+      dirty_worktree_allowed_environments:
+        - test
+        - staging
+      dirty_worktree_blocked_environments:
+        - production
+      dirty_snapshot_record_required: true
+      latest_code_reference: deployments.<deployment_target>.environment_key + component source branch
+      # production 的统一来源门禁由 project-lifecycle 协议执行；非 origin/main 可达提交或非 main tag 一律失败关闭。
+      formal_release_gate: ops/scripts/manage-project-lifecycle.py release-check
+      formal_release_remote_ref: refs/remotes/origin/main
+      formal_release_tag_required: true
+      # test/staging 不强制本地代码最新；production 必须先 fetch 并确认候选 commit 等于 origin/<branch>。
+      test_latest_code_required: false
+      staging_latest_code_required: false
+
+  # 组件发布配置由项目在组件启用并确认发布方式后显式登记。
+  # 多组件共用数据库/服务时，可为相关组件声明相同的
+  # database_migration.service_ref；Planner 会按 service_ref 分组，在同一次目标发布中
+  # 只由 owner_component 执行一次，避免前后端或多个 Worker 重复迁移。
+  # components:
+  #   api:
+  #     database_migration: {enabled: true, service_ref: primary-database, strategy: owner_first}
+  components: {}
+
+  # 可选的非原子协调发布组。组件仍独立构建、审批、回滚和记录；默认允许部分发布。
+  # 例：同一子项目的 api/web 可以配置 component_refs 与 order，但不得声称跨仓库事务原子性。
+  groups: {}

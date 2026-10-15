@@ -74,6 +74,7 @@ execution_contract:
   - prefer existing project patterns
   - update related docs when boundaries change
   closeout:
+    release_policy: docs/ai-coding/release-closeout.md
     required_human_fields:
     - changes
     - validation

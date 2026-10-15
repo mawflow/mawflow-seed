@@ -95,9 +95,9 @@ AI 专用上下文是可选文件，建议命名为 `ai-context.md`，或由 `.m
 - 只有本轮已经执行该组件的发布动作，并完成目标环境验证或明确的发布验收，才写“当前已发布”。
 - 如果需要发布但本轮没有执行发布，必须写“当前未发布”。
 - 如果无法确认目标环境是否已经包含本轮改动，不得猜测为已发布；应写“当前未发布/未验证”，并说明需要人工或发布流程确认。
-- 如果某组件需要发布且当前未发布或未验证，最终说明必须同时输出可复制的 `release_commands`。发布指令必须先通过 `.maw/components.yaml` 的 `release_ref` 定位发布配置，再读取聚合后的 `.maw/releases.yaml` 的 `releases.components.<app_key>.release_commands`、`releases.defaults.version_tracking` 和 `code/<app_key>/.maw.component.yaml` 的 `release.commands`；默认环境来自组件 `release.default_environment` 或全局 `releases.defaults.default_environment`。多个 app_key 需要发布时，必须按 app_key 分别列出多条指令，用户可以复制其中一条或多条选择部分发布；目标环境不明确时，列出默认发布指令和可选环境指令，不要临时编造配置外环境。用户说 `发布测试`、`发布上线`、`发布生产` 或 `发布生成` 且未指定组件时，先读 `releases.defaults.release_command_aliases` 和对应 `environments.<env>.remote_server.default_release_components`，再按 `artifacts/release-state/<env>/<app_key>.json` 的发布版本状态和组件路径差异筛选实际发布名单；`发布测试` 是本地调试版本，需给可访问调试地址；`发布上线` 是部署到 `remote_staging_server` 的编译包部署测试，仍属于测试，需给线上可访问地址；`发布生产` 是部署到 `remote_production_server` 的生产发布，涉及生产环境安装或版本上线必须人工审计；上线和生产发布前必须确认本地候选 commit 等于发布来源远端分支。
-- 如果某组件需要发布且当前未发布或未验证，最终说明必须输出 `release_confirmation_prompt`，在收口末尾询问用户是否“确认发布全部”，例如“本轮需要发布 server、client 才会生效。是否确认发布全部？回复‘确认发布全部/确认/是’将发布全部；如只发布部分，请复制上方对应组件的 #发布 指令。”单个 app_key 时也使用同一语义，回复“确认发布全部/确认/是”表示发布该组件。
-- 用户在同一会话中回复“确认发布全部、是、确认、全部发布、立即发布、发布生效”时，若 `release_confirmation_prompt` 已明确列出全部待发布组件，则 AI 必须发布全部待发布组件；用户复制某条或多条 `#发布` 指令时，只发布对应 app_key。AI 不得停留在说明层面；在 app_key、目标环境和 SQL/迁移范围明确时，按 `docs/ai-instructions/instructions/release-component.md` 执行发布。若缺少关键信息，先只补问缺口。
+- 需要发布时按 [发布收口规范](release-closeout.md) 展示环境、部署目标、逐组件成功/候选提交和状态，优先发布全部入口，保留单组件指令供选择部分发布；发布门仍按 TINST-014。
+- 仅在需要新授权时输出“确认发布全部”，确认绑定最近明确列出的具体计划；无需业务发布或已有授权时不重复询问。
+- 简短确认只覆盖已列明的环境、部署目标、组件与候选源码；另行发出发布全部时重新规划选定目标全部候选。复制单组件指令仅发布相应组件。
 - 如果本轮未命中任何 `code/` 组件应用，应写“未命中 code 组件应用，无需更新发布”。
 
 ## 最终说明格式
@@ -123,9 +123,9 @@ hit_code_components:
 release_update_status:
   - <本轮修改了 <app_key> 的 <代码/运行配置/发布覆盖/部署脚本/线上可见行为>，需要发布 <app_key> 才会生效，当前已发布/当前未发布/当前未发布或未验证；或未命中 code 组件应用，无需更新发布>
 release_commands:
-  - <app_key>: <按配置列出 #发布：发布 <app_key>（默认 <env>）、#发布：发布 <app_key> 到 <env_option> 以及可用中文口令 #发布测试/#发布上线/#发布生产/#发布生成；多个 app_key 分别列出，用户可复制其中一条或多条；或 none>
+  - <优先 #发布全部 到 <env> 并明确部署目标；保留已登记单组件指令；未采用时说明；或 not_required>
 release_confirmation_prompt:
-  - <本轮需要发布 <app_key 列表> 才会生效。是否确认发布全部？回复“确认发布全部/确认/是”将发布全部；如只发布部分，请复制上方对应组件的 #发布 指令；或 none>
+  - <需要新授权时，确认发布全部仅针对列明环境、目标、组件及候选提交；否则 not_required>
 todo_task_update_status:
   - <新增/完成/取消/查询了哪些 TODO-ID；或未涉及被依赖但暂不实现的待办任务；如发现应登记但未登记，写明原因>
 health_context_update_status:
@@ -152,7 +152,7 @@ Reviewer 应检查：
 - 具体页面或后端审计相关变化是否同步二级模块的 `pages/`、`backend/` 或 `traceability.md`，且未把这些 detail docs 当成正式模块。
 - 最终说明是否包含 `experience_lookup`，且未绕过 `experience-index.md` 主动读取大型 `solutions/**` 详情。
 - 最终说明是否列出本轮修改的 `code` 组件应用，并对需要发布才会生效的组件使用“本轮修改了 <app_key> 的 <内容>，需要发布 <app_key> 才会生效，当前已发布/当前未发布”这类明确字眼。
-- 需要发布且当前未发布或未验证时，最终说明是否按 app_key 给出可复制 `#发布` 快捷指令，并在收口末尾询问是否“确认发布全部”，说明回复“确认发布全部/确认/是”发布全部、复制对应指令可选择部分发布。
+- 是否按发布收口规范给出统一入口、逐组件提交与状态，并把确认绑定具体计划；无需发布或已有授权时是否避免重复询问。
 - 中文环境口令未指定组件时，是否用发布版本状态和组件路径差异计算实际发布名单；上线/生产是否明确执行本地最新代码阻塞检查。
 - 不更新模块档案的理由是否可信。
 - 如果当前业务流程依赖暂未实现的能力，是否登记到 `docs/planning/todos/active.md`，并在模块档案中只回链 TODO-ID。

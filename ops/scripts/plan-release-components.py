@@ -6,8 +6,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import re
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -36,6 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--environment", help="Target environment key. Overrides positional target.")
     parser.add_argument("--deployment-target", help="Stable deployment target key from .maw/deployments.yaml.")
     parser.add_argument("--component", action="append", dest="components", help="Limit to an app_key. Repeatable.")
+    parser.add_argument("--all", action="store_true", dest="all_components", help="Plan all explicitly configured components in the selected deployment target; unchanged components still skip.")
     parser.add_argument("--candidate-commit", help="Commit to release. Default: HEAD.")
     parser.add_argument("--format", choices=["text", "json"], default="text")
     parser.add_argument("--no-local", action="store_true", help="Do not load local config overlays.")
@@ -51,6 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="After a successful real release, write release-state files for components selected by the plan.",
     )
     parser.add_argument("--record-path", help="Optional release run record path to reference when writing state.")
+    parser.add_argument("--successful-component", action="append", default=[], help="Record only this actually released and verified component. Required for a multi-component success write; repeatable.")
     return parser
 
 
@@ -114,6 +119,17 @@ def resolve_environment(target: str, releases: Dict[str, Any]) -> Tuple[str, Opt
             return str(alias.get("environment") or alias_key), str(alias.get("remote_server") or ""), str(alias_key)
 
     return normalized, None, None
+
+
+def release_all_target(target: str, releases: Dict[str, Any]) -> Tuple[str, bool]:
+    normalized = normalize_phrase(target)
+    normalized = re.sub(r"^发布\s*:\s*", "", normalized)
+    match = re.fullmatch(r"发布\s*全部(?:\s*到\s*(.+))?", normalized)
+    if match:
+        environment = (match.group(1) or str(((releases.get("releases") or {}).get("defaults") or {}).get("default_environment") or "")).strip()
+        return environment, True
+    match = re.fullmatch(r"发布(测试|上线|生产|生成)\s*:?(?:发布)?\s*全部", normalized)
+    return (f"发布{match.group(1)}", True) if match else (target, False)
 
 
 def parse_component_scope(value: Any) -> List[str]:
@@ -581,6 +597,17 @@ def plan_component(
         item["reason"] = str(source_context.get("error") or "组件源码未就绪")
         return item
 
+    if (state or {}).get("verified") is False:
+        item["decision"] = "blocked"
+        item["reason"] = "发布状态未验证成功，不能用作成功发布基线。"
+        return item
+    source_root = Path(source_context.get("root") or root)
+    dirty = run_git(["status", "--porcelain", "--", *paths], source_root)
+    item["dirty_worktree"] = bool(dirty)
+    if dirty:
+        item["dirty_entries"] = dirty.splitlines()
+        item["dirty_snapshot_id"] = dirty_snapshot_id(source_root, dirty.splitlines())
+
     if not deployed_commitish:
         item["decision"] = "include"
         item["reason"] = "目标环境没有该组件发布版本记录。"
@@ -598,6 +625,18 @@ def plan_component(
         return item
 
     item["deployed_commit"] = deployed
+    if deployed != component_candidate and not is_ancestor(source_root, deployed, component_candidate):
+        item["decision"] = "blocked"
+        item["reason"] = "发布状态比候选提交更新或已分叉；需要人工确认发布基线。"
+        return item
+    if dirty or (state or {}).get("dirty_worktree"):
+        item["decision"] = "include"
+        item["reason"] = "存在组件相关未提交变化或上一版为dirty快照，不能仅凭Git提交号跳过。"
+        return item
+    if str((state or {}).get("scope_fingerprint") or "") != scope_fingerprint:
+        item["decision"] = "include"
+        item["reason"] = "部署目标、服务器、组件范围或策略发生变化。"
+        return item
     if deployed == component_candidate:
         if str((state or {}).get("scope_fingerprint") or "") == scope_fingerprint:
             item["decision"] = "skip"
@@ -629,12 +668,12 @@ def plan_component(
     return item
 
 
-def write_success_state(root: Path, plan: Dict[str, Any], record_path: str = "") -> List[str]:
+def write_success_state(root: Path, plan: Dict[str, Any], record_path: str = "", successful_components: Optional[List[str]] = None) -> List[str]:
     written: List[str] = []
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     worktree = plan.get("worktree_check") or {}
     for item in plan["components"]:
-        if item.get("decision") != "include":
+        if item.get("decision") != "include" or item["app_key"] not in (successful_components or []):
             continue
         state_path = root / item["state_file"]
         state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -650,6 +689,7 @@ def write_success_state(root: Path, plan: Dict[str, Any], record_path: str = "")
             "source_mode": item.get("source_mode"),
             "source_repository_ref": item.get("source_repository_ref"),
             "source_commit": item["candidate_commit"],
+            "released_commit": item["candidate_commit"],
             "definition_commit": plan["candidate_commit"],
             "source_branch": plan.get("release_branch"),
             "released_at": now,
@@ -657,17 +697,27 @@ def write_success_state(root: Path, plan: Dict[str, Any], record_path: str = "")
             "verified": True,
             "notes": "Written by ops/scripts/plan-release-components.py --record-success after a successful release.",
         }
-        if worktree.get("dirty"):
+        if worktree.get("dirty") or item.get("dirty_worktree"):
             payload.update(
                 {
                     "dirty_worktree": True,
                     "dirty_allowed": bool(worktree.get("dirty_allowed")),
-                    "dirty_snapshot_id": worktree.get("dirty_snapshot_id"),
-                    "dirty_entries": worktree.get("dirty_entries") or [],
+                    "dirty_snapshot_id": item.get("dirty_snapshot_id") or worktree.get("dirty_snapshot_id"),
+                    "dirty_entries": item.get("dirty_entries") or worktree.get("dirty_entries") or [],
                     "snapshot_note": "Test release snapshot includes uncommitted working-tree changes; version_id is the base git commit.",
                 }
             )
-        state_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        temporary = ""
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=state_path.parent, delete=False) as stream:
+                temporary = stream.name
+                stream.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, state_path)
+        finally:
+            if temporary and Path(temporary).exists():
+                Path(temporary).unlink()
         written.append(str(state_path.relative_to(root)))
     return written
 
@@ -675,7 +725,13 @@ def write_success_state(root: Path, plan: Dict[str, Any], record_path: str = "")
 def compute_plan(args: argparse.Namespace) -> Dict[str, Any]:
     root = Path(args.root).expanduser().resolve()
     releases, environments, components_doc, deployments, code_sources, code_source_bindings = load_configs(args, root)
-    target = args.environment or args.target or ""
+    requested_target, phrase_all = release_all_target(args.target or "", releases)
+    all_components = bool(getattr(args, "all_components", False) or phrase_all)
+    target = args.environment or requested_target or (
+        str(((releases.get("releases") or {}).get("defaults") or {}).get("default_environment") or "") if all_components else ""
+    )
+    if all_components and args.components:
+        raise RuntimeError("发布全部与--component不能同时使用；请选择完整目标范围或显式组件列表。")
     if not target:
         raise RuntimeError("必须提供发布目标，例如 发布测试、发布上线、发布生产 或 --environment staging")
 
@@ -727,6 +783,7 @@ def compute_plan(args: argparse.Namespace) -> Dict[str, Any]:
 
     plan: Dict[str, Any] = {
         "target": target,
+        "scope": "all_configured_target_components" if all_components else "configured_target_components",
         "alias_key": alias_key,
         "environment": environment,
         "environment_role": environment_role,
@@ -797,7 +854,14 @@ def compute_plan(args: argparse.Namespace) -> Dict[str, Any]:
     if args.record_success:
         if plan["blocked"]:
             raise RuntimeError("发布计划仍有阻塞项，不能写入成功发布状态。")
-        plan["recorded_state_files"] = write_success_state(root, plan, args.record_path or "")
+        successful = list(dict.fromkeys(getattr(args, "successful_component", []) or []))
+        if not successful:
+            if len(plan["included_components"]) > 1:
+                raise RuntimeError("多组件发布须用--successful-component逐项声明实际发布并验证成功的组件。")
+            successful = list(plan["included_components"])
+        if set(successful) - set(plan["included_components"]):
+            raise RuntimeError("成功组件必须属于本次实际待发布名单，不能记录跳过、失败或范围外组件。")
+        plan["recorded_state_files"] = write_success_state(root, plan, args.record_path or "", successful)
 
     return plan
 

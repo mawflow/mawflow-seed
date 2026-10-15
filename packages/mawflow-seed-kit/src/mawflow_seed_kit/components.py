@@ -217,7 +217,7 @@ def _repository_identity(value: str) -> str:
 def _git_output(directory: Path, *args: str) -> str:
     try:
         result = subprocess.run(
-            ["git", "-C", str(directory), *args],
+            ["git", "--no-optional-locks", "-C", str(directory), *args],
             check=False,
             capture_output=True,
             text=True,
@@ -811,8 +811,9 @@ def inspect_components(root: Path | str, key: str | None = None) -> dict[str, An
             try:
                 payload = yaml.safe_load(descriptor.read_text(encoding="utf-8"))
                 detail = payload.get("component") if isinstance(payload, dict) else None
-                if not isinstance(detail, dict) or detail.get("key") != component_key or detail.get("local_path") != relative:
-                    issues.append({"severity": "error", "code": "seed_component_descriptor_mismatch"})
+                paths = [detail[field] for field in ("local_path", "path") if isinstance(detail, dict) and field in detail]
+                if not isinstance(detail, dict) or detail.get("key") != component_key or not paths or any(path != relative for path in paths):
+                    issues.append({"severity": "error", "code": "seed_component_descriptor_mismatch", "expected_path": relative})
             except (OSError, UnicodeError, yaml.YAMLError):
                 issues.append({"severity": "error", "code": "seed_component_descriptor_invalid"})
         source = component.get("source") if isinstance(component.get("source"), dict) else {}

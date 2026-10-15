@@ -1,0 +1,31 @@
+schema_version: 1
+upgrade_key: 20261015-optional-runtime-health
+title: 可选运行健康声明与原生接入契约
+risk_level: T3
+status: active
+summary:
+  - 只分发关闭示例、schema、离线检查和接入文档，不安装运行服务。
+  - 已有原生健康能力的项目可直接提供标准只读出口。
+source_template_files:
+  - .maw/runtime-health.example.json
+  - .maw/schemas/runtime-health.schema.json
+  - .maw/schemas/runtime-health-snapshot.schema.json
+  - docs/capabilities/runtime-health-contract.md
+  - docs/capabilities/examples/runtime-health-native.json
+  - docs/capabilities/examples/runtime-health-sidecar.json
+  - ops/scripts/check-runtime-health.py
+  - tests/test_runtime_health_contract.py
+  - docs/template-migrations/20261015-optional-runtime-health.md
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect: [README.md, code/, app_key, release configuration, repository mappings, real secrets, .local/, module dossiers, .maw/runtime-health.json]
+  forbidden:
+    - 自动创建已启用的运行健康声明、工作台环境绑定、凭据或采集服务
+    - 因未接入或关闭运行健康而扣分或阻断 Project Doctor
+    - 用模板升级触发环境访问、项目发布或替换原生诊断能力
+validation:
+  commands:
+    - python3 -m pytest tests/test_runtime_health_contract.py -q
+    - python3 ops/scripts/check-runtime-health.py --format json
+    - bash ops/scripts/check-local-boundary.sh

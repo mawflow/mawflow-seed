@@ -99,7 +99,8 @@ def test_materialized_project_is_complete_and_editable(tmp_path: Path) -> None:
     assert projection["configs"][".maw/components.yaml"]["components"] == []
     assert yaml.safe_load((root / ".maw/module-candidates.yaml").read_text(encoding="utf-8"))["module_candidates"] == []
     capabilities = yaml.safe_load((root / ".maw/capabilities.yaml").read_text(encoding="utf-8"))["capabilities"]
-    assert [item["key"] for item in capabilities] == ["development-resource-coordination", "workspace-libraries", "stage-standards-governance"]
+    assert [item["key"] for item in capabilities] == ["development-resource-coordination", "workspace-libraries", "stage-standards-governance", "incremental-release-all", "optional-runtime-health-contract"]
+    assert not (root / ".maw/runtime-health.json").exists()
     assert capabilities[0]["owner_module"] == "not_identified"
     assert capabilities[0]["related_app_keys"] == []
     signals = yaml.safe_load((root / ".maw/project-signals.yaml").read_text(encoding="utf-8"))["signals"]

@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 import yaml
 
 from .catalog import CONTRACT_VERSION, catalog, contract_fingerprint
+from .compatibility import tool_compatibility
 
 
 MAX_CONFIG_BYTES = 2 * 1024 * 1024
@@ -680,9 +681,12 @@ def compile_project_definition(root: Path | str) -> dict[str, Any]:
 
     issues = _validate_model(configs)
     lock = configs.get(".maw/seed.lock", {})
-    lock_contract = int(lock.get("contract_version") or 0) if isinstance(lock, dict) else 0
-    lock_fingerprint = str(lock.get("contract_fingerprint") or "") if isinstance(lock, dict) else ""
-    migration_required = lock_contract != CONTRACT_VERSION or lock_fingerprint != contract_fingerprint()
+    compatibility = tool_compatibility(lock if isinstance(lock, dict) else {})
+    migration_required = compatibility["migration_required"]
+    if compatibility["status"] == "tool_upgrade_required":
+        issues.append(_issue("seed_tool_upgrade_required", ".maw/seed.lock", "项目要求较新的 Seed Kit；先升级工具，不得使用旧工具迁移项目"))
+    elif compatibility["status"] == "unknown":
+        issues.append(_issue("seed_contract_compatibility_unknown", ".maw/seed.lock", "无法识别项目 Seed 版本；保留项目并核对工具兼容性"))
     if migration_required:
         issues.append(_issue("seed_contract_migration_required", ".maw/seed.lock", "项目必须迁移到当前 Seed Contract 后才可写入", severity="warning"))
 
@@ -703,6 +707,7 @@ def compile_project_definition(root: Path | str) -> dict[str, Any]:
         "status": "ready" if not error_count and not migration_required else "needs_attention",
         "editable": not error_count and not migration_required,
         "migration_required": migration_required,
+        "tool_compatibility": compatibility,
         "project": project if isinstance(project, dict) else {},
         "configs": configs,
         "local_configs": local_configs,

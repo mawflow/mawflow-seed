@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Optional MAWflow runtime health declaration",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": "mawflow.runtime_health_contract.v1"
+        },
+        "enabled": {
+          "const": false
+        }
+      },
+      "required": [
+        "schema",
+        "enabled"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": "mawflow.runtime_health_contract.v1"
+        },
+        "enabled": {
+          "const": true
+        },
+        "mode": {
+          "const": "native"
+        },
+        "native": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": "string",
+              "pattern": "^/(?!.*\\.\\.)(?!.*//)[A-Za-z0-9_./-]{0,240}$"
+            },
+            "scope": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$"
+            },
+            "response_envelope": {
+              "enum": [
+                "direct",
+                "common-result"
+              ]
+            },
+            "tenant_required": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "path",
+            "scope",
+            "response_envelope"
+          ]
+        }
+      },
+      "required": [
+        "schema",
+        "enabled",
+        "mode",
+        "native"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": "mawflow.runtime_health_contract.v1"
+        },
+        "enabled": {
+          "const": true
+        },
+        "mode": {
+          "const": "sidecar"
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$"
+              },
+              "kind": {
+                "enum": [
+                  "availability",
+                  "readiness",
+                  "dependency",
+                  "version",
+                  "backlog",
+                  "heartbeat",
+                  "business"
+                ]
+              },
+              "target": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^/(?!.*\\.\\.)(?!.*//)[A-Za-z0-9_./-]{0,240}$"
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "assertion": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "const": "http_status"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "const": "json_equals"
+                      },
+                      "pointer": {
+                        "type": "string",
+                        "pattern": "^(?:/[A-Za-z0-9_.~-]{1,80}){1,8}$"
+                      },
+                      "expected": {
+                        "type": [
+                          "string",
+                          "number",
+                          "boolean"
+                        ],
+                        "maxLength": 120
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "pointer",
+                      "expected"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "const": "json_number_max"
+                      },
+                      "pointer": {
+                        "type": "string",
+                        "pattern": "^(?:/[A-Za-z0-9_.~-]{1,80}){1,8}$"
+                      },
+                      "maximum": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "pointer",
+                      "maximum"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "const": "json_age_seconds"
+                      },
+                      "pointer": {
+                        "type": "string",
+                        "pattern": "^(?:/[A-Za-z0-9_.~-]{1,80}){1,8}$"
+                      },
+                      "maximum": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "pointer",
+                      "maximum"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "kind",
+              "target",
+              "path",
+              "required",
+              "assertion"
+            ]
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "enabled",
+        "mode",
+        "checks"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+schema_version: 1
+upgrade_key: 20261015-incremental-release-all
+title: 发布全部与逐组件成功提交基线
+risk_level: T2
+status: active
+summary:
+- 发布全部复用显式部署目标和已有增量差异判断
+- 多组件只记录实际发布且验证成功者，失败或跳过不推进状态
+- 按统一收口规范合并目标项目的交互配置、收口指令、工作流和偏好，保留项目事实
+source_template_files:
+- .maw/agent-entry.yaml
+- docs/ai-coding/release-closeout.md
+- ops/scripts/plan-release-components.py
+- ops/lib/maw_config_loader.py
+- docs/ai-instructions/instructions/release-component.md
+- docs/capabilities/incremental-release-all.md
+- docs/template-migrations/20261015-incremental-release-all.md
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect: [README.md, code/, app_key, release configuration, repository mappings, real secrets, .local/, module dossiers]
+  forbidden:
+  - 导入Seed真实发布状态、来源事件和更新动态
+  - 把全部解释成跨环境、未登记组件或多服务器自动授权
+  - 把构建成功或规划结果写成部署成功
+validation:
+  commands:
+  - python3 -m py_compile ops/scripts/plan-release-components.py
+  - python3 ops/scripts/plan-release-components.py --help

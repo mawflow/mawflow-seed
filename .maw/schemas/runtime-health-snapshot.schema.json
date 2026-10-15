@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MAWflow bounded runtime health snapshot",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "schema",
+        "project",
+        "environment",
+        "instance",
+        "scope",
+        "adapter",
+        "snapshot_id",
+        "status",
+        "code",
+        "checked_at",
+        "source_checked_at",
+        "stale_after_seconds",
+        "configuration_current",
+        "freshness",
+        "checks"
+      ],
+      "properties": {
+        "schema": {
+          "const": "mawflow.runtime_health.v1"
+        },
+        "project": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$"
+        },
+        "environment": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$"
+        },
+        "instance": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$"
+        },
+        "scope": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$"
+        },
+        "adapter": {
+          "enum": [
+            "native-v1",
+            "declarative-http-v1",
+            "actmp-course-rd-v1"
+          ]
+        },
+        "snapshot_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "status": {
+          "enum": [
+            "blocked",
+            "degraded",
+            "healthy",
+            "unknown"
+          ]
+        },
+        "code": {
+          "enum": [
+            "assertion_failed",
+            "authentication_failed",
+            "check_passed",
+            "collected",
+            "credential_missing",
+            "endpoint_unavailable",
+            "evidence_missing",
+            "native_not_configured",
+            "release_match",
+            "release_mismatch",
+            "reported_status",
+            "required_integrations",
+            "response_invalid",
+            "response_too_large",
+            "runtime_count",
+            "schema_unsupported",
+            "snapshot_stale",
+            "source_stale",
+            "storage_unavailable",
+            "timeout"
+          ]
+        },
+        "checked_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_checked_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "stale_after_seconds": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 86400
+        },
+        "configuration_current": {
+          "type": "boolean"
+        },
+        "freshness": {
+          "enum": [
+            "fresh",
+            "stale"
+          ]
+        },
+        "checks": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "kind",
+              "required",
+              "status",
+              "code"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$"
+              },
+              "kind": {
+                "enum": [
+                  "availability",
+                  "readiness",
+                  "dependency",
+                  "version",
+                  "backlog",
+                  "heartbeat",
+                  "business"
+                ]
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "status": {
+                "enum": [
+                  "blocked",
+                  "degraded",
+                  "healthy",
+                  "unknown"
+                ]
+              },
+              "code": {
+                "enum": [
+                  "assertion_failed",
+                  "authentication_failed",
+                  "check_passed",
+                  "collected",
+                  "credential_missing",
+                  "endpoint_unavailable",
+                  "evidence_missing",
+                  "native_not_configured",
+                  "not_collected",
+                  "release_match",
+                  "release_mismatch",
+                  "reported_status",
+                  "required_integrations",
+                  "response_invalid",
+                  "response_too_large",
+                  "runtime_count",
+                  "schema_unsupported",
+                  "snapshot_stale",
+                  "source_stale",
+                  "storage_unavailable",
+                  "timeout"
+                ]
+              },
+              "count": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 80
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema",
+        "project",
+        "environment",
+        "instance",
+        "status",
+        "code",
+        "freshness",
+        "checks"
+      ],
+      "properties": {
+        "schema": {
+          "const": "mawflow.runtime_health.v1"
+        },
+        "project": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$"
+        },
+        "environment": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$"
+        },
+        "instance": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$"
+        },
+        "status": {
+          "const": "unknown"
+        },
+        "code": {
+          "const": "not_collected"
+        },
+        "freshness": {
+          "const": "missing"
+        },
+        "checks": {
+          "const": []
+        }
+      }
+    }
+  ]
+}

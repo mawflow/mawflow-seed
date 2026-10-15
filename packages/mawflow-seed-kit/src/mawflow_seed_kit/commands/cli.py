@@ -6,7 +6,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Any, Callable
-from importlib.metadata import version
+from mawflow_seed_kit.cli_contract import CliParser, JsonVersionAction, guard_cli, print_json, runtime_info, project_doctor_output, drift_exit_code
 
 from mawflow_seed_kit import export_agent_context, inspect_agent_readiness, render_agent_context
 from .project_init import ProjectInitConfig, ProjectInitError
@@ -40,14 +40,17 @@ from .template_drift import TemplateDriftConfig, TemplateDriftError, plan_templa
 
 
 def _json_print(payload: dict[str, Any] | list[dict[str, Any]]) -> None:
-    print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str))
+    print_json(payload)
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="mawflow", description="Seed project tools. Daily commands work offline without an account.")
-    parser.add_argument("--version", action="version", version=version("mawflow-seed-kit"))
+    parser = CliParser(prog="mawflow", description="Seed project tools. Daily commands work offline without an account.")
+    parser.add_argument("--version", action=JsonVersionAction, version=json.dumps(runtime_info(), ensure_ascii=False, sort_keys=True))
     parser.add_argument("-C", "--workdir", default="")
+    parser.add_argument("--read-only", action="store_true", help="仅允许已审查零写入查询，拒绝保存计划和执行变更。")
     sub = parser.add_subparsers(dest="area", required=True)
+    sub.add_parser("version", help="Show executing runtime versions and profile.")
+    sub.add_parser("profile", help="Show the effective installation profile without changing it.")
     project = sub.add_parser(
         "project",
         help="Initialize MAWflow projects with 'mawflow project init'.",
@@ -321,13 +324,25 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+@guard_cli
 def main(argv: list[str] | None = None, *, authorize_upgrade: Callable[[], object] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.read_only:
+        from .readonly import readonly_allowed
+        if not readonly_allowed(args):
+            _json_print({"schema": "mawflow.cli_readonly.v1", "status": "blocked", "error": "readonly_command_forbidden", "mutated": False})
+            return 1
     if args.workdir:
-        os.chdir(Path(args.workdir).expanduser())
+        try:
+            os.chdir(Path(args.workdir).expanduser())
+        except OSError:
+            parser.error("workdir_unavailable")
+    if args.area in {"version", "profile"}:
+        _json_print(runtime_info())
+        return 0
     if args.area == "capabilities":
-        _json_print({"schema": "mawflow.seed_cli.capabilities.v1", "version": version("mawflow-seed-kit"), "profile": "seed-cli", "host_required": False, "daily_login_required": False, "capabilities": ["project.init.current_directory", "project.init.existing_git", "project.init.idempotent", "component.lifecycle", "project.agent_context", "project.upgrade.online_account_required"]})
+        _json_print({"schema": "mawflow.seed_cli.capabilities.v1", "version": runtime_info()["seed_version"], "runtime": runtime_info(), "profile": "seed-cli", "host_required": False, "daily_login_required": False, "capabilities": ["cli.read_only", "cli.output_contract.v1", "cli.runtime_info", "cli.doctor_summary", "project.init.current_directory", "project.init.existing_git", "project.init.idempotent", "component.lifecycle", "project.agent_context", "project.upgrade.online_account_required"]})
         return 0
     if args.area == "project" and args.command == "upgrade" and args.execute and not args.rollback:
         try:
@@ -657,7 +672,7 @@ def main(argv: list[str] | None = None, *, authorize_upgrade: Callable[[], objec
         if args.command == "doctor":
             try:
                 result = project_doctor(Path(args.root))
-                _json_print(result)
+                _json_print(project_doctor_output(result))
                 return 0 if result.get("status") == "ready" else 1
             except (OSError, ValueError) as exc:
                 _json_print({"schema": "mawflow.seed_project_definition.v2", "status": "failed", "error": str(exc)})
@@ -708,8 +723,9 @@ def main(argv: list[str] | None = None, *, authorize_upgrade: Callable[[], objec
                         max_commits=args.max_commits,
                     )
                 )
+                exit_code = drift_exit_code(result)
                 _json_print(result)
-                return 0 if result["status"] in {"up_to_date", "behind", "ahead", "baseline_missing", "seed_contract_behind"} else 1
+                return exit_code
             except TemplateDriftError as exc:
                 _json_print({"schema": "mawflow.template_drift.plan.v2", "status": "failed", "error": str(exc)})
                 return 1

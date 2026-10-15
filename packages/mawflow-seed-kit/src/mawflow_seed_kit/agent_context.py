@@ -6,6 +6,7 @@ nor reads local bindings, credentials, source trees, or session transcripts.
 from __future__ import annotations
 
 import hashlib
+import codecs
 from importlib.resources import files
 import json
 from pathlib import Path, PurePosixPath
@@ -269,16 +270,24 @@ def export_agent_context(root: Path | str, *, module_key: str = "", task_kind: s
     omitted: list[dict[str, str]] = []
     remaining = max_chars
     for ref in dict.fromkeys(refs):
-        try:
-            text = _text(project_root, ref)
-        except FileNotFoundError:
-            omitted.append({"source_ref": ref, "reason": "not_configured"})
-            continue
+        path = _safe_path(project_root, ref)
         if remaining <= 0:
             omitted.append({"source_ref": ref, "reason": "budget"})
             continue
+        try:
+            source_bytes = path.stat().st_size
+            with path.open("rb") as stream:
+                raw = stream.read(MAX_BYTES)
+            source_truncated = source_bytes > len(raw)
+            text = codecs.getincrementaldecoder("utf-8")().decode(raw, final=not source_truncated)
+        except FileNotFoundError:
+            omitted.append({"source_ref": ref, "reason": "not_configured"})
+            continue
         content = text[:remaining]
-        documents.append({"source_ref": ref, "content_hash": _hash(text), "content": content, "truncated": len(content) < len(text)})
+        documents.append({"source_ref": ref, "content_hash": _hash(text), "content": content,
+                          "truncated": source_truncated or len(content) < len(text),
+                          "hash_scope": "read_prefix" if source_truncated else "full_source",
+                          "source_bytes": source_bytes, "read_bytes": len(raw)})
         remaining -= len(content)
     return {
         "schema": "mawflow.agent_context.v1",
@@ -304,7 +313,7 @@ def render_agent_context(payload: dict[str, Any]) -> str:
     if payload["module"]:
         lines.extend(["模块边界：", json.dumps(payload["module"], ensure_ascii=False), ""])
     for document in payload["documents"]:
-        lines.extend([f"## {document['source_ref']}", f"来源摘要：{document['content_hash']}；正文截断：{'是' if document['truncated'] else '否'}", document["content"], ""])
+        lines.extend([f"## {document['source_ref']}", f"来源摘要：{document['content_hash']}；哈希范围：{document.get('hash_scope', 'full_source')}；正文截断：{'是' if document['truncated'] else '否'}", document["content"], ""])
     if payload["omitted"]:
         lines.append("未载入：" + json.dumps(payload["omitted"], ensure_ascii=False))
     return "\n".join(lines)
