@@ -104,3 +104,5 @@ upgrade_strategy_update:
 seed_repository_upgrade_suggestions:
 user_terms_style:
 ```
+
+任务开工、恢复与收尾按 `docs/ai-coding/task-lifecycle.md` 执行；分别说明执行结果、业务关闭与资源回收，等待/失败/取消/交接也清点资源。

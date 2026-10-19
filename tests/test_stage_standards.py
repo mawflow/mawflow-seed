@@ -19,6 +19,8 @@ def project(tmp_path):
     root = tmp_path / "project"
     root.mkdir()
     shutil.copytree(ROOT / "docs/standards", root / "docs/standards")
+    (root / "docs/ai-coding").mkdir()
+    shutil.copyfile(ROOT / "docs/ai-coding/task-lifecycle.md", root / "docs/ai-coding/task-lifecycle.md")
     (root / s.INDEX).unlink()
     (root / ".maw").mkdir()
     shutil.copyfile(ROOT / ".maw/standards.yaml", root / s.CATALOG)

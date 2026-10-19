@@ -1,0 +1,474 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mawflow.task_lifecycle.v1",
+  "title": "任务快照的可选生命周期扩展；声明不授予权限",
+  "type": "object",
+  "required": [
+    "schema",
+    "scope_revision",
+    "run_ref",
+    "stage",
+    "condition",
+    "outcome",
+    "task_closure",
+    "human_acceptance_required",
+    "required_axes",
+    "completion_criteria",
+    "resources",
+    "resource_cleanup_status"
+  ],
+  "properties": {
+    "schema": {
+      "const": "mawflow.task_lifecycle.v1"
+    },
+    "scope_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "run_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stage": {
+      "enum": [
+        "scoped",
+        "preparing",
+        "executing",
+        "verifying",
+        "closing",
+        "ended"
+      ]
+    },
+    "condition": {
+      "enum": [
+        "active",
+        "blocked",
+        "waiting_human",
+        "paused"
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "pending",
+        "succeeded",
+        "partial",
+        "failed",
+        "cancelled",
+        "interrupted"
+      ]
+    },
+    "task_closure": {
+      "enum": [
+        "open",
+        "ready_for_review",
+        "closed",
+        "cancelled"
+      ]
+    },
+    "human_acceptance_required": {
+      "type": "boolean"
+    },
+    "required_axes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": [
+          "implementation",
+          "verification",
+          "external_integration",
+          "delivery",
+          "deployment",
+          "human_acceptance"
+        ]
+      }
+    },
+    "completion_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "status"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "passed",
+              "failed",
+              "not_applicable"
+            ]
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "kind",
+          "ownership",
+          "holder_run_ref",
+          "state",
+          "action"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "browser_tab",
+              "process",
+              "service",
+              "connection",
+              "lock",
+              "worktree",
+              "file",
+              "debug_setting"
+            ]
+          },
+          "ownership": {
+            "enum": [
+              "created",
+              "borrowed",
+              "shared"
+            ]
+          },
+          "holder_run_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state": {
+            "enum": [
+              "active",
+              "released",
+              "retained",
+              "pending_automatic",
+              "failed",
+              "unknown"
+            ]
+          },
+          "action": {
+            "enum": [
+              "none",
+              "release_control",
+              "close",
+              "stop",
+              "release",
+              "retain",
+              "restore"
+            ]
+          },
+          "control_state": {
+            "enum": [
+              "held",
+              "released",
+              "pending_automatic",
+              "unsupported",
+              "unknown"
+            ]
+          },
+          "retention": {
+            "type": "object",
+            "required": [
+              "purpose",
+              "owner",
+              "review_condition"
+            ],
+            "properties": {
+              "purpose": {
+                "type": "string",
+                "minLength": 1
+              },
+              "owner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "review_condition": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "receipt": {
+            "type": "object",
+            "required": [
+              "resource_key",
+              "action",
+              "run_ref",
+              "source_revision",
+              "environment",
+              "scope_hash",
+              "record_ref",
+              "observed_at",
+              "path",
+              "content_hash",
+              "task_ref",
+              "scope_revision"
+            ],
+            "properties": {
+              "resource_key": {
+                "type": "string",
+                "minLength": 1
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1
+              },
+              "run_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_revision": {
+                "type": "string",
+                "minLength": 1
+              },
+              "environment": {
+                "type": "string",
+                "minLength": 1
+              },
+              "scope_hash": {
+                "type": "string",
+                "minLength": 1
+              },
+              "record_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "observed_at": {
+                "type": "string",
+                "minLength": 1
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "content_hash": {
+                "type": "string",
+                "minLength": 1
+              },
+              "task_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "scope_revision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "restored_hash": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              }
+            }
+          },
+          "control": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "enum": [
+                  "held",
+                  "released",
+                  "pending_automatic",
+                  "unsupported",
+                  "unknown"
+                ]
+              },
+              "action": {
+                "enum": [
+                  "release_control",
+                  "close"
+                ]
+              },
+              "release_mode": {
+                "enum": [
+                  "explicit",
+                  "automatic",
+                  "unsupported"
+                ]
+              },
+              "receipt": {
+                "type": "object",
+                "required": [
+                  "resource_key",
+                  "action",
+                  "run_ref",
+                  "source_revision",
+                  "environment",
+                  "scope_hash",
+                  "record_ref",
+                  "observed_at",
+                  "path",
+                  "content_hash",
+                  "task_ref",
+                  "scope_revision"
+                ],
+                "properties": {
+                  "resource_key": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "action": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "run_ref": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source_revision": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "environment": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "scope_hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "record_ref": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "observed_at": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "content_hash": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "task_ref": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "scope_revision": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "restored_hash": {
+                    "type": "string",
+                    "pattern": "^sha256:[0-9a-f]{64}$"
+                  }
+                }
+              }
+            },
+            "required": [
+              "state",
+              "action",
+              "release_mode"
+            ],
+            "additionalProperties": false
+          },
+          "temporary_change": {
+            "type": "object",
+            "properties": {
+              "owner_run_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "before_hash": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              "applied_hash": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              "authorization_ref": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "owner_run_ref",
+              "before_hash",
+              "applied_hash",
+              "authorization_ref"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "resource_cleanup_status": {
+      "enum": [
+        "pending",
+        "partial",
+        "passed",
+        "failed",
+        "not_applicable"
+      ]
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "reason_ref": {
+      "type": "string"
+    },
+    "pause_authorization_ref": {
+      "type": "string"
+    },
+    "closure_ref": {
+      "type": "string"
+    },
+    "protocol_revision": {
+      "type": "integer",
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "outcome_reason_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "continuation": {
+      "type": "object",
+      "properties": {
+        "previous_run_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checkpoint_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownership_check_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "previous_run_ref",
+        "checkpoint_ref",
+        "ownership_check_ref"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

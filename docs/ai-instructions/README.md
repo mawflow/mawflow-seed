@@ -82,6 +82,8 @@ read_contract:
 #模块地图：初始化、检查、审计、查漏补缺、清理过期、变更影响或发布前检查已有项目 modules，建立一级 URL/API 索引、二级模块档案、证据字段和渐进式审计页
 #项目评审：基于 docs 会议式评审项目目标、业务流程、验收目标和 docs 口径，评审报告给出接续 #项目审计 调用
 #项目审计：<评审报告路径>，按评审成果审计验收目标、实现程度、证据和后续推进建议
+#配置诊断：只读核对配置来源、引用、消费者和运行版本
+#配置修复：预览并修复配置已保存但消费者读取不一致等问题，关联工作台诊断
 #项目健康：记录、审计或生成 .maw/health 项目健康上下文和健康关注建议
 #待办任务：记录/查询/完成/取消被当前业务闭环依赖但暂不实现、先假设已完成的跨模块待办
 #MCP服务诊断：检查项目级 MCP 连通、project_key、仓库身份、宿主机用途、项目归属、开发绑定、tools/list、AI 可写路径和安全拒绝边界
@@ -159,6 +161,7 @@ read_contract:
 | TINST-041 | UAT 业务交付 | #UAT交付、UAT 交付、模块验收说明、业务验收文档、测试与审计版、逐模块交付测试 | [instructions/uat-business-handoff.md](instructions/uat-business-handoff.md) |
 | TINST-042 | Seed 经验反馈报告 | #Seed反馈、#Seed复盘、#Seed优化报告、Seed 经验反馈报告 | [instructions/seed-feedback.md](instructions/seed-feedback.md) |
 | TINST-043 | 生成更新动态 | #更新动态、#生成更新动态、更新记录、更新日志、最近100条、全部动态、release notes、update_note | [instructions/generate-update-notes.md](instructions/generate-update-notes.md) |
+| TINST-045 | 配置诊断与修复 | #配置修复、#配置诊断、配置已保存但检测不到、界面配置与执行不一致、配置来源漂移 | [instructions/configuration-repair.md](instructions/configuration-repair.md) |
 
 
 ## 当前术语列表

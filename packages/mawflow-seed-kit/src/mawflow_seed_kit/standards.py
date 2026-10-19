@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import hashlib
 import json
 import os
@@ -12,6 +13,14 @@ import tempfile
 from typing import Any
 
 import yaml
+
+from .task_lifecycle import validate_lifecycle
+from .standard_scope import validate_scope_paths
+from .standard_selection import FACTS, select_rules, validate_applicability
+from .standard_evidence import policy_issues, evidence_issues
+from .standard_binding import plan_binding, validate_binding, task_projection
+
+STANDARDS_EXECUTION_PROTOCOL = 1
 
 PHASES = ("initiation", "design", "development", "testing", "deployment", "delivery")
 CLASSES = ("small_change", "iteration", "formal_delivery")
@@ -125,6 +134,8 @@ def inspect_catalog(root: Path) -> dict[str, Any]:
             issues.append("requirement_invalid:" + key)
         if rule.get("enforcement") not in {"documented", "manual", "script"}:
             issues.append("enforcement_invalid:" + key)
+        if "applicability" in rule and not validate_applicability(rule["applicability"]):
+            issues.append("applicability_invalid:" + key)
         authority = rule.get("authority", "")
         if isinstance(authority, str) and authority and not safe_path(root, authority).is_file():
             issues.append("authority_missing:" + key)
@@ -135,15 +146,25 @@ def inspect_catalog(root: Path) -> dict[str, Any]:
             "summary": "规范目录有缺口。" if issues else "阶段规范目录及显式权威引用完整。"}
 
 
-def context(root: Path, phase: str, task_class: str, task_kind: str) -> dict[str, Any]:
+def context(root: Path, phase: str, task_class: str, task_kind: str,
+            facts: dict[str, bool] | None = None) -> dict[str, Any]:
     report = inspect_catalog(root)
     if report["status"] != "ready":
         return report
-    selected = [r for r in report["rules"]
-                if (not phase or phase in r["applies_to_phases"])
-                and task_class in r["task_classes"] and task_kind in r["task_kinds"]]
+    if (phase and phase not in PHASES) or task_class not in CLASSES or task_kind not in KINDS:
+        raise ValueError("task_selection_invalid")
+    selected, excluded = select_rules(report["rules"], phase, task_class, task_kind, facts)
+    depth = {
+        "small_change": ["scope_and_authorization", "affected_contracts", "focused_validation", "unverified_and_impact"],
+        "iteration": ["requirements_design_dependencies", "owned_paths_and_risks", "related_validation", "updated_project_facts"],
+        "formal_delivery": ["frozen_source_target_artifact", "authorization_and_recovery", "actual_candidate_readback", "handoff_and_independent_acceptance"],
+    }[task_class]
     return {**report, "rules": selected, "phase": phase, "task_class": task_class,
+            "delivery_depth": depth,
             "task_kind": task_kind, "authorization_granted": False,
+            "facts": {} if facts is None else facts, "excluded_rules": excluded,
+            "pending_applicability": [r["key"] for r in selected if r["selection"]["status"] == "pending_applicability"],
+            "required_reads": list(dict.fromkeys(r["authority"] for r in selected)),
             "summary": "已选择适用规范；仍须核对触发条件、项目规则及已有授权。"}
 
 
@@ -212,7 +233,8 @@ def validate_task(root: Path, ref: str) -> dict[str, Any]:
     if not required <= task.keys() or task.get("schema") != "mawflow.standard_task_snapshot.v1":
         issues.append("task_schema_invalid")
     if (task.get("phase") not in PHASES or task.get("task_class") not in CLASSES
-            or task.get("task_kind") not in KINDS or not task.get("task_ref")):
+            or task.get("task_kind") not in KINDS or not isinstance(task.get("task_ref"), str)
+            or not task["task_ref"].strip()):
         issues.append("task_selection_invalid")
     scope = task.get("scope") or {}
     if not isinstance(scope, dict):
@@ -228,15 +250,9 @@ def validate_task(root: Path, ref: str) -> dict[str, Any]:
         issues.append("environment_invalid")
     if not isinstance(scope.get("module_keys"), list):
         issues.append("modules_invalid")
-    for field in ("read_paths", "write_paths", "blocked_paths"):
-        if not isinstance(scope.get(field), list):
-            issues.append("scope_paths_invalid:" + field)
-            continue
-        for path in scope[field]:
-            safe_path(root, path)
-    writes, blocked = [scope.get(f, []) for f in ("write_paths", "blocked_paths")]
-    if any(w == b or w.startswith(b.rstrip("/") + "/") for w in writes for b in blocked):
-        issues.append("write_path_blocked")
+    path_issues, normalized_scope = validate_scope_paths(scope, safe_path, root)
+    issues.extend(path_issues)
+    writes = normalized_scope["write_paths"]
     authorization = task.get("authorization") or {}
     if not isinstance(authorization, dict):
         authorization = {}
@@ -253,6 +269,7 @@ def validate_task(root: Path, ref: str) -> dict[str, Any]:
     if scope.get("environment") not in authorization.get("environments", []):
         issues.append("environment_outside_declared_authorization")
     scope_hash = digest(json.dumps(scope, sort_keys=True, ensure_ascii=False).encode())
+    issues.extend(policy_issues(task))
     evidence = task.get("evidence")
     if not isinstance(evidence, list):
         evidence = []
@@ -275,6 +292,10 @@ def validate_task(root: Path, ref: str) -> dict[str, Any]:
             issues.append("evidence_state_invalid:" + key)
             continue
         if item.get("status") != "passed":
+            continue
+        provenance_issues = evidence_issues(task, item)
+        if provenance_issues:
+            issues.extend(code + ":" + key for code in provenance_issues)
             continue
         path = safe_path(root, item.get("path", ""))
         if not path.is_file() or path.stat().st_size > MAX_BYTES:
@@ -327,35 +348,83 @@ def validate_task(root: Path, ref: str) -> dict[str, Any]:
             issues.append("suite_evidence_missing")
     if states.get("verification") == "passed" and any(s["status"] != "passed" for s in suites if isinstance(s, dict)):
         issues.append("verification_overstates_suites")
+    def receipt_valid(receipt: Any, run_ref: str) -> bool:
+        if not isinstance(receipt, dict):
+            return False
+        lifecycle = task.get("lifecycle") if isinstance(task.get("lifecycle"), dict) else {}
+        if (receipt.get("run_ref") != run_ref
+                or receipt.get("task_ref") != task.get("task_ref")
+                or type(receipt.get("scope_revision")) is not int
+                or receipt.get("scope_revision") != lifecycle.get("scope_revision")
+                or receipt.get("source_revision") != scope.get("source_revision")
+                or receipt.get("environment") != scope.get("environment")
+                or receipt.get("scope_hash") != scope_hash or not receipt.get("record_ref")):
+            return False
+        try:
+            timestamp = datetime.fromisoformat(str(receipt.get("observed_at", "")))
+            path = safe_path(root, receipt.get("path", ""))
+            return (timestamp.utcoffset() is not None and path.is_file()
+                    and path.stat().st_size <= MAX_BYTES
+                    and digest(path.read_bytes()) == receipt.get("content_hash"))
+        except (ValueError, TypeError, OSError):
+            return False
+
+    issues.extend(validate_lifecycle({**task, "_valid_evidence_keys": valid}, receipt_valid))
+    binding = validate_binding(root, task, context, safe_path, digest, valid)
+    issues.extend(binding["issues"])
+    warnings.extend(binding["warnings"])
+    if "evidence_policy" not in task:
+        warnings.append("旧快照未采用执行证据协议；不证明方法、时间、执行轮次与候选内容已绑定。")
+    lifecycle_status = "not_adopted" if "lifecycle" not in task else "declaration_validated"
+    if any(issue.startswith("lifecycle_") for issue in issues):
+        lifecycle_status = "blocked"
     return {"schema": "mawflow.standard_task_validation.v1",
             "status": "blocked" if issues else "declaration_validated",
             "issues": sorted(set(issues)), "warnings": warnings, "scope_hash": scope_hash,
             "valid_evidence_keys": sorted(valid), "authorization_granted": False,
+            "lifecycle_status": lifecycle_status,
+            "standards_binding_status": binding["status"], "rule_refs": binding["rule_refs"],
+            "evidence_policy_status": "not_adopted" if "evidence_policy" not in task else ("blocked" if any(i.startswith("evidence_") for i in issues) else "declaration_validated"),
+            "normalized_scope": normalized_scope,
             "summary": "任务声明有缺口。" if issues else "任务声明一致；实际完成仍以原任务、测试及发布回执为准。"}
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="六阶段规范导航、索引检查与任务声明核验")
-    parser.add_argument("command", choices=["check", "context", "render", "validate-task"])
+    parser.add_argument("command", choices=["check", "context", "render", "validate-task", "plan-task", "report-task"])
     parser.add_argument("--root", default=".")
     parser.add_argument("--phase", choices=PHASES, default="")
     parser.add_argument("--task-class", choices=CLASSES, default="small_change")
     parser.add_argument("--task-kind", choices=KINDS, default="modify")
     parser.add_argument("--input", default="")
+    parser.add_argument("--fact", action="append", default=[], metavar="NAME=true|false")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--expected-fingerprint", default="")
     parser.add_argument("--format", choices=["json", "markdown"], default="json")
     args = parser.parse_args(argv)
     try:
         root = Path(args.root).resolve(strict=True)
+        facts = {}
+        for fact in args.fact:
+            name, separator, value = fact.partition("=")
+            if not separator or name not in FACTS or value not in {"true", "false"} or name in facts:
+                raise ValueError("selection_facts_invalid")
+            facts[name] = value == "true"
         if args.execute and args.command != "render":
             raise ValueError("execute_only_for_render")
         if args.command == "context":
-            result = context(root, args.phase, args.task_class, args.task_kind)
+            result = context(root, args.phase, args.task_class, args.task_kind, facts)
         elif args.command == "render":
             result = render(root, args.execute, args.expected_fingerprint)
         elif args.command == "validate-task":
             result = validate_task(root, args.input)
+        elif args.command == "plan-task":
+            task = read_mapping(root, args.input)
+            selection = context(root, task.get("phase", ""), task.get("task_class", ""), task.get("task_kind", ""), facts)
+            result = plan_binding(root, task, selection, safe_path, digest)
+        elif args.command == "report-task":
+            result = validate_task(root, args.input)
+            result["projection"] = task_projection(read_mapping(root, args.input), result)
         else:
             result = inspect_catalog(root)
             if result["status"] == "ready":
@@ -367,6 +436,9 @@ def main(argv: list[str] | None = None) -> int:
             print("# " + result["summary"])
             for rule in result.get("rules", []):
                 print("- " + rule["title"] + "：" + rule["authority"] + "（" + rule["enforcement"] + "）")
+                if "selection" in rule:
+                    print("  选择：" + rule["selection"]["status"] + "；依据：" + rule["selection"]["reason"]
+                          + "；待核对：" + ", ".join(rule["selection"]["missing_facts"]))
             for issue in result.get("issues", []):
                 print("- " + issue)
         else:

@@ -131,6 +131,7 @@ def bootstrap_block(adapter: str) -> str:
         "不自动读取 prompts、归档、本机私有目录；不提交秘密或无关改动。",
         "工具、Skill、MCP、RTK 均非读取项目规则的前置条件；已有授权按任务范围延续。",
         "本地开发按 docs/ai-coding/development-resources.md 检查资源与工作台/CLI，按需复用服务，跨项目重任务串行。",
+        "任务开工、恢复、等待与结束按 docs/ai-coding/task-lifecycle.md 执行，清点并回收本任务资源，借用浏览器页面交还控制，未验证不得称已释放。",
         "完成时区分已修改、已验证、已发布与真人验收，列出未验证项。",
         "长期结论与缺口按 docs/ai-coding/document-source-capture.md 收录最小来源及回执；只读任务不写入。",
         "实际用户可见变化按 docs/ai-coding/update-notes.md 追加权威动态；默认100条，--all 保留全部已记录历史。",
@@ -209,6 +210,37 @@ def inspect_agent_readiness(root: Path | str) -> dict[str, Any]:
     for key in ("facts", "protected_paths", "execution_contract"):
         if not isinstance(entry.get(key), dict) or not entry[key]:
             report("seed_agent_contract_missing", ".maw/agent-entry.yaml", f"缺少 {key} 契约")
+    execution = entry.get("execution_contract")
+    if isinstance(execution, dict):
+        defaults = agent_contract()["entry_defaults"]["execution_contract"]
+        for name in ("task_lifecycle", "standards"):
+            if name not in execution:
+                continue  # Old projects remain explicitly not adopted.
+            value, expected = execution[name], defaults.get(name, {})
+            expected = dict(expected)
+            if isinstance(value, dict):
+                if name == "standards" and "execution_protocol" not in value:
+                    for field in ("execution_protocol", "execution_policy", "plan", "report"):
+                        expected.pop(field, None)
+                if name == "task_lifecycle" and "preferred_protocol_revision" not in value:
+                    expected.pop("preferred_protocol_revision", None)
+            def valid_shape(actual, reference):
+                if isinstance(reference, dict):
+                    return isinstance(actual, dict) and all(k in actual and valid_shape(actual[k], v) for k, v in reference.items())
+                if isinstance(reference, list):
+                    return isinstance(actual, list) and all(item in actual for item in reference)
+                if isinstance(reference, bool):
+                    return type(actual) is bool and actual == reference
+                if isinstance(reference, int):
+                    return type(actual) is int and actual == reference
+                return type(actual) is type(reference) and (bool(actual.strip()) if isinstance(actual, str) else True)
+            if not valid_shape(value, expected):
+                report("seed_agent_nested_contract_invalid", ".maw/agent-entry.yaml", f"{name} 契约结构或必需字段无效")
+            elif isinstance(value, dict):
+                if value.get("schema") != expected.get("schema"):
+                    report("seed_agent_nested_schema_invalid", ".maw/agent-entry.yaml", f"{name} schema 不匹配")
+                if value.get("policy"):
+                    read(value["policy"])
     try:
         rules_doc = yaml.safe_load(read(".maw/agent-rules.yaml")) or {}
         rules = rules_doc.get("rules") or []
@@ -262,17 +294,28 @@ def export_agent_context(root: Path | str, *, module_key: str = "", task_kind: s
         raise ValueError("seed_agent_module_not_found")
     refs = [".maw/agent-context.md", ".maw/agent-rules.yaml"]
     routes = entry.get("task_routes") or {}
+    refs.extend(routes.get(task_kind, []) if isinstance(routes, dict) else [])
+    required_refs = list(dict.fromkeys(refs))
+    deferred_refs = []
     for module in selected:
         if module.get("doc"):
-            refs.append(module["doc"])
-    refs.extend(routes.get(task_kind, []) if isinstance(routes, dict) else [])
+            summary_ref = module.get("ai_doc") or str(PurePosixPath(module["doc"]).with_name("ai-context.md"))
+            if _safe_path(project_root, summary_ref).is_file():
+                refs.append(summary_ref)
+                deferred_refs.append({"source_ref": module["doc"], "reason": "history_on_demand"})
+            else:
+                refs.append(module["doc"])
     documents: list[dict[str, Any]] = []
     omitted: list[dict[str, str]] = []
     remaining = max_chars
-    for ref in dict.fromkeys(refs):
+    ordered_refs = list(dict.fromkeys(refs))
+    pending_required_reads = []
+    for position, ref in enumerate(ordered_refs):
         path = _safe_path(project_root, ref)
         if remaining <= 0:
             omitted.append({"source_ref": ref, "reason": "budget"})
+            if ref in required_refs:
+                pending_required_reads.append({"source_ref": ref, "reason": "budget", "next_offset_chars": 0})
             continue
         try:
             source_bytes = path.stat().st_size
@@ -282,13 +325,21 @@ def export_agent_context(root: Path | str, *, module_key: str = "", task_kind: s
             text = codecs.getincrementaldecoder("utf-8")().decode(raw, final=not source_truncated)
         except FileNotFoundError:
             omitted.append({"source_ref": ref, "reason": "not_configured"})
+            if ref in required_refs:
+                pending_required_reads.append({"source_ref": ref, "reason": "not_configured", "next_offset_chars": 0})
             continue
-        content = text[:remaining]
+        # Fairly reserve space for later mandatory authorities. A long module
+        # history can no longer evict the actual task rules.
+        later_required = sum(item in required_refs for item in ordered_refs[position + 1:])
+        allowance = remaining // (later_required + 1) if ref in required_refs else remaining
+        content = text[:allowance]
         documents.append({"source_ref": ref, "content_hash": _hash(text), "content": content,
                           "truncated": source_truncated or len(content) < len(text),
                           "hash_scope": "read_prefix" if source_truncated else "full_source",
                           "source_bytes": source_bytes, "read_bytes": len(raw)})
         remaining -= len(content)
+        if ref in required_refs and (source_truncated or len(content) < len(text)):
+            pending_required_reads.append({"source_ref": ref, "reason": "truncated", "next_offset_chars": len(content)})
     return {
         "schema": "mawflow.agent_context.v1",
         "adapter": resolve_agent_adapter(agent_name),
@@ -298,6 +349,11 @@ def export_agent_context(root: Path | str, *, module_key: str = "", task_kind: s
         "module": [{key: item[key] for key in ("key", "name", "doc", "owned_paths", "source_paths", "blocked_paths") if key in item} for item in selected],
         "documents": documents,
         "omitted": omitted,
+        "required_refs": required_refs,
+        "included_authorities": [d["source_ref"] for d in documents if d["source_ref"] in required_refs and not d["truncated"]],
+        "pending_required_reads": pending_required_reads,
+        "context_status": "needs_required_reads" if pending_required_reads else "complete",
+        "deferred_refs": deferred_refs,
         "content_chars": max_chars - remaining,
         "max_chars": max_chars,
         "local_overlays_included": False,
@@ -316,4 +372,8 @@ def render_agent_context(payload: dict[str, Any]) -> str:
         lines.extend([f"## {document['source_ref']}", f"来源摘要：{document['content_hash']}；哈希范围：{document.get('hash_scope', 'full_source')}；正文截断：{'是' if document['truncated'] else '否'}", document["content"], ""])
     if payload["omitted"]:
         lines.append("未载入：" + json.dumps(payload["omitted"], ensure_ascii=False))
+    if payload.get("pending_required_reads"):
+        lines.append("必读待补：" + json.dumps(payload["pending_required_reads"], ensure_ascii=False))
+    if payload.get("deferred_refs"):
+        lines.append("按需历史：" + json.dumps(payload["deferred_refs"], ensure_ascii=False))
     return "\n".join(lines)

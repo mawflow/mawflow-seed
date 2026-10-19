@@ -21,3 +21,14 @@ mawflow-seed-kit doctor credentials /path/to/project --fail-on-plaintext
 `mawflow_seed_kit.commands.cli` 与 `mawflow_seed_kit.testing` 是项目文件能力的唯一实现；主仓轻量 CLI 与 Host 共用。普通命令离线可用。升级执行须由官方入口提供在线账号授权；直接使用此模块不会默认授权升级。`project upgrade --template` 处理 package 来源模板，`--rollback` 恢复已保存的事务，Contract 迁移使用既有显式选项。
 
 本版本是未发布候选；首发操作说明随主仓 `code/npm-cli/README.md` 维护。源码仓 Git 漂移仍沿用原有受控流程，不能用 package 升级覆盖项目。
+
+## 开发验证依赖
+
+安装测试可选依赖后使用 pytest 收集完整套件，避免 unittest discover 漏掉函数式回归：
+
+```bash
+python3 -m pip install -e 'packages/mawflow-seed-kit[test]'
+python3 -m pytest -q tests
+```
+
+测试依赖不加入 Kit 运行时依赖；项目资源预算仍按现有串行验证入口执行。

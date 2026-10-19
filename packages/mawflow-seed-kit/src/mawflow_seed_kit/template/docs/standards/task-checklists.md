@@ -35,3 +35,7 @@ python3 ops/scripts/manage-project-standards.py validate-task --input docs/stand
 ```
 
 规则目录按执行阶段选择，文档front matter的stage用于文档分类，两者分别维护。生成规范索引不是任务完成或部署证明。
+
+任务开工、恢复与收尾按 `docs/ai-coding/task-lifecycle.md` 执行；分别说明执行结果、业务关闭与资源回收，等待/失败/取消/交接也清点资源。
+
+新任务按 [规范执行协议](execution-protocol.md) 绑定适用规则与候选、方法、时间和执行轮次；旧快照保留未采用状态。

@@ -90,6 +90,30 @@ execution_contract:
     - local_environment_status
     - memory_update
     - local_update
+    - task_lifecycle_status
+    - resource_cleanup_status
+  task_lifecycle:
+    policy: docs/ai-coding/task-lifecycle.md
+    schema: mawflow.task_lifecycle.v1
+    snapshot_extension: mawflow.standard_task_snapshot.v1.lifecycle
+    checker: python3 ops/scripts/manage-project-standards.py validate-task --input
+      <task-snapshot>
+    stages:
+    - scoped
+    - preparing
+    - executing
+    - verifying
+    - closing
+    - ended
+    closeout_fields:
+    - task_lifecycle_status
+    - resource_cleanup_status
+    existing_authorization_persists: true
+    task_master_unchanged: true
+    read_only_no_project_writes: true
+    live_cleanup_enforcement: executor_capability_required
+    automatic_cleanup_without_receipt: pending_automatic
+    preferred_protocol_revision: 2
   development_resources:
     device_policy_schema: mawflow.development_resource_policy.v1
     device_policy_location: user_home/.local/config/maw-development-resources.json
@@ -150,6 +174,10 @@ execution_contract:
     read_policy: catalog_then_selected_authority_only
     authorization_granted: false
     legacy_missing: not_adopted_no_development_block
+    execution_policy: docs/standards/execution-protocol.md
+    execution_protocol: 1
+    plan: python3 ops/scripts/manage-project-standards.py plan-task --input <task-snapshot>
+    report: python3 ops/scripts/manage-project-standards.py report-task --input <task-snapshot>
 tool_adapters:
   codex:
     file: AGENTS.md
@@ -211,6 +239,8 @@ validation:
   - closeout contract
 agent_protocol_version: 1
 task_routes:
+  configuration_repair:
+  - docs/ai-instructions/instructions/configuration-repair.md
   resource_libraries:
   - docs/ai-coding/workspace-libraries.md
   development:

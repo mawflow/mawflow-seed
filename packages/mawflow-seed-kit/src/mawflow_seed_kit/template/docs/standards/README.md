@@ -32,3 +32,7 @@ python3 ops/scripts/manage-project-standards.py validate-task --input docs/stand
 ```
 
 `context/check/validate-task` 只读。`render` 先预览，再用返回指纹追加 `--execute --expected-fingerprint <指纹>`；内容相同零写入。未采用项目返回 not_adopted，不能报告规范已接入或检查通过。模板示例只说明结构，状态固定 pending，不作为项目授权或执行证据。
+
+- [任务生命周期与资源收尾](../ai-coding/task-lifecycle.md)：跨工具任务阶段、恢复、浏览器控制交还、资源保留及文件侧回执检查。
+
+- [规范执行协议](execution-protocol.md)：显式条件、规则指纹、执行证据、只读任务投影及渐进采用。

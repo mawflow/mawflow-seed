@@ -139,3 +139,42 @@ capabilities:
     consumed_by_modules: []
     validation: [python3 ops/scripts/check-runtime-health.py --format json]
     last_verified_commit: ''
+
+  - key: configuration-repair
+    name: 配置诊断与修复
+    type: governance_protocol
+    status: candidate
+    origin: seed_repository
+    owner_module: ''
+    owner_component: ''
+    related_app_keys: []
+    summary: 工作台、Agent与CLI同源追踪配置声明、引用和实际消费者，按授权预览修复并分层回读。
+    implementation_paths:
+      - docs/ai-instructions/instructions/configuration-repair.md
+      - docs/ai-instructions/templates/configuration-repair-report.md
+    provided_contracts: [TINST-045]
+    reusable_entrypoints: ['#配置诊断', '#配置修复', '#T044']
+    consumed_by_modules: []
+    validation: [tests/test_configuration_repair_distribution.py]
+    last_verified_commit: ''
+  - key: task-lifecycle-resource-closeout
+    name: 任务生命周期与资源收尾
+    type: governance_protocol
+    status: stable
+    origin: seed_repository
+    owner_module: ''
+    owner_component: ''
+    related_app_keys: []
+    summary: 跨工具任务定界、执行、验证、异常恢复和资源收尾；复用原任务快照和主账。
+    implementation_paths:
+    - docs/ai-coding/task-lifecycle.md
+    - .maw/schemas/task-lifecycle.schema.json
+    - ops/scripts/manage-project-standards.py
+    provided_contracts:
+    - mawflow.task_lifecycle.v1，可选任务快照扩展；声明校验不代表实际回收或验收。
+    reusable_entrypoints:
+    - python3 ops/scripts/manage-project-standards.py validate-task --input <task-snapshot>
+    consumed_by_modules: []
+    validation:
+    - python3 -m pytest tests/test_task_lifecycle.py -q
+    last_verified_commit: ''

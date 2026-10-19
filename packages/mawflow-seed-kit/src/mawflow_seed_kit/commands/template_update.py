@@ -24,6 +24,20 @@ from .template_sources import TemplateSourceConfig, materialize_template_source
 
 ENTRIES = {"AI_START_HERE.md", "AGENTS.md", "CLAUDE.md", "GEMINI.md", "CHATGPT.md", "CHATGPT_TO_AI.md", "MAWFLOW_CLI.md", "PROJECT_COMMANDS.md"}
 MANAGED = {".maw/agent-entry.yaml", ".maw/agent-rules.yaml", ".maw/agent-context.md", ".maw/project-doctor.yaml", ".maw/testing.yaml"}
+# Exact shared-protocol assets; project facts and business files stay protected.
+LIFECYCLE_FILES = {
+    "docs/standards/README.md", "docs/standards/execution-protocol.md",
+    "docs/standards/examples/execution-task.yaml", ".maw/schemas/standards-catalog.schema.json",
+    "docs/template-migrations/20261019-standards-execution.md",
+    ".maw-template/upgrades/20261019-standards-execution.yaml",
+    "docs/ai-coding/task-lifecycle.md", "docs/ai-coding/development-resources.md",
+    ".maw/schemas/task-lifecycle.schema.json", ".maw/schemas/standard-task-snapshot.schema.json",
+    ".maw/standards.yaml", ".maw/generated/standards-index.json",
+    "docs/standards/index.md", "docs/standards/task-checklists.md",
+    "docs/standards/examples/task-lifecycle.yaml", "ops/scripts/manage-project-standards.py",
+    "docs/template-migrations/20261019-task-lifecycle.md",
+    ".maw-template/upgrades/20261019-task-lifecycle.yaml",
+}
 
 
 def _digest(value: bytes | None) -> str:
@@ -125,7 +139,7 @@ def plan_update(root: Path, *, base_template: Path | None = None, target_templat
         target = target_template or Path(str(files("mawflow_seed_kit").joinpath("template")))
         scan_template_safety(base_template); scan_template_safety(target)
         names = {p.relative_to(tree).as_posix() for tree in (base_template, target) for p in tree.rglob("*") if p.is_file()}
-        names = {name for name in names if name in ENTRIES | MANAGED or name.startswith("docs/ai-instructions/")}
+        names = {name for name in names if name in ENTRIES | MANAGED | LIFECYCLE_FILES or name.startswith("docs/ai-instructions/")}
         writes, conflicts = [], []
         for name in sorted(names):
             def render(tree):

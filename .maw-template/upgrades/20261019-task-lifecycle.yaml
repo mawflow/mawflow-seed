@@ -1,0 +1,47 @@
+schema_version: 1
+upgrade_key: 20261019-task-lifecycle
+title: 任务生命周期与资源收尾
+risk_level: T2
+status: active
+summary:
+- 统一任务/执行尝试/资源边界，正常与异常均收尾；浏览器借用交还控制、临时标签按工具回收。
+- 现有任务快照增加可选扩展；检查声明与哈希，不操控资源、不替代原主账。
+source_template_files:
+- docs/ai-coding/task-lifecycle.md
+- .maw/schemas/task-lifecycle.schema.json
+- .maw/schemas/standard-task-snapshot.schema.json
+- docs/standards/examples/task-lifecycle.yaml
+- .maw/agent-entry.yaml
+- .maw/agent-rules.yaml
+- .maw/agent-context.md
+- .maw/standards.yaml
+- packages/mawflow-seed-kit/src/mawflow_seed_kit/task_lifecycle.py
+- packages/mawflow-seed-kit/src/mawflow_seed_kit/standards.py
+- docs/template-migrations/20261019-task-lifecycle.md
+- ops/scripts/manage-project-standards.py
+- packages/mawflow-seed-kit/src/mawflow_seed_kit/commands/template_update.py
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect:
+  - README.md
+  - code/
+  - app_key
+  - release configuration
+  - repository mappings
+  - real secrets
+  - .local/
+  - module dossiers
+  - existing task history
+  forbidden:
+  - 把文件声明检查称为实际自动回收、验收或发布
+  - 自动安装Host或清理历史标签/进程/业务数据
+  - 导入源仓真实任务来源及更新动态
+validation:
+- git diff --check
+- python3 -m pytest tests/test_task_lifecycle.py tests/test_stage_standards.py tests/test_agent_portability.py
+  tests/test_template_update.py -q
+- bash ops/scripts/check-ai-framework-consistency.sh
+- bash ops/scripts/check-local-boundary.sh
+propagation:
+  migration_note: docs/template-migrations/20261019-task-lifecycle.md

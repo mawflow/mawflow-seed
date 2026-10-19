@@ -1,0 +1,38 @@
+schema_version: 1
+upgrade_key: 20261015-configuration-repair
+title: 配置诊断修复与Seed工作台消费闭环
+risk_level: T2
+status: active
+summary:
+  - 新增TINST-045，已有TINST-044阶段规范编号保留。
+  - 追踪共享声明、本机引用与实际消费者，区分配置、连接和执行结果。
+  - 本地产品工作台作为Seed规范可视化与Seed项目管理核心消费者。
+source_template_files:
+  - docs/ai-instructions/instructions/configuration-repair.md
+  - docs/ai-instructions/templates/configuration-repair-report.md
+  - docs/capabilities/seed-workbench-integration.md
+  - PROJECT_COMMANDS.md
+  - docs/ai-instructions/README.md
+  - docs/ai-instructions/experience-index.md
+  - docs/capabilities/README.md
+  - .maw/agent-entry.yaml
+  - .maw/capabilities.yaml
+  - tests/test_configuration_repair_distribution.py
+  - docs/template-migrations/20261015-configuration-repair.md
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect: [README.md, code/, app_key, release configuration, repository mappings, real secrets, .local/, module dossiers, existing instruction IDs, optional component state]
+  forbidden:
+    - 把规范新增当作目标工作台已经支持或生产发布成功
+    - 自动创建凭据副本、开启可选组件或改写模板采用版本
+    - 将源仓真实来源记录和动态导入目标项目
+validation:
+  - git diff --check
+  - python3 -m pytest tests/test_configuration_repair_distribution.py -q
+  - bash ops/scripts/check-template-module-docs.sh
+  - bash ops/scripts/check-ai-framework-consistency.sh
+  - bash ops/scripts/check-local-boundary.sh
+propagation:
+  instruction: docs/ai-instructions/instructions/derived-template-drift-upgrade.md
+  migration_note: docs/template-migrations/20261015-configuration-repair.md

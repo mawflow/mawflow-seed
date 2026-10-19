@@ -1,0 +1,45 @@
+schema_version: 1
+upgrade_key: 20261019-standards-execution
+title: 规范执行、证据绑定与渐进采用
+risk_level: T2
+status: active
+summary:
+- 修复范围、资源回执、入口结构及CI漏跑。
+- 按事实选择规则并绑定权威与执行证据；只读投影保留原主账。
+source_template_files:
+- docs/standards/execution-protocol.md
+- docs/standards/examples/execution-task.yaml
+- docs/template-migrations/20261019-standards-execution.md
+- .maw/standards.yaml
+- .maw/agent-entry.yaml
+- .maw/schemas/standards-catalog.schema.json
+- .maw/schemas/standard-task-snapshot.schema.json
+- .maw/schemas/task-lifecycle.schema.json
+- docs/ai-coding/task-lifecycle.md
+- ops/scripts/manage-project-standards.py
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect:
+  - README.md
+  - code/
+  - app_key
+  - release configuration
+  - repository mappings
+  - real secrets
+  - .local/
+  - module dossiers
+  - existing task history
+  forbidden:
+  - 把文件声明检查称为实际自动回收、验收或发布
+  - 自动安装Host或清理历史标签/进程/业务数据
+  - 导入源仓真实任务来源及更新动态
+validation:
+- git diff --check
+- python3 -m pytest tests/test_standards_execution.py tests/test_task_lifecycle.py
+  tests/test_stage_standards.py tests/test_agent_portability.py tests/test_template_update.py
+  -q
+- bash ops/scripts/check-ai-framework-consistency.sh
+- bash ops/scripts/check-local-boundary.sh
+propagation:
+  migration_note: docs/template-migrations/20261019-standards-execution.md

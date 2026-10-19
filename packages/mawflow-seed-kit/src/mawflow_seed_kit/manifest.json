@@ -1,9 +1,9 @@
 {
   "schema": "mawflow.seed_kit.manifest.v2",
   "name": "mawflow-seed-kit",
-  "version": "2.14.0",
+  "version": "2.15.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:80fb3337f2f22c79a93d5afc81210c4f0d222bd8c1c78728860e27861673cfd0",
+  "contract_fingerprint": "sha256:dc8a88cc9a74dba0bfca543289ec96758bea322ff2b8ea023cce798bdd1e6f35",
   "template_root": "template",
   "profiles": [
     "blank",
@@ -78,7 +78,21 @@
     "docs/capabilities/runtime-health-contract.md",
     "docs/capabilities/examples/runtime-health-native.json",
     "docs/capabilities/examples/runtime-health-sidecar.json",
-    "ops/scripts/check-runtime-health.py"
+    "ops/scripts/check-runtime-health.py",
+    "docs/ai-instructions/instructions/configuration-repair.md",
+    "docs/ai-instructions/templates/configuration-repair-report.md",
+    "docs/capabilities/seed-workbench-integration.md",
+    "docs/ai-coding/task-lifecycle.md",
+    ".maw/schemas/task-lifecycle.schema.json",
+    "docs/standards/examples/task-lifecycle.yaml",
+    "docs/template-migrations/20261019-task-lifecycle.md",
+    "docs/ai-coding/development-resources.md",
+    "docs/ai-coding/README.md",
+    ".maw-template/upgrades/20261019-task-lifecycle.yaml",
+    "docs/standards/execution-protocol.md",
+    "docs/standards/examples/execution-task.yaml",
+    "docs/template-migrations/20261019-standards-execution.md",
+    ".maw-template/upgrades/20261019-standards-execution.yaml"
   ],
   "quick_check": [
     "python3",

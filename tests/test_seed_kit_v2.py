@@ -99,12 +99,12 @@ def test_materialized_project_is_complete_and_editable(tmp_path: Path) -> None:
     assert projection["configs"][".maw/components.yaml"]["components"] == []
     assert yaml.safe_load((root / ".maw/module-candidates.yaml").read_text(encoding="utf-8"))["module_candidates"] == []
     capabilities = yaml.safe_load((root / ".maw/capabilities.yaml").read_text(encoding="utf-8"))["capabilities"]
-    assert [item["key"] for item in capabilities] == ["development-resource-coordination", "workspace-libraries", "stage-standards-governance", "incremental-release-all", "optional-runtime-health-contract"]
+    assert [item["key"] for item in capabilities] == ["development-resource-coordination", "workspace-libraries", "stage-standards-governance", "incremental-release-all", "optional-runtime-health-contract", "configuration-repair", "task-lifecycle-resource-closeout"]
     assert not (root / ".maw/runtime-health.json").exists()
     assert capabilities[0]["owner_module"] == "not_identified"
     assert capabilities[0]["related_app_keys"] == []
     signals = yaml.safe_load((root / ".maw/project-signals.yaml").read_text(encoding="utf-8"))["signals"]
-    assert [item["id"] for item in signals] == ["SIG-20261010-development-resources"]
+    assert [item["id"] for item in signals] == ["SIG-20261010-development-resources", "SIG-20261019-task-lifecycle"]
     assert signals[0]["related_modules"] == []
     for source_ref in ("code/README.md", "docs/README.md", "MAWFLOW_CLI.md", "PROJECT_COMMANDS.md", "CHATGPT_TO_AI.md"):
         assert (root / source_ref).is_file()

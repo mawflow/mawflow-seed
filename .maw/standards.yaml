@@ -1,5 +1,5 @@
 schema: mawflow.standards_catalog.v1
-catalog_version: 1.0.0
+catalog_version: 1.1.0
 authority_policy: catalog_references_only_no_parallel_rule_body
 phases:
 - key: initiation
@@ -51,9 +51,12 @@ rules:
   validation:
   - 核验仓库身份、绑定或公共稳定版
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - project_setup
 - key: std.authorization
   title: 读取与动作授权
   category: common
@@ -146,9 +149,12 @@ rules:
   validation:
   - 核对适用条件、取舍及实际接入状态
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - project_setup
 - key: std.onboarding
   title: 项目创建和存量接管
   category: stage
@@ -156,7 +162,8 @@ rules:
   applies_to_phases:
   - initiation
   task_classes: *id002
-  task_kinds: *id003
+  task_kinds:
+  - modify
   trigger: 用户授权创建/采纳/接管
   authority: docs/standards/01-initiation.md
   owner: project-owner
@@ -166,9 +173,12 @@ rules:
   validation:
   - 实际初始化/doctor回执
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - project_setup
 - key: std.configuration
   title: 组件与环境资源配置
   category: stage
@@ -187,9 +197,12 @@ rules:
   validation:
   - 核对声明、本机绑定和凭证需求
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - project_setup
 - key: std.requirements
   title: 需求与验收目标
   category: stage
@@ -208,9 +221,12 @@ rules:
   validation:
   - 核对确认依据及正常/拒绝场景
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - requirements_change
 - key: std.module-map
   title: 模块地图
   category: stage
@@ -230,9 +246,12 @@ rules:
   validation:
   - 模块地图与源码事实核验
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - public_contract
 - key: std.technical-map
   title: 技术地图与公共复用
   category: stage
@@ -251,9 +270,12 @@ rules:
   validation:
   - 检索已实现能力与项目信号
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - source_change
 - key: std.external-contract
   title: 外部契约与集成
   category: stage
@@ -274,9 +296,12 @@ rules:
   validation:
   - 真实契约/目标联调与缺口回执
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - external_dependency
 - key: std.coding
   title: 编码与接口兼容
   category: stage
@@ -284,7 +309,8 @@ rules:
   applies_to_phases:
   - development
   task_classes: *id002
-  task_kinds: *id003
+  task_kinds:
+  - modify
   trigger: 实现、修复或重构
   authority: docs/standards/03-development.md
   owner: project-owner
@@ -294,9 +320,12 @@ rules:
   validation:
   - 项目实际编码/接口规范及定向测试
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - source_change
 - key: std.collaboration
   title: 分支协作与集成
   category: stage
@@ -304,7 +333,8 @@ rules:
   applies_to_phases:
   - development
   task_classes: *id002
-  task_kinds: *id003
+  task_kinds:
+  - modify
   trigger: 多个写入者或任务分支集成
   authority: docs/standards/03-development.md
   owner: project-owner
@@ -314,9 +344,12 @@ rules:
   validation:
   - 核对独立工作树、租约及集成输入
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - source_change
 - key: std.resources
   title: 设备预算与制品复用
   category: resource
@@ -337,9 +370,12 @@ rules:
   validation:
   - 核对当前资源、输入哈希与目标基线
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - resources
 - key: std.test-scope
   title: 测试授权与影响范围
   category: stage
@@ -370,7 +406,11 @@ rules:
   applies_to_phases:
   - testing
   task_classes: *id002
-  task_kinds: *id003
+  task_kinds:
+  - test
+  - modify
+  - deploy
+  - deliver
   trigger: Test Contract注册或验证收口
   authority: docs/standards/task-checklists.md
   owner: project-owner
@@ -380,7 +420,7 @@ rules:
   validation:
   - 空套件不得passed；validate-task核验
   enforcement: script
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
 - key: std.real-journeys
@@ -400,9 +440,12 @@ rules:
   validation:
   - 有数据动作、刷新、拒绝、项目视口回读
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - browser
 - key: std.deployment
   title: 部署方案与冻结制品
   category: stage
@@ -410,7 +453,8 @@ rules:
   applies_to_phases:
   - deployment
   task_classes: *id002
-  task_kinds: *id003
+  task_kinds:
+  - deploy
   trigger: 用户授权目标部署
   authority: docs/standards/05-deployment.md
   owner: project-owner
@@ -420,7 +464,7 @@ rules:
   validation:
   - 核对实际目标/版本/哈希与健康
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
 - key: std.database
@@ -441,9 +485,12 @@ rules:
   validation:
   - 目标身份/数据保护/旧值/回读与应用复诊
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - database
 - key: std.recovery
   title: 失败恢复与最小续跑
   category: stage
@@ -476,7 +523,10 @@ rules:
   - deployment
   - delivery
   task_classes: *id002
-  task_kinds: *id003
+  task_kinds:
+  - modify
+  - deploy
+  - deliver
   trigger: 用户可见变化、部署或交付收尾
   authority: docs/standards/06-delivery.md
   owner: project-owner
@@ -486,7 +536,7 @@ rules:
   validation:
   - 实际变化和原发布/交付回执对应
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
 - key: std.customer-candidate
@@ -495,8 +545,12 @@ rules:
   primary_phase: delivery
   applies_to_phases:
   - delivery
-  task_classes: *id002
-  task_kinds: *id003
+  task_classes:
+  - small_change
+  - iteration
+  - formal_delivery
+  task_kinds:
+  - deliver
   trigger: 对客户代码或制品交付
   authority: docs/standards/06-delivery.md
   owner: project-owner
@@ -506,7 +560,7 @@ rules:
   validation:
   - 真实目标公共API/依赖与范围核验
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
 - key: std.handoff
@@ -516,7 +570,8 @@ rules:
   applies_to_phases:
   - delivery
   task_classes: *id002
-  task_kinds: *id003
+  task_kinds:
+  - deliver
   trigger: 用户、技术、运维或UAT交付
   authority: docs/standards/06-delivery.md
   owner: project-owner
@@ -526,7 +581,7 @@ rules:
   validation:
   - 引用闭包、权限、未验证项与真人签收独立
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
 - key: std.libraries
@@ -545,9 +600,12 @@ rules:
   validation:
   - 权限/适用条件/version/hash与当前项目复验
   enforcement: manual
-  version: 1.0.0
+  version: 1.1.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - knowledge_reuse
 - key: std.feedback
   title: 经验候选与审核回流
   category: resource
@@ -564,6 +622,43 @@ rules:
   validation:
   - 补证据、脱敏、审核及共享范围确认
   enforcement: manual
+  version: 1.1.0
+  exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
+  reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。
+  applicability:
+    any_facts:
+    - knowledge_reuse
+- key: std.task-lifecycle
+  title: 任务生命周期与资源收尾
+  category: common
+  primary_phase: development
+  applies_to_phases:
+  - initiation
+  - design
+  - development
+  - testing
+  - deployment
+  - delivery
+  task_classes:
+  - small_change
+  - iteration
+  - formal_delivery
+  task_kinds:
+  - read_only
+  - modify
+  - test
+  - deploy
+  - deliver
+  trigger: 开工、恢复、等待、失败、取消、交接与结束
+  authority: docs/ai-coding/task-lifecycle.md
+  owner: project-owner
+  requirement: required
+  deliverables:
+  - task_lifecycle_status
+  - resource_cleanup_status
+  validation:
+  - validate-task检查可选生命周期声明、证据、资源归属与收尾一致性；实际资源回收由当前工具或执行器回执证明
+  enforcement: script
   version: 1.0.0
   exception_policy: 沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。
   reuse_policy: 输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。

@@ -50,6 +50,7 @@ def test_cli_missing_is_a_reported_file_only_fallback(project, monkeypatch):
     # Load a separate module so fixture's handshake replacement does not hide the real adapter.
     real = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(real)
+    monkeypatch.setattr(real.Path, "home", lambda: project.parent / "isolated-home")
     monkeypatch.setattr(real, "probe", lambda *args: (_ for _ in ()).throw(FileNotFoundError()))
     real.sample = lambda: {"pressure": "normal"}
     result = real.inspect(project)

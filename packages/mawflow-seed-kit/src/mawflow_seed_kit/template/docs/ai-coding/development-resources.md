@@ -74,3 +74,5 @@ python3 ops/scripts/development-resources.py run --workload docker --execute -- 
 Git Seed 和 Kit 物化都包含规范、脚本、Agent 规则及升级资产；旧项目经自身模板升级增量合并，保护项目事实与本机配置。仅开发源提交不会让所有既有项目立即生效；公共稳定 Seed/Kit 发行、各项目采用、正式 Host 安装和真人验收分别记录。
 
 验收覆盖只读零写入、CLI缺失/能力不支持/工作台离线、真实上下文回读、双项目互斥、包装进程崩溃后子任务持锁、超时清理、失败退出码和 Git/Kit 资产一致性。收口记录资源压力、通信状态、并发选择、服务复用/新增理由与未验证项。
+
+任务开工、恢复与收尾按 `docs/ai-coding/task-lifecycle.md` 执行；分别说明执行结果、业务关闭与资源回收，等待/失败/取消/交接也清点资源。

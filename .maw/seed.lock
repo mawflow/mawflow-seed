@@ -1,11 +1,11 @@
 schema: mawflow.seed_lock.v2
 contract_version: 2
-contract_fingerprint: sha256:80fb3337f2f22c79a93d5afc81210c4f0d222bd8c1c78728860e27861673cfd0
-seed_version: 2.14.0
+contract_fingerprint: sha256:dc8a88cc9a74dba0bfca543289ec96758bea322ff2b8ea023cce798bdd1e6f35
+seed_version: 2.15.0
 profile: seed-development
 source:
   kind: seed_development_repository
   repository: maw-project-template
 bom:
-  kit: mawflow-seed-kit==2.14.0
+  kit: mawflow-seed-kit==2.15.0
   contract: seed-contract-v2

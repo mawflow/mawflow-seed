@@ -35,3 +35,6 @@ rules:
 - id: stage_standards_scoped_execution
   severity: required
   summary: 按docs/standards/README.md和规范目录选择六阶段及任务深度，只读命中权威；授权、模块边界、状态与证据独立。未采用/空测试/过期证据不称通过；规范快照不替代原任务、测试、发布或真人验收。
+- id: task_lifecycle_and_resource_closeout
+  severity: required
+  summary: 按 docs/ai-coding/task-lifecycle.md 完成定界、准备、执行、验证、交付与资源收尾；失败、取消、等待、交接同样清点本任务资源，借用页面交还控制，临时标签按工具文档关闭，保留须有用途/归属/复查条件；待自动收尾、失败和未知不得称已释放，执行结束不等于业务验收关闭。

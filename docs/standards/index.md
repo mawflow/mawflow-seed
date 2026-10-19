@@ -20,6 +20,7 @@
 | 组件与环境资源配置 | stage | 新增组件、环境或部署目标 | manual | [std.configuration](01-initiation.md) |
 | 公共经验与资源采用 | resource | 任务需要共享资源或工程经验 | manual | [std.libraries](knowledge-resources.md) |
 | 经验候选与审核回流 | resource | 产生跨项目可复用经验 | manual | [std.feedback](knowledge-resources.md) |
+| 任务生命周期与资源收尾 | common | 开工、恢复、等待、失败、取消、交接与结束 | script | [std.task-lifecycle](../ai-coding/task-lifecycle.md) |
 
 ## 需求与设计
 
@@ -39,6 +40,7 @@
 | 外部契约与集成 | stage | 依赖外部服务或公共模块 | manual | [std.external-contract](02-design.md) |
 | 公共经验与资源采用 | resource | 任务需要共享资源或工程经验 | manual | [std.libraries](knowledge-resources.md) |
 | 经验候选与审核回流 | resource | 产生跨项目可复用经验 | manual | [std.feedback](knowledge-resources.md) |
+| 任务生命周期与资源收尾 | common | 开工、恢复、等待、失败、取消、交接与结束 | script | [std.task-lifecycle](../ai-coding/task-lifecycle.md) |
 
 ## 开发与集成
 
@@ -62,6 +64,7 @@
 | 更新文档与冻结快照 | stage | 用户可见变化、部署或交付收尾 | manual | [std.update-notes](06-delivery.md) |
 | 公共经验与资源采用 | resource | 任务需要共享资源或工程经验 | manual | [std.libraries](knowledge-resources.md) |
 | 经验候选与审核回流 | resource | 产生跨项目可复用经验 | manual | [std.feedback](knowledge-resources.md) |
+| 任务生命周期与资源收尾 | common | 开工、恢复、等待、失败、取消、交接与结束 | script | [std.task-lifecycle](../ai-coding/task-lifecycle.md) |
 
 ## 测试与质量
 
@@ -84,6 +87,7 @@
 | 失败恢复与最小续跑 | stage | 失败、输入变化或继续未完步骤 | manual | [std.recovery](05-deployment.md) |
 | 公共经验与资源采用 | resource | 任务需要共享资源或工程经验 | manual | [std.libraries](knowledge-resources.md) |
 | 经验候选与审核回流 | resource | 产生跨项目可复用经验 | manual | [std.feedback](knowledge-resources.md) |
+| 任务生命周期与资源收尾 | common | 开工、恢复、等待、失败、取消、交接与结束 | script | [std.task-lifecycle](../ai-coding/task-lifecycle.md) |
 
 ## 部署与发布
 
@@ -107,6 +111,7 @@
 | 更新文档与冻结快照 | stage | 用户可见变化、部署或交付收尾 | manual | [std.update-notes](06-delivery.md) |
 | 公共经验与资源采用 | resource | 任务需要共享资源或工程经验 | manual | [std.libraries](knowledge-resources.md) |
 | 经验候选与审核回流 | resource | 产生跨项目可复用经验 | manual | [std.feedback](knowledge-resources.md) |
+| 任务生命周期与资源收尾 | common | 开工、恢复、等待、失败、取消、交接与结束 | script | [std.task-lifecycle](../ai-coding/task-lifecycle.md) |
 
 ## 交付与移交
 
@@ -131,3 +136,4 @@
 | 文档审计与责任移交 | stage | 用户、技术、运维或UAT交付 | manual | [std.handoff](06-delivery.md) |
 | 公共经验与资源采用 | resource | 任务需要共享资源或工程经验 | manual | [std.libraries](knowledge-resources.md) |
 | 经验候选与审核回流 | resource | 产生跨项目可复用经验 | manual | [std.feedback](knowledge-resources.md) |
+| 任务生命周期与资源收尾 | common | 开工、恢复、等待、失败、取消、交接与结束 | script | [std.task-lifecycle](../ai-coding/task-lifecycle.md) |

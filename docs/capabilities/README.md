@@ -84,3 +84,9 @@ docs/capabilities/<capability-key>.md
 - [发布全部与逐组件基线](incremental-release-all.md)：按上次成功提交筛选、部分成功记录与失败重试。
 
 - [可选项目运行健康](runtime-health-contract.md)：原生接口或独立采集按需接入；不改变 Seed 健康评分。
+
+- [配置诊断与修复](../ai-instructions/instructions/configuration-repair.md)：工作台可视化、Agent 和 CLI 同源追踪配置到实际消费者，分层验证修复结果。
+
+- [Seed 与本地产品工作台](seed-workbench-integration.md)：规范可视化、Seed 项目管理和同源消费闭环。
+
+- [任务生命周期与资源收尾](../ai-coding/task-lifecycle.md)：跨工具任务阶段、恢复、浏览器控制交还、资源保留及文件侧回执检查。

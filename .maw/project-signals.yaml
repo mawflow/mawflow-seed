@@ -70,3 +70,21 @@ signals:
     created_at: '2026-10-10'
     last_updated: '2026-10-10'
     resolution: ''
+  - id: SIG-20261019-task-lifecycle
+    type: ai_precondition
+    status: active
+    severity: medium
+    audience:
+    - human
+    - ai
+    - reviewer
+    title: 任务执行结束与业务关闭、资源回收分别判断
+    human_summary: 等待、失败、取消与交接也清点本任务资源；借用浏览器页面交还控制，自动收尾未回读不称已释放。
+    ai_preconditions:
+    - 开工、恢复、收尾读取任务生命周期权威；只读不落盘，不清理归属不明资源。
+    related_modules: []
+    related_capabilities:
+    - task-lifecycle-resource-closeout
+    related_todos: []
+    evidence_paths:
+    - docs/ai-coding/task-lifecycle.md

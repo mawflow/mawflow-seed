@@ -139,3 +139,5 @@ AI/Codex 不应在任务开始时全量读取 `docs/**`。本目录采用“总�
 - [开发资源与本机通信](ai-coding/development-resources.md)：按需环境、设备重任务串行及工作台/CLI回读。
 
 - [六阶段规范导航](standards/README.md)：阶段入口、项目采用、任务清单与独立证据；只读目录后按需读取正文。
+
+- [任务生命周期与资源收尾](ai-coding/task-lifecycle.md)：跨工具任务阶段、恢复、浏览器控制交还、资源保留及文件侧回执检查。

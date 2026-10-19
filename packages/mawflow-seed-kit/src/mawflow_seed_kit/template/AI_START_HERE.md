@@ -23,3 +23,5 @@ CLI、MCP、Skill 和 RTK 均可选；无工具集成时仍能直接读取本入
 - 本地开发开工、恢复与重任务前后按 `docs/ai-coding/development-resources.md` 检查资源和工作台/CLI；按需复用服务，跨项目重任务串行，通信失败回退项目文件。
 
 - [六阶段规范导航](docs/standards/README.md)：按项目适用条件、任务范围与风险选择规范，验证与交付状态分别记录。
+
+任务开工、恢复与收尾按 `docs/ai-coding/task-lifecycle.md` 执行，分别记录执行、业务关闭和资源状态。

@@ -1,6 +1,6 @@
 {
   "schema": "mawflow.standards_inspection.v1",
-  "source_hash": "sha256:57575a975b1e9a125a7009822263d409f80c8599d65cd23cd9f76b1b49f5ff7e",
+  "source_hash": "sha256:f50e7ccd2927fd08a2ac8f264ef0c4e76a3b80e669cb3636123512409a04ace7",
   "phases": [
     {
       "key": "initiation",
@@ -70,9 +70,14 @@
         "核验仓库身份、绑定或公共稳定版"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "project_setup"
+        ]
+      }
     },
     {
       "key": "std.authorization",
@@ -270,9 +275,14 @@
         "核对适用条件、取舍及实际接入状态"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "project_setup"
+        ]
+      }
     },
     {
       "key": "std.onboarding",
@@ -288,11 +298,7 @@
         "formal_delivery"
       ],
       "task_kinds": [
-        "read_only",
-        "modify",
-        "test",
-        "deploy",
-        "deliver"
+        "modify"
       ],
       "trigger": "用户授权创建/采纳/接管",
       "authority": "docs/standards/01-initiation.md",
@@ -305,9 +311,14 @@
         "实际初始化/doctor回执"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "project_setup"
+        ]
+      }
     },
     {
       "key": "std.configuration",
@@ -341,9 +352,14 @@
         "核对声明、本机绑定和凭证需求"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "project_setup"
+        ]
+      }
     },
     {
       "key": "std.requirements",
@@ -377,9 +393,14 @@
         "核对确认依据及正常/拒绝场景"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "requirements_change"
+        ]
+      }
     },
     {
       "key": "std.module-map",
@@ -414,9 +435,14 @@
         "模块地图与源码事实核验"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "public_contract"
+        ]
+      }
     },
     {
       "key": "std.technical-map",
@@ -450,9 +476,14 @@
         "检索已实现能力与项目信号"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "source_change"
+        ]
+      }
     },
     {
       "key": "std.external-contract",
@@ -488,9 +519,14 @@
         "真实契约/目标联调与缺口回执"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "external_dependency"
+        ]
+      }
     },
     {
       "key": "std.coding",
@@ -506,11 +542,7 @@
         "formal_delivery"
       ],
       "task_kinds": [
-        "read_only",
-        "modify",
-        "test",
-        "deploy",
-        "deliver"
+        "modify"
       ],
       "trigger": "实现、修复或重构",
       "authority": "docs/standards/03-development.md",
@@ -523,9 +555,14 @@
         "项目实际编码/接口规范及定向测试"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "source_change"
+        ]
+      }
     },
     {
       "key": "std.collaboration",
@@ -541,11 +578,7 @@
         "formal_delivery"
       ],
       "task_kinds": [
-        "read_only",
-        "modify",
-        "test",
-        "deploy",
-        "deliver"
+        "modify"
       ],
       "trigger": "多个写入者或任务分支集成",
       "authority": "docs/standards/03-development.md",
@@ -558,9 +591,14 @@
         "核对独立工作树、租约及集成输入"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "source_change"
+        ]
+      }
     },
     {
       "key": "std.resources",
@@ -596,9 +634,14 @@
         "核对当前资源、输入哈希与目标基线"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "resources"
+        ]
+      }
     },
     {
       "key": "std.test-scope",
@@ -652,9 +695,8 @@
         "formal_delivery"
       ],
       "task_kinds": [
-        "read_only",
-        "modify",
         "test",
+        "modify",
         "deploy",
         "deliver"
       ],
@@ -669,7 +711,7 @@
         "空套件不得passed；validate-task核验"
       ],
       "enforcement": "script",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
       "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
     },
@@ -704,9 +746,14 @@
         "有数据动作、刷新、拒绝、项目视口回读"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "browser"
+        ]
+      }
     },
     {
       "key": "std.deployment",
@@ -722,11 +769,7 @@
         "formal_delivery"
       ],
       "task_kinds": [
-        "read_only",
-        "modify",
-        "test",
-        "deploy",
-        "deliver"
+        "deploy"
       ],
       "trigger": "用户授权目标部署",
       "authority": "docs/standards/05-deployment.md",
@@ -739,7 +782,7 @@
         "核对实际目标/版本/哈希与健康"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
       "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
     },
@@ -775,9 +818,14 @@
         "目标身份/数据保护/旧值/回读与应用复诊"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "database"
+        ]
+      }
     },
     {
       "key": "std.recovery",
@@ -833,9 +881,7 @@
         "formal_delivery"
       ],
       "task_kinds": [
-        "read_only",
         "modify",
-        "test",
         "deploy",
         "deliver"
       ],
@@ -850,7 +896,7 @@
         "实际变化和原发布/交付回执对应"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
       "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
     },
@@ -868,10 +914,6 @@
         "formal_delivery"
       ],
       "task_kinds": [
-        "read_only",
-        "modify",
-        "test",
-        "deploy",
         "deliver"
       ],
       "trigger": "对客户代码或制品交付",
@@ -885,7 +927,7 @@
         "真实目标公共API/依赖与范围核验"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
       "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
     },
@@ -903,10 +945,6 @@
         "formal_delivery"
       ],
       "task_kinds": [
-        "read_only",
-        "modify",
-        "test",
-        "deploy",
         "deliver"
       ],
       "trigger": "用户、技术、运维或UAT交付",
@@ -920,7 +958,7 @@
         "引用闭包、权限、未验证项与真人签收独立"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
       "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
     },
@@ -960,9 +998,14 @@
         "权限/适用条件/version/hash与当前项目复验"
       ],
       "enforcement": "manual",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
-      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "knowledge_reuse"
+        ]
+      }
     },
     {
       "key": "std.feedback",
@@ -1000,6 +1043,52 @@
         "补证据、脱敏、审核及共享范围确认"
       ],
       "enforcement": "manual",
+      "version": "1.1.0",
+      "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
+      "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。",
+      "applicability": {
+        "any_facts": [
+          "knowledge_reuse"
+        ]
+      }
+    },
+    {
+      "key": "std.task-lifecycle",
+      "title": "任务生命周期与资源收尾",
+      "category": "common",
+      "primary_phase": "development",
+      "applies_to_phases": [
+        "initiation",
+        "design",
+        "development",
+        "testing",
+        "deployment",
+        "delivery"
+      ],
+      "task_classes": [
+        "small_change",
+        "iteration",
+        "formal_delivery"
+      ],
+      "task_kinds": [
+        "read_only",
+        "modify",
+        "test",
+        "deploy",
+        "deliver"
+      ],
+      "trigger": "开工、恢复、等待、失败、取消、交接与结束",
+      "authority": "docs/ai-coding/task-lifecycle.md",
+      "owner": "project-owner",
+      "requirement": "required",
+      "deliverables": [
+        "task_lifecycle_status",
+        "resource_cleanup_status"
+      ],
+      "validation": [
+        "validate-task检查可选生命周期声明、证据、资源归属与收尾一致性；实际资源回收由当前工具或执行器回执证明"
+      ],
+      "enforcement": "script",
       "version": "1.0.0",
       "exception_policy": "沿用已确认精确例外；变化记录依据、范围、责任和有效期，不能由工具授予。",
       "reuse_policy": "输入版本、环境、范围和证据仍有效时复用；变化只重验受影响部分。"
