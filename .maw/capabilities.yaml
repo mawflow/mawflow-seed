@@ -32,6 +32,31 @@ capability_registry:
   closeout_metadata_key: capability_map_update_status
 
 capabilities:
+  - key: project-governance-dialogue
+    name: 项目权威问答与档案闭环
+    type: governance_protocol
+    status: candidate
+    origin: seed_repository
+    owner_module: ''
+    owner_component: ''
+    related_app_keys: []
+    summary: 以同源版本记录连接AI理解、人工确认、待回应问题、消费回执与固定档案。
+    implementation_paths:
+    - ops/scripts/maw_governance/
+    - ops/scripts/manage-project-governance.py
+    - docs/ai-coding/project-governance.md
+    - docs/capabilities/project-governance-dialogue.md
+    provided_contracts:
+    - mawflow.project_governance.v1
+    - mawflow.document_source.v3
+    - mawflow.document_work_event.v2
+    reusable_entrypoints:
+    - mawflow project governance
+    - mawflow_seed_kit.governance.project_governance
+    consumed_by_modules: []
+    validation:
+    - python3 -m pytest -q tests/test_project_governance.py tests/test_document_source_capture.py
+    last_verified_commit: ''
   - key: development-resource-coordination
     name: 对话开发资源协调
     type: governance_protocol

@@ -87,6 +87,9 @@ rules:
   severity: required
   summary: 获准修改且形成对使用者有意义的新增、优化、修复、安全或使用文档变化时，按 docs/ai-coding/update-notes.md 追加
     update_note 权威片段并生成最近100条、完整历史与云端分页；只读不落盘，开发、发布、验证和真人验收独立标注。
+- id: consume_confirmed_project_answers
+  severity: required
+  summary: 支持项目口径协议时按 docs/ai-coding/project-governance.md 读取任务范围有效问答，并在获准修改任务记录精确版本消费回执；疑义、风险、冲突、待办和建议形成可回应问题，仅阻塞依赖动作。AI理解保持候选，人工精确确认才生效；档案实质修订映射回口径，不自动扩大授权。
 - id: coordinate_development_resources
   severity: required
   summary: 本地对话开发开工、恢复及重任务前后按 docs/ai-coding/development-resources.md 检查资源和已装工作台/CLI；按需复用服务，同一用户跨项目重任务默认串行，离线回退项目文件，不自动安装、调参、停服务或上传会话。

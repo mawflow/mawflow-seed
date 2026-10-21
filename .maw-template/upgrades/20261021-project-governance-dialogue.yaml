@@ -1,0 +1,32 @@
+schema_version: 1
+upgrade_key: 20261021-project-governance-dialogue
+title: 项目权威问答、人机对话与档案修订
+risk_level: T2
+status: active
+summary:
+  - 追加来源v3和事件v2，支持业务技术问答、待回应问题、精确确认与AI消费回执。
+  - 档案固定版本及对应口径变更使用同一原子完成记录；失败不提前激活新口径。
+source_template_files:
+  - ops/scripts/capture-document-source.py
+  - ops/scripts/manage-project-governance.py
+  - ops/scripts/maw_governance/
+  - docs/ai-coding/project-governance.md
+  - docs/template-migrations/20261021-project-governance-dialogue.md
+  - .maw/agent-entry.yaml
+  - .maw/agent-rules.yaml
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect: [README.md, code/, app_key, release configuration, repository mappings, real secrets, .local/, module dossiers, existing intake records]
+  forbidden:
+    - 自动确认历史AI分析或将确认来源声明冒充已验证账号
+    - 复制源项目真实问答到其它项目
+    - 用私有Seed工作副本升级公共渠道的业务项目
+    - 联合修订完成前暴露新口径或覆盖旧档案版本
+validation:
+  - python3 -m pytest -q tests/test_project_governance.py tests/test_document_source_capture.py
+  - git diff --check
+  - bash ops/scripts/check-ai-framework-consistency.sh
+  - bash ops/scripts/check-local-boundary.sh
+propagation:
+  migration_note: docs/template-migrations/20261021-project-governance-dialogue.md

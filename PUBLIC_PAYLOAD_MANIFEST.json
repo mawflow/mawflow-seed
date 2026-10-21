@@ -1,10 +1,10 @@
 {
   "schema": "mawflow.seed_public_payload.v2",
-  "seed_version": "2.15.0",
+  "seed_version": "2.16.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:dc8a88cc9a74dba0bfca543289ec96758bea322ff2b8ea023cce798bdd1e6f35",
+  "contract_fingerprint": "sha256:d1c02012e8e64354cdd1e47d5e798fefbca7e26792d8313122cefa5bef310a55",
   "bom": {
-    "kit": "mawflow-seed-kit==2.15.0",
+    "kit": "mawflow-seed-kit==2.16.0",
     "contract": "seed-contract-v2"
   },
   "required_paths": [
@@ -223,7 +223,21 @@
     "docs/standards/execution-protocol.md",
     "docs/standards/examples/execution-task.yaml",
     "docs/template-migrations/20261019-standards-execution.md",
-    ".maw-template/upgrades/20261019-standards-execution.yaml"
+    ".maw-template/upgrades/20261019-standards-execution.yaml",
+    "ops/scripts/manage-project-governance.py",
+    "docs/ai-coding/project-governance.md",
+    "ops/scripts/maw_governance/__init__.py",
+    "ops/scripts/maw_governance/artifacts.py",
+    "ops/scripts/maw_governance/authority.py",
+    "ops/scripts/maw_governance/model.py",
+    "ops/scripts/maw_governance/service.py",
+    "ops/scripts/maw_governance/store.py",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/governance.py",
+    "tests/test_project_governance.py",
+    "docs/template-migrations/20261021-project-governance-dialogue.md",
+    ".maw-template/upgrades/20261021-project-governance-dialogue.yaml",
+    "packages/mawflow-seed-kit/src/mawflow_seed_kit/commands/governance.py",
+    "docs/capabilities/project-governance-dialogue.md"
   ],
   "forbidden_paths": [
     ".maw/secrets.yaml",

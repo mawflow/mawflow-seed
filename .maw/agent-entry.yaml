@@ -155,6 +155,15 @@ execution_contract:
     - blocked
     - verification
     - handoff
+  project_governance:
+    schema: mawflow.project_governance.v1
+    source_schema: mawflow.document_source.v3
+    policy: docs/ai-coding/project-governance.md
+    command: mawflow project governance
+    portable_tool: ops/scripts/manage-project-governance.py
+    authority: confirmed_question_versions
+    confirmation_does_not_grant_execution_permission: true
+    consumption_requires_exact_context: true
   update_notes:
     policy: docs/ai-coding/update-notes.md
     source: .maw/changes/*.yaml
@@ -251,6 +260,7 @@ task_routes:
   - MAWFLOW_CLI.md
   - docs/ai-coding/project-workflow.md
   governance:
+  - docs/ai-coding/project-governance.md
   - docs/standards/README.md
   - docs/ai-instructions/README.md
   standards:

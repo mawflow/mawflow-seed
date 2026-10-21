@@ -120,6 +120,8 @@ def build_parser() -> argparse.ArgumentParser:
     agent_context.add_argument("--task-kind", choices=["development", "review", "delivery", "governance"], default="development")
     agent_context.add_argument("--max-chars", type=int, default=12000)
     agent_context.add_argument("--format", choices=["json", "markdown"], default="json")
+    from .governance import configure as configure_governance
+    configure_governance(project_sub.add_parser("governance", help="Read, discuss and confirm versioned project answers and deliverables."))
     upgrade_project = project_sub.add_parser(
         "upgrade", help="Preview or apply a one-time Seed Contract v2 migration."
     )
@@ -342,7 +344,7 @@ def main(argv: list[str] | None = None, *, authorize_upgrade: Callable[[], objec
         _json_print(runtime_info())
         return 0
     if args.area == "capabilities":
-        _json_print({"schema": "mawflow.seed_cli.capabilities.v1", "version": runtime_info()["seed_version"], "runtime": runtime_info(), "profile": "seed-cli", "host_required": False, "daily_login_required": False, "capabilities": ["cli.read_only", "cli.output_contract.v1", "cli.runtime_info", "cli.doctor_summary", "project.init.current_directory", "project.init.existing_git", "project.init.idempotent", "component.lifecycle", "project.agent_context", "project.upgrade.online_account_required"]})
+        _json_print({"schema": "mawflow.seed_cli.capabilities.v1", "version": runtime_info()["seed_version"], "runtime": runtime_info(), "profile": "seed-cli", "host_required": False, "daily_login_required": False, "capabilities": ["cli.read_only", "cli.output_contract.v1", "cli.runtime_info", "cli.doctor_summary", "project.init.current_directory", "project.init.existing_git", "project.init.idempotent", "component.lifecycle", "project.agent_context", "project.governance.v1", "project.upgrade.online_account_required"]})
         return 0
     if args.area == "project" and args.command == "upgrade" and args.execute and not args.rollback:
         try:
@@ -653,6 +655,15 @@ def main(argv: list[str] | None = None, *, authorize_upgrade: Callable[[], objec
                         ],
                     }
                 )
+                return 1
+        if args.command == "governance":
+            from .governance import execute
+            try:
+                _json_print(execute(args))
+                return 0
+            except (OSError, ValueError, TypeError, KeyError) as exc:
+                reason = str(exc) if isinstance(exc, ValueError) and str(exc).replace("_", "").isalnum() else "governance_request_invalid"
+                _json_print({"status": "failed", "error": reason, "message": "口径操作未完成，请核对版本、预览和确认范围。"})
                 return 1
         if args.command in {"agents", "context"}:
             try:
