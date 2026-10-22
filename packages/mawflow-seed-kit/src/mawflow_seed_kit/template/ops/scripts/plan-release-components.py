@@ -109,6 +109,8 @@ def resolve_environment(target: str, releases: Dict[str, Any]) -> Tuple[str, Opt
     defaults = (releases.get("releases") or {}).get("defaults") or {}
     aliases = defaults.get("release_command_aliases") or {}
     normalized = normalize_phrase(target)
+    normalized = {"生产": "production", "正式": "production", "测试": "test",
+                  "上线": "staging", "预发": "staging"}.get(normalized, normalized)
 
     for alias_key, alias in aliases.items():
         if not isinstance(alias, dict):

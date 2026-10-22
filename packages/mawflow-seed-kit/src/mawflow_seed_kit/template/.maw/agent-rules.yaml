@@ -41,3 +41,23 @@ rules:
 - id: task_lifecycle_and_resource_closeout
   severity: required
   summary: 按 docs/ai-coding/task-lifecycle.md 完成定界、准备、执行、验证、交付与资源收尾；失败、取消、等待、交接同样清点本任务资源，借用页面交还控制，临时标签按工具文档关闭，保留须有用途/归属/复查条件；待自动收尾、失败和未知不得称已释放，执行结束不等于业务验收关闭。
+
+- id: record_public_execution_materials
+  severity: required
+  summary: 无人值守任务按task/run记录公开理解、假设、理由、调整和失败恢复；收口保留原始目标与验证依据，缺失如实提示，不采集隐藏推理，不由最终结果倒推理由。
+
+- id: archive_explicit_document_outputs
+  severity: required
+  summary: 明确要求保存的方案、沉淀和交付文档按项目口径协议登记固定版本并回读；普通入档不依赖无关口径。用户原件默认受管本地保存，不进Git或自动分享；失败只续作登记。
+
+- id: bind_release_version_before_execution
+  severity: required
+  summary: 采用版本节点协议后，每次发布在执行前绑定项目既有版本、候选、目标和明确变更成员；同请求复用节点，实际状态仍回读原发布系统，摘要失败不重跑部署。
+
+- id: human_direct_governance_maintenance
+  severity: required
+  summary: 人工可直接新增、编辑和删除口径；写入绑定完整正文、范围、版本及预览，删除以停用修订退出有效阅读和AI上下文，保留历史与原引用，不由AI代替人工确认。
+
+- id: browser_connection_recovery
+  severity: required
+  summary: 浏览器操作先按 docs/ai-coding/browser-connection.md 读取当前工具文档；用户指定优先，否则优先健康官方入口。按加载、发现、原生连接、网络与页面分层定位，JS重置不替代MCP重连；保留官方命令、权限、可信登记与连接上下文，真实开页/点击/刷新/截图后才称恢复，本机配置不传播。

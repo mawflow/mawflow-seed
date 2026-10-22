@@ -1,0 +1,20 @@
+schema_version: 1
+upgrade_key: natural-language-learning
+title: 自然语言理解与经验复用闭环
+summary: 复用权威问答、来源事件和消费回执沉淀理解纠偏，并在新会话中复用与验证。
+source_version: 2.17.0-candidate
+owned_paths:
+  - ops/scripts/maw_governance/
+  - ops/scripts/capture-document-source.py
+  - ops/scripts/manage-project-governance.py
+  - docs/ai-coding/project-governance.md
+  - docs/ai-instructions/instructions/keyword-learning-loop.md
+  - docs/ai-instructions/instructions/project-memory-loop.md
+  - docs/capabilities/project-governance-dialogue.md
+  - docs/template-migrations/20261022-natural-language-learning.md
+preserve:
+  - 项目身份、真实组件、模块、发布配置与历史来源
+  - 本机覆盖、私有规则和并行维护能力
+validation:
+  - python3 -m pytest tests/test_natural_language_learning.py -q
+  - 新进程复用精确已确认版本，旧候选、失效和越范围案例不生效

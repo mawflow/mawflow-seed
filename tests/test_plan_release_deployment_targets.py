@@ -13,6 +13,19 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "ops/scripts/plan-release-components.py"
 
 
+@pytest.mark.parametrize(("phrase", "expected"), [
+    ("#发布全部 到生产", "production"), ("#发布全部 到正式", "production"),
+    ("#发布全部 到测试", "test"), ("#发布全部 到上线", "staging"),
+])
+def test_chinese_environment_names_resolve_to_canonical_scope(phrase, expected):
+    import runpy
+    planner = runpy.run_path(str(SCRIPT))
+    target, selected_all = planner["release_all_target"](phrase, {})
+    environment, _, _ = planner["resolve_environment"](target, {})
+    assert selected_all is True
+    assert environment == expected
+
+
 def _write(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump(payload, allow_unicode=True, sort_keys=False), encoding="utf-8")

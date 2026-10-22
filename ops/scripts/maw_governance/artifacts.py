@@ -4,17 +4,19 @@ from __future__ import annotations
 import hashlib
 from .model import context
 from .store import digest
+from .extensions import normalize_archive
 
 
 KINDS = {"requirements": "需求文档", "design": "设计文档", "acceptance": "测试与验收文档",
-         "delivery": "部署与交付文档", "maintenance": "使用与维护文档"}
+         "delivery": "部署与交付文档", "maintenance": "使用与维护文档", "plans": "方案与决策", "reference": "参考资料"}
 FIELDS = {"document_key", "document_kind", "document_title", "body", "previous_ref", "change_kind",
-          "question_changes", "review_refs", "selected_question_refs"}
+          "question_changes", "review_refs", "selected_question_refs", "category", "origin", "summary", "tags",
+          "document_state", "retention", "release_ref", "source_path", "resource_ref", "mime", "size", "content_hash", "original_name", "template_version", "document_category"}
 CHANGE_FIELDS = {"question_key", "scope", "question", "answer", "category", "claim_type", "rationale",
                  "exceptions", "base_refs", "evidence_paths", "modules", "resolves_issues"}
 
 
-def prepare(service, payload: dict, snapshot: dict, item: dict, event_id: str) -> tuple[list[dict], dict[str, bytes]]:
+def prepare(service, payload: dict, snapshot: dict, item: dict, event_id: str, *, registration=False) -> tuple[list[dict], dict[str, bytes]]:
     capture = service.capture
     kind = payload.get("document_kind")
     if kind not in KINDS:
@@ -28,7 +30,7 @@ def prepare(service, payload: dict, snapshot: dict, item: dict, event_id: str) -
     heads = [x for x in revisions if x["id"] not in replaced]
     if previous_ref and (previous is None or previous["artifact"]["document_key"] != key):
         raise ValueError("artifact_previous_version_invalid")
-    if previous:
+    if previous and previous["artifact"]["path"]:
         prior_path = capture.safe_path(service.root, previous["artifact"]["path"])
         expected = next((e["sha256"] for e in previous["evidence"] if e["path"] == previous["artifact"]["path"]), "")
         if hashlib.sha256(prior_path.read_bytes()).hexdigest() != expected:
@@ -60,18 +62,18 @@ def prepare(service, payload: dict, snapshot: dict, item: dict, event_id: str) -
     # A combined revision can resolve existing branches, but may not silently omit
     # other unresolved conflicts in a document's selected scope.
     mapped_refs = {ref for change in changes for ref in change.get("base_refs", [])}
-    if any(b["ref"] not in mapped_refs for b in current["blockers"]):
-        raise ValueError("artifact_unresolved_authority_conflict")
-    requested = payload.get("selected_question_refs")
+    requested = payload.get("selected_question_refs", [] if registration else None)
     if requested is not None and (not isinstance(requested, list) or any(not isinstance(x, str) for x in requested)):
         raise ValueError("invalid_artifact_selected_questions")
+    if any(b["ref"] not in mapped_refs and (requested is None or b["ref"] in requested) for b in current["blockers"]):
+        raise ValueError("artifact_unresolved_authority_conflict")
     selected = [x for x in current["questions"] if requested is None or x["ref"] in requested]
     if requested is not None and set(requested) != {q["ref"] for q in selected}:
         raise ValueError("artifact_question_version_changed")
     selected = [q for q in selected if q["ref"] not in mapped_refs]
     selected += [{"ref": f"{event_id}#{a['key']}", "question": a["business"]["title"], "answer": a["statement"],
                   "scope": a["business"]["scope"], "claim_type": a["qa"]["claim_type"]} for a in mapped]
-    if not selected and not payload.get("evidence_paths"):
+    if not registration and not selected and not payload.get("evidence_paths"):
         raise ValueError("artifact_authority_or_facts_required")
     facts = []
     if not isinstance(payload.get("evidence_paths", []), list) or len(payload.get("evidence_paths", [])) > 19:
@@ -83,18 +85,43 @@ def prepare(service, payload: dict, snapshot: dict, item: dict, event_id: str) -
             raise ValueError("evidence_too_large")
         facts.append({**evidence, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
     body = payload.get("body", "")
+    if registration and payload.get("source_path"):
+        if body or payload.get("resource_ref"):
+            raise ValueError("artifact_content_source_ambiguous")
+        source_path = capture.safe_path(service.root, payload["source_path"])
+        if not payload["source_path"].startswith("docs/") or source_path.suffix.lower() not in {".md", ".txt"} or source_path.stat().st_size > 262144:
+            raise ValueError("artifact_registration_source_invalid")
+        body = source_path.read_text(encoding="utf-8")
+        if len(facts) >= 19:
+            raise ValueError("artifact_evidence_limit_exceeded")
+        facts.append({"path": payload["source_path"], "kind": "document", "sha256": hashlib.sha256(source_path.read_bytes()).hexdigest()})
+    resource = payload.get("resource_ref", "")
+    if resource and (not registration or body or changes or selected):
+        raise ValueError("artifact_resource_registration_required")
+    if registration and not body and not resource:
+        raise ValueError("artifact_body_required")
     if body:
         body = capture.text(body, 90000, "artifact_body")
     review_refs = capture._strings(payload.get("review_refs", []), "artifact_review_refs", count=20, limit=240)
     if previous and change_kind == "substantive" and not review_refs:
         raise ValueError("artifact_revision_review_reference_required")
+    if payload.get("document_state") == "final" and (not review_refs or payload.get("source_kind") != "user_statement"):
+        raise ValueError("artifact_final_review_required")
+    category = payload.get("document_category", payload.get("category", kind))
+    # Older artifact requests carried the question's category in this field.
+    if not registration and "document_category" not in payload and category in {"business", "technical", "experience", "environment"}:
+        category = kind
+    metadata = normalize_archive(capture, {**payload, "document_kind": kind, "category": category,
+        "origin": payload.get("origin", "existing" if registration else "delivery_generated")})
     manifest = {"questions": selected, "facts": facts, "previous_ref": previous_ref, "review_refs": review_refs,
-                "scope": payload.get("scope", "project"), "body": body, "kind": kind}
+                "scope": payload.get("scope", "project"), "body": body, "kind": kind, "archive": metadata}
     input_hash = digest(manifest)
     version = event_id.removeprefix("governance-")
     relative = f"docs/deliverables/{key}/{version}.md"
-    lines = [f"# {title}", "", f"项目：{service.project_key} · 档案：{key} · 版本：{version}", "",
+    lines = [f"# {title}", "", f"项目：{service.project_key} · 文档状态：{metadata['document_state']}", "",
              "版本状态以对应项目来源回执为准；没有完成回执时仅为准备中的草稿。", "",
+             "## 档案正文", "", body or "正文尚待完善；当前仅冻结已选依据，不能作为完整交付文档。", "",
+             "<details><summary>查看来源、输入与版本</summary>", "",
              "## 已确认的项目口径", ""]
     for q in selected:
         lines += [f"### {q['question']}", "", q["answer"], "",
@@ -106,16 +133,16 @@ def prepare(service, payload: dict, snapshot: dict, item: dict, event_id: str) -
         lines += [f"- `{fact['path']}` · {fact['kind']} · SHA-256 `{fact['sha256']}`"]
     if not facts:
         lines += ["尚未选择代码或验证证据；本文不宣称功能已经实现或验收通过。"]
-    lines += ["", "## 档案正文", "", body or "以上为依据汇编。请结合所列证据完善交付说明，再进入人工审阅。", "",
-              "## 修订与审计", "", f"上一版本：{previous_ref or '首次生成'}", "",
+    lines += ["", "## 修订与审计", "", f"上一版本：{previous_ref or '首次生成'}", "",
               *[f"- 审阅依据：{ref}" for ref in review_refs], "", f"输入指纹：`{input_hash}`", ""]
+    lines += ["</details>", ""]
     content = "\n".join(lines).encode("utf-8")
     if len(content) > 262144:
         raise ValueError("artifact_too_large")
     artifact = {**item, "key": "document", "kind": "observation", "volume": "technical" if kind == "design" else "requirements",
         "statement": f"{title}形成固定版本；{len(selected)}条口径，{len(facts)}份代码或资料依据。",
-        "evidence": [*payload.get("evidence_paths", []), {"path": relative, "kind": "document"}],
-        "artifact": {"document_key": key, "version_key": version, "document_kind": kind, "path": relative,
+        "evidence": [{"path": f["path"], "kind": f["kind"]} for f in facts] + ([] if resource else [{"path": relative, "kind": "document"}]),
+        "artifact": {**metadata, "document_key": key, "document_title": title, "version_key": version, "document_kind": kind, "path": "" if resource else relative,
                      "input_hash": input_hash, "previous_ref": previous_ref, "question_refs": [q["ref"] for q in selected],
                      "change_kind": change_kind, "review_refs": review_refs}}
-    return [artifact, *mapped], {relative: content}
+    return [artifact, *mapped], {} if resource else {relative: content}

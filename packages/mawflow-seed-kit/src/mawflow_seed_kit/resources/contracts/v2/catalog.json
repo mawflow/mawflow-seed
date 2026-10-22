@@ -1,7 +1,7 @@
 {
   "schema": "mawflow.seed_contract_catalog.v2",
   "contract_version": 2,
-  "seed_version": "2.16.0",
+  "seed_version": "2.17.0",
   "required_files": [
     ".maw/seed.lock",
     ".maw/project.yaml",
@@ -27,8 +27,24 @@
     "CHATGPT_TO_AI.md",
     "code/README.md",
     "docs/README.md",
-    "docs/handbooks/manifest.yaml"
+    "docs/handbooks/manifest.yaml",
+    ".maw/project-governance.yaml"
   ],
+  "governance": {
+    "source_protocol": "mawflow.document_source.v4",
+    "work_protocol": "mawflow.document_work_event.v3",
+    "declaration": ".maw/project-governance.yaml",
+    "baseline_task": "project_governance_baseline",
+    "capabilities": [
+      "readable_governance.v1",
+      "governance_revision_batch.v1",
+      "governance_baseline.v1",
+      "curated_archives.v1",
+      "update_batches.v1",
+      "release_version_binding.v1",
+      "post_execution_review.v1"
+    ]
+  },
   "profiles": [
     {"key": "blank", "label": "空项目", "description": "只建立项目协议，组件通过 mawflow component init/adopt 显式创建"},
     {"key": "minimal", "label": "最小内核（兼容）", "description": "兼容旧调用，等价于 blank"},
@@ -375,7 +391,7 @@
   "agent_bootstrap": {
     "protocol_version": 1,
     "resource": "resources/agent-contract.v1.json",
-    "resource_hash": "sha256:fe31e0960e7a4a688e93d9d4c280a358cf11d966f6fa113f02b9cb7619d914e2",
+    "resource_hash": "sha256:f0837234295bffd6d46808229e9bc1e08a83fe0cb6a3d5971e63ce4f0f6b39c3",
     "required_files": [
       "AGENTS.md",
       "CLAUDE.md",

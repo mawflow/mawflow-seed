@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "mawflow.update_note.v1",
+  "$id": "mawflow.update_note.v2",
   "title": "任务级更新动态片段",
   "type": "object",
   "required": [
@@ -48,7 +48,10 @@
       ],
       "properties": {
         "schema": {
-          "const": "mawflow.update_note.v1"
+          "enum": [
+            "mawflow.update_note.v1",
+            "mawflow.update_note.v2"
+          ]
         },
         "occurred_at": {
           "type": "string",
@@ -179,9 +182,90 @@
             }
           },
           "additionalProperties": false
+        },
+        "external": {
+          "type": "object",
+          "required": [
+            "title",
+            "summary"
+          ],
+          "properties": {
+            "title": {
+              "type": "string",
+              "maxLength": 4000,
+              "minLength": 1
+            },
+            "summary": {
+              "type": "string",
+              "maxLength": 4000,
+              "minLength": 1
+            },
+            "impact": {
+              "type": "string",
+              "maxLength": 2000
+            },
+            "testing": {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              }
+            },
+            "important": {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              }
+            },
+            "limitations": {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              }
+            },
+            "authorship": {
+              "enum": [
+                "ai",
+                "human",
+                "legacy"
+              ]
+            }
+          },
+          "additionalProperties": false
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "schema": {
+                "const": "mawflow.update_note.v2"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "external"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "external"
+              ]
+            }
+          }
+        }
+      ]
     },
     "evidence_refs": {
       "type": "array",

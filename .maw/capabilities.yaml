@@ -40,16 +40,28 @@ capabilities:
     owner_module: ''
     owner_component: ''
     related_app_keys: []
-    summary: 以同源版本记录连接AI理解、人工确认、待回应问题、消费回执与固定档案。
+    summary: 同源口径全文阅读与人工维护、基线、明确档案、版本批次及公开过程事后审查。
     implementation_paths:
     - ops/scripts/maw_governance/
     - ops/scripts/manage-project-governance.py
     - docs/ai-coding/project-governance.md
     - docs/capabilities/project-governance-dialogue.md
+    - docs/ai-coding/governance-suite.md
+    - .maw/project-governance.yaml
     provided_contracts:
     - mawflow.project_governance.v1
     - mawflow.document_source.v3
     - mawflow.document_work_event.v2
+    - mawflow.document_source.v4
+    - mawflow.document_work_event.v3
+    - mawflow.governance_baseline_report.v1
+    - mawflow.curated_archives.v1
+    - mawflow.release_version_binding.v1
+    - mawflow.update_batch.v1
+    - mawflow.execution_review_materials.v1
+    - natural_language_learning.v1
+    - mawflow.language_recall.v1
+    - mawflow.language_learning_report.v1
     reusable_entrypoints:
     - mawflow project governance
     - mawflow_seed_kit.governance.project_governance

@@ -64,7 +64,7 @@ def read_sources(root: Path) -> dict:
                         for child in value:
                             safe_values(child, depth + 1)
                 safe_values(contract)
-                if contract.get("schema") not in {capture.SCHEMA, capture.SCHEMA_V2, capture.SCHEMA_V3}:
+                if contract.get("schema") not in {capture.SCHEMA, capture.SCHEMA_V2, capture.SCHEMA_V3, capture.SCHEMA_V4}:
                     if contract.get("schema", "").startswith("mawflow.document_source."):
                         raise ValueError("source_version_unsupported")
                     continue
@@ -79,9 +79,13 @@ def read_sources(root: Path) -> dict:
                     if not isinstance(item, dict):
                         raise ValueError("invalid_source_item")
                     capture.slug(item.get("key"), "item_key")
-                    for name in ("business", "qa", "dialogue", "activity", "consumption", "artifact"):
+                    for name in ("business", "qa", "dialogue", "activity", "consumption", "artifact", "organization", "process", "baseline", "release_binding", "update_batch", "learning"):
                         if item.get(name) is not None and not isinstance(item[name], dict):
                             raise ValueError("invalid_source_structure")
+                    if contract["schema"] == capture.SCHEMA_V4:
+                        capture.source_extensions().normalize_extensions(capture, item, activity=item.get("activity"))
+                    elif item.get("learning") is not None:
+                        raise ValueError("v4_required")
                     for name in ("business", "dialogue"):
                         identity = item.get(name)
                         if identity:
@@ -89,7 +93,7 @@ def read_sources(root: Path) -> dict:
                             capture.slug(identity.get("scope"), "scope")
                     if item.get("business"):
                         capture.text(item["business"].get("title"), 180, "business_title")
-                    capture.text(item.get("statement"), 1800, "statement")
+                    capture.text(item.get("statement"), 14000 if contract["schema"] == capture.SCHEMA_V4 else 1800, "statement")
                     if item.get("volume") not in capture.VOLUMES or item.get("decision_status") not in capture.DECISIONS:
                         raise ValueError("invalid_source_state")
                     for identity, fields in ((item.get("dialogue") or {}, ("type", "status")),
@@ -117,7 +121,7 @@ def read_sources(root: Path) -> dict:
                         for field in ("document_key", "version_key", "document_kind", "path", "input_hash", "previous_ref", "change_kind"):
                             if not isinstance(artifact.get(field), str):
                                 raise ValueError("invalid_artifact_structure")
-                        if not any(e.get("path") == artifact["path"] and e.get("kind") == "document" for e in item.get("evidence", []) if isinstance(e, dict)):
+                        if artifact["path"] and not any(e.get("path") == artifact["path"] and e.get("kind") == "document" for e in item.get("evidence", []) if isinstance(e, dict)):
                             raise ValueError("artifact_evidence_required")
                     fresh = "current"
                     evidence_states = {}

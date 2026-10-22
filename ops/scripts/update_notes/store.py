@@ -118,6 +118,22 @@ def timestamp(value: str) -> datetime:
     return parsed.astimezone(timezone.utc)
 
 
+def validate_external(value: dict) -> dict:
+    if not isinstance(value, dict) or set(value) - {"title", "summary", "impact", "testing", "important", "limitations", "authorship"}:
+        raise ValueError("invalid_external_wording")
+    result = {"title": safe_text(value.get("title"), 240), "summary": safe_text(value.get("summary"), 4000),
+              "impact": safe_text(value["impact"], 2000) if value.get("impact") else "",
+              "authorship": value.get("authorship", "ai")}
+    if result["authorship"] not in {"ai", "human", "legacy"}:
+        raise ValueError("invalid_external_authorship")
+    for field in ("testing", "important", "limitations"):
+        values = value.get(field, [])
+        if not isinstance(values, list) or len(values) > 20:
+            raise ValueError("invalid_external_wording_list")
+        result[field] = [safe_text(text, 2000) for text in values]
+    return result
+
+
 def validate(root: Path, item: dict) -> dict:
     if (
         not isinstance(item, dict)
@@ -157,11 +173,15 @@ def validate(root: Path, item: dict) -> dict:
     if (
         not isinstance(payload, dict)
         or not required.issubset(payload)
-        or set(payload) - required - {"version", "supersedes", "provenance"}
+        or set(payload) - required - {"version", "supersedes", "provenance", "external"}
     ):
         raise ValueError("invalid_note_fields")
-    if payload["schema"] != "mawflow.update_note.v1":
+    if payload["schema"] not in {"mawflow.update_note.v1", "mawflow.update_note.v2"}:
         raise ValueError("invalid_note_schema")
+    if payload["schema"] == "mawflow.update_note.v2":
+        validate_external(payload.get("external"))
+    elif "external" in payload:
+        raise ValueError("external_wording_requires_v2")
     timestamp(payload["occurred_at"])
     for key in ("title", "summary", "module_name"):
         safe_text(payload[key], 4000 if key == "summary" else 2000)

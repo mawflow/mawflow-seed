@@ -49,6 +49,7 @@
 | EXP-033 | instruction | MCP Knowledge Runtime、MCP知识库、MCP安装、MCP更新、MCP审计、Framework Pack、Style Pack、Blueprint Pack、Prompt Pack、Pack Registry、Project Override、strict lock、registry.example.json、locks.example.json | AI 容易把种子仓离线 Pack 协议误当真实安装器，或把主仓 runtime API、Framework Hub 资源库和派生项目 registry 混成一个仓库内修改；也容易在未确认前下载 Pack、写 lock 或导入导出 bundle | 查询、规划或审计 MCP Knowledge Runtime；派生项目采用 Pack registry、locks、示例和校验脚本；主仓/Framework Hub 边界拆分 | 先按 `TINST-040` 读取 `.maw/mcp.yaml`、`docs/implementation/mcp-knowledge-runtime/README.md` 和 `docs/capabilities/mcp-knowledge-runtime.md`；默认只做 preview/plan，真实写入、下载、导入、导出或 Host Program 更新前必须人工确认；主仓控制面和 Framework Hub 资源拆成对应仓库任务 | `instructions/mcp-knowledge-runtime.md` | high | no，先命中本索引 |
 | EXP-034 | instruction | 更新动态、生成更新记录、更新日志、最近100条、全部动态、update_note | 更新说明只留在临时对话或 Git 标题，容易丢历史并混淆开发和发布状态 | 日常使用者可见变化、生成或补录更新动态 | 按 TINST-043 追加权威片段，生成100条/全量/云端分页并回读；其它仓库通过模板升级采用 | `instructions/generate-update-notes.md` | high | no，先命中本索引 |
 | EXP-035 | instruction | 配置修复、配置诊断、已配置但检测不到、来源漂移、消费者适配、工作台与Seed | 已保存配置在另一入口报缺失，易重复索要凭据或错误改写配置 | Seed项目配置、工作台项目诊断、执行入口联调 | 按 TINST-045 追踪权威来源到实际消费者，预览修复并从原入口回读；工作台复用同一事实 | `instructions/configuration-repair.md` | high | no，先命中本索引 |
+| EXP-036 | protocol | Codex浏览器、Chrome、CUA、代理入口、发现为空、Sky native pipe startup failed、Debugger unattached、request-header policy、js_reset、MCP重连、env_vars | 自定义入口无法发现浏览器、官方发现与页面控制结果不一致，或JS重置后配置仍未生效 | 浏览器操作及连接故障定位 | 用户指定优先，否则使用健康官方入口；按层定位，核对官方启动上下文，重连后真实开页、点击、刷新与截图，不复制本机连接值 | `docs/ai-coding/browser-connection.md` | high | no，按需读取 |
 
 
 ## 新增条目规则

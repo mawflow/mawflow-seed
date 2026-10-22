@@ -1,0 +1,30 @@
+schema_version: 1
+project_governance:
+  policy: docs/ai-coding/governance-suite.md
+  source_schema: mawflow.document_source.v4
+  work_event_schema: mawflow.document_work_event.v3
+  human_direct_maintenance: [create, edit, retire]
+  deletion_preserves_history: true
+  baseline_task:
+    key: project_governance_baseline
+    name: 项目口径基线治理
+    execution_owner: existing_task_run
+    modes: [initialize, audit, repair]
+    audit_project_writes: false
+    initialization_result: candidates_and_coverage
+    semantic_repair_requires_exact_confirmation: true
+    source_policy: explicit_paths_and_module_owned_paths
+  post_execution_review:
+    trigger: terminal_or_interrupted
+    material_policy: public_messages_and_explicit_source_events
+    hidden_reasoning: forbidden
+    retry_scope: summary_only
+  archives:
+    membership: explicitly_registered
+    original_storage: host_managed_local_by_default
+    delivery_template: delivery-v1
+  updates:
+    internal_source: update_note
+    external_source: immutable_explicit_member_batch
+    release_version_binding: before_execution
+    execution_state_owner: original_release_system

@@ -1,0 +1,51 @@
+schema_version: 1
+upgrade_key: 20261022-governance-suite
+title: 项目口径、档案、动态与事后审查四项治理
+risk_level: T2
+status: active
+summary:
+- 来源v4/工作事件v3与旧历史兼容，新增人工直接维护和精确批量确认。
+- 全量基线、明确档案、固定批次与发布版本节点、公开过程材料同源实现。
+source_template_files:
+- .maw/project-governance.yaml
+- ops/scripts/capture-document-source.py
+- ops/scripts/manage-project-governance.py
+- ops/scripts/maw_governance/
+- ops/scripts/update_notes/store.py
+- .maw/schemas/update-note.schema.json
+- docs/ai-coding/governance-suite.md
+- docs/ai-coding/project-governance.md
+- docs/ai-coding/update-notes.md
+- docs/template-migrations/20261022-governance-suite.md
+- .maw/agent-entry.yaml
+- .maw/agent-rules.yaml
+- ops/scripts/maw_governance/release_execution.py
+- docs/ai-instructions/instructions/release-component.md
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect:
+  - README.md
+  - code/
+  - app_key
+  - release configuration
+  - repository mappings
+  - real secrets
+  - .local/
+  - module dossiers
+  - existing intake records
+  forbidden:
+  - 用AI理解或方向认可自动确认业务正文
+  - 删除历史或用新内容覆盖旧文档和摘要
+  - 用旧成功证明新候选发布或真人验收
+  - 以私有Seed目录升级公共渠道业务项目
+  - 将用户原件或客户资料复制进Seed
+validation:
+- python3 -m pytest -q tests/test_project_governance.py tests/test_governance_source_v4.py
+  tests/test_governance_readable_baseline.py tests/test_governance_curated_archives.py
+  tests/test_governance_update_batches.py tests/test_governance_execution_review.py
+- git diff --check
+- bash ops/scripts/check-ai-framework-consistency.sh
+- bash ops/scripts/check-local-boundary.sh
+propagation:
+  migration_note: docs/template-migrations/20261022-governance-suite.md

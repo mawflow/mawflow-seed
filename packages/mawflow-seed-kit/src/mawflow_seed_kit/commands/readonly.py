@@ -11,7 +11,7 @@ def readonly_allowed(args):
         return True
     if area == "project":
         if command == "governance":
-            return args.governance_action in {"read", "context", "preview"}
+            return args.governance_action in {"read", "context", "recall", "learning-report", "preview"}
         return command in {"doctor", "agents", "context", "verify", "hydrate"} or (
             command == "sources" and args.source_command == "inspect")
     return (area == "component" and command in {"list", "show", "doctor"}) or (

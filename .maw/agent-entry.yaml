@@ -38,6 +38,7 @@ facts:
   policies: .maw/policies.yaml
   interaction: .maw/interaction.yaml
   standards: .maw/standards.yaml
+  project_governance: .maw/project-governance.yaml
 protected_paths:
   never_commit:
   - .local/**
@@ -63,6 +64,13 @@ protected_paths:
   - prompts/**
   - docs/archive/**
 execution_contract:
+  browser_connection:
+    policy: docs/ai-coding/browser-connection.md
+    entry_selection: user_specified_else_healthy_official
+    custom_proxy: confirmed_runtime_need_only
+    js_reset_is_mcp_reload: false
+    runtime_verified_by: fresh_discovery_open_read_click_reload_screenshot
+    machine_values: local_only
   before_editing:
   - identify repository role
   - identify module_key or module_candidate
@@ -142,8 +150,8 @@ execution_contract:
     tool: ops/scripts/capture-document-source.py
     read_only: deferred_read_only
     closeout_field: document_source_capture
-    preferred_schema: mawflow.document_source.v2
-    event_schema: mawflow.document_work_event.v1
+    preferred_schema: mawflow.document_source.v4
+    event_schema: mawflow.document_work_event.v3
     event_template: docs/intake/event-template.json
     record_action: record-event
     closeout_check: check-event
@@ -157,13 +165,17 @@ execution_contract:
     - handoff
   project_governance:
     schema: mawflow.project_governance.v1
-    source_schema: mawflow.document_source.v3
+    source_schema: mawflow.document_source.v4
     policy: docs/ai-coding/project-governance.md
     command: mawflow project governance
     portable_tool: ops/scripts/manage-project-governance.py
     authority: confirmed_question_versions
     confirmation_does_not_grant_execution_permission: true
     consumption_requires_exact_context: true
+    suite_policy: docs/ai-coding/governance-suite.md
+    declaration: .maw/project-governance.yaml
+    baseline_task: project_governance_baseline
+    human_direct_maintenance: [create, edit, retire]
   update_notes:
     policy: docs/ai-coding/update-notes.md
     source: .maw/changes/*.yaml
@@ -248,6 +260,8 @@ validation:
   - closeout contract
 agent_protocol_version: 1
 task_routes:
+  browser_automation:
+  - docs/ai-coding/browser-connection.md
   configuration_repair:
   - docs/ai-instructions/instructions/configuration-repair.md
   resource_libraries:
@@ -261,6 +275,7 @@ task_routes:
   - docs/ai-coding/project-workflow.md
   governance:
   - docs/ai-coding/project-governance.md
+  - docs/ai-coding/governance-suite.md
   - docs/standards/README.md
   - docs/ai-instructions/README.md
   standards:

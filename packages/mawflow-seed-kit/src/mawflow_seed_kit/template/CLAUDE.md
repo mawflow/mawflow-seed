@@ -7,6 +7,7 @@
 工具、Skill、MCP、RTK 均非读取项目规则的前置条件；已有授权按任务范围延续。
 本地开发按 docs/ai-coding/development-resources.md 检查资源与工作台/CLI，按需复用服务，跨项目重任务串行。
 任务开工、恢复、等待与结束按 docs/ai-coding/task-lifecycle.md 执行，清点并回收本任务资源，借用浏览器页面交还控制，未验证不得称已释放。
+浏览器操作按 docs/ai-coding/browser-connection.md 选择入口、恢复连接并真实验收；用户指定优先，否则优先健康官方入口，JS重置不替代MCP重连。
 完成时区分已修改、已验证、已发布与真人验收，列出未验证项。
 长期结论与缺口按 docs/ai-coding/document-source-capture.md 收录最小来源及回执；只读任务不写入。
 实际用户可见变化按 docs/ai-coding/update-notes.md 追加权威动态；默认100条，--all 保留全部已记录历史。

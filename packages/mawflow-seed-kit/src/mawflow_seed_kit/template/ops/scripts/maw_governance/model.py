@@ -35,6 +35,7 @@ def project(root, project_key: str) -> dict:
     artifacts = [i for i in items if i.get("artifact")]
     snapshot = {**data, "schema": "mawflow.project_governance.v1", "project_key": project_key,
             "questions": questions, "dialogues": dialogues, "artifacts": artifacts,
+            "baselines": [i for i in items if i.get("baseline")],
             "consumptions": [i for i in items if i.get("consumption")],
             "tasks": [i for i in items if i.get("activity")],
             "pending": [d for d in dialogues if not d["resolved"] and d["dialogue"]["status"] in {"open", "deferred"} and d["dialogue"]["type"] != "reply"],
@@ -53,6 +54,23 @@ def project(root, project_key: str) -> dict:
         latest = contexts[identity]
         item["consumption_check"] = {"status": "current" if latest["complete"] and receipt["context_hash"] == latest["context_hash"] else "reread_required",
             "context_hash": latest["context_hash"], "complete": latest["complete"]}
+    for item in snapshot["baselines"]:
+        baseline = item["baseline"]
+        latest = context(snapshot, baseline.get("scope", ""), baseline.get("module", ""))
+        source_checks = []
+        for ref in baseline.get("source_refs", []):
+            path, _, expected = ref.rpartition("@")
+            try:
+                import hashlib
+                from .store import recorder
+                target = recorder().safe_path(root, path)
+                valid = target.stat().st_size <= 2_000_000 and hashlib.sha256(target.read_bytes()).hexdigest() == expected
+            except (OSError, ValueError):
+                valid = False
+            source_checks.append({"ref": ref, "current": valid})
+        item["baseline_check"] = {"status": "current" if set(baseline["question_refs"]) == set(latest["question_refs"]) and
+            all(c["current"] for c in source_checks) and item["freshness"] == "current" else "review_required",
+            "sources": source_checks, "confirmed_rules_revoked": False}
     return snapshot
 
 
@@ -68,7 +86,8 @@ def context(snapshot: dict, scope: str = "", module: str = "") -> dict:
                 selected.append({"ref": item["id"], "source_hash": item["source_hash"],
                     "question": item["business"]["title"], "answer": item["statement"], "scope": question["scope"],
                     "claim_type": (item.get("qa") or {}).get("claim_type", "requirement"),
-                    "confirmation": item.get("confirmation"), "source_path": item["source_path"], "evidence": item["evidence"], "evidence_freshness": item["freshness"]})
+                    "confirmation": item.get("confirmation"), "source_path": item["source_path"], "evidence": item["evidence"], "evidence_freshness": item["freshness"],
+                    **({"learning": item["learning"]} if item.get("learning", {}).get("kind") == "rule" else {})})
             elif item["business_status"] in {"conflict", "source_changed"}:
                 blockers.append({"ref": item["id"], "question": question["question"], "reason": item["business_status"]})
     selected.sort(key=lambda i: i["ref"])

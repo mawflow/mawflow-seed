@@ -24,6 +24,8 @@
 
 ## 执行步骤
 
+自然语言任务先读取范围内有效context；支持`natural_language_learning.v1`时按用户表达执行recall并阅读命中正文，未命中可改写检索或按范围阅读完整案例。理解纠偏沿用propose/confirm追加版本，实际复用沿用consume并追加feedback；协议见`docs/ai-coding/project-governance.md`。不因后台注入、文件存在或最终成功宣称AI已消费或理解正确。
+
 1. 任务开始时，用用户消息、任务包、路径、命令和错误症状检索 `docs/ai-instructions/README.md`、`experience-index.md`、`keyword-candidates.md`、`experience-candidates.md`、`execution-lesson-candidates.md`。
 2. 如果任务涉及本机差异，读取 `.local/README.md`、`.local/ai/README.md`、`.local/config/README.md` 和相关 example 文件。
 3. 执行过程中遇到用户澄清、术语、简称、别称、习惯用语、偏好、执行经验或本机差异时，先判断存放边界。

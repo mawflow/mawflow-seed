@@ -7,7 +7,7 @@ import json
 from typing import Any
 
 
-SEED_VERSION = "2.16.0"
+SEED_VERSION = "2.17.0"
 CONTRACT_VERSION = 2
 
 
@@ -37,6 +37,7 @@ def public_catalog() -> dict[str, Any]:
         "operations": payload["operations"],
         "profiles": payload["profiles"],
         "agent_bootstrap": payload.get("agent_bootstrap", {}),
+        "governance": payload.get("governance", {}),
         "trust_boundary": {
             "arbitrary_paths_writable": False,
             "project_schema_can_expand_host_permissions": False,

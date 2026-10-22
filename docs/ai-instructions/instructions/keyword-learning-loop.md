@@ -31,6 +31,8 @@ Codex/Agent 在执行任务时，应从任务提示词和用户消息中识别�
 
 ## 执行步骤
 
+自然语言理解与用户纠偏优先复用`docs/ai-coding/project-governance.md`中的已确认问答和`natural_language_learning.v1`。用户原话摘要、正确含义、反例、适用条件、精确版本消费与复用反馈形成同一来源链；本页候选台账只作检索与整理入口。次数不是正确性证明，AI推断不自行确认。只读任务输出待收录摘要。
+
 1. 开始任务时，快速扫当前用户消息和任务提示词，提取可能影响边界的关键词、澄清和说明。
 2. 先查 `docs/ai-instructions/README.md`、`docs/ai-instructions/experience-index.md`、`docs/ai-instructions/keyword-candidates.md`、`docs/ai-instructions/experience-candidates.md`、`docs/ai-instructions/execution-lesson-candidates.md` 和相关 `terms/` / `lessons/` 索引，确认是否已有项目共享记忆。
 3. 如果任务涉及本机路径、端口、工具链、代理、浏览器调试、本机 SSH key 路径或本机维护记录，再读取 `.local/README.md`、`.local/ai/README.md`、`.local/config/README.md` 和相关 example 说明，确认本机记忆边界。

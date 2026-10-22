@@ -1,10 +1,10 @@
 {
   "schema": "mawflow.seed_public_payload.v2",
-  "seed_version": "2.16.0",
+  "seed_version": "2.17.0",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:d1c02012e8e64354cdd1e47d5e798fefbca7e26792d8313122cefa5bef310a55",
+  "contract_fingerprint": "sha256:edb4acc58d664da00e082d450b210fa74e1eced49d37b4a695c706e47ce9041b",
   "bom": {
-    "kit": "mawflow-seed-kit==2.16.0",
+    "kit": "mawflow-seed-kit==2.17.0",
     "contract": "seed-contract-v2"
   },
   "required_paths": [
@@ -237,7 +237,31 @@
     "docs/template-migrations/20261021-project-governance-dialogue.md",
     ".maw-template/upgrades/20261021-project-governance-dialogue.yaml",
     "packages/mawflow-seed-kit/src/mawflow_seed_kit/commands/governance.py",
-    "docs/capabilities/project-governance-dialogue.md"
+    "docs/capabilities/project-governance-dialogue.md",
+    "ops/scripts/maw_governance/extensions.py",
+    "docs/ai-coding/governance-suite.md",
+    "tests/test_governance_source_v4.py",
+    "ops/scripts/maw_governance/reading.py",
+    "ops/scripts/maw_governance/baseline.py",
+    "tests/test_governance_readable_baseline.py",
+    "ops/scripts/maw_governance/library.py",
+    "tests/test_governance_curated_archives.py",
+    "ops/scripts/maw_governance/releases.py",
+    "ops/scripts/maw_governance/update_batches.py",
+    "tests/test_governance_update_batches.py",
+    "ops/scripts/maw_governance/review.py",
+    "tests/test_governance_execution_review.py",
+    ".maw/project-governance.yaml",
+    "docs/template-migrations/20261022-governance-suite.md",
+    ".maw-template/upgrades/20261022-governance-suite.yaml",
+    "tests/test_governance_suite_distribution.py",
+    "ops/scripts/maw_governance/learning.py",
+    "docs/template-migrations/20261022-natural-language-learning.md",
+    ".maw-template/upgrades/20261022-natural-language-learning.yaml",
+    "tests/test_natural_language_learning.py",
+    "docs/ai-instructions/instructions/keyword-learning-loop.md",
+    "docs/ai-instructions/instructions/project-memory-loop.md",
+    "ops/scripts/maw_governance/release_execution.py"
   ],
   "forbidden_paths": [
     ".maw/secrets.yaml",

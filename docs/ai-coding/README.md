@@ -50,3 +50,5 @@ AI/Codex 不应默认全量读取 `docs/ai-coding/**`。先读取本 README，�
 - [六阶段规范导航](../standards/README.md)：阶段入口、项目采用、任务清单与独立证据；只读目录后按需读取正文。
 
 任务开工、恢复与收尾按 `docs/ai-coding/task-lifecycle.md` 执行；分别说明执行结果、业务关闭与资源回收，等待/失败/取消/交接也清点资源。
+
+- [浏览器连接与恢复](browser-connection.md)：入口选择、工具发现、MCP重连与真实页面验收；设备参数不随规范传播。
