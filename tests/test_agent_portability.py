@@ -29,12 +29,33 @@ def project(tmp_path: Path) -> Path:
 def test_materialized_bootstrap_supports_all_adapters_without_plugins(project: Path) -> None:
     status = inspect_agent_readiness(project)
     assert status["status"] == "ready", status["issues"]
-    assert set(status["adapters"]) == {"codex", "claude", "gemini", "cursor", "generic_ai", "chatgpt_web"}
+    assert set(status["adapters"]) == {"codex", "claude", "gemini", "cursor", "workbuddy", "generic_ai", "chatgpt_web"}
     assert status["runtime_verified"] is False
     assert all(item["static_status"] == "ready" for item in status["adapters"].values())
     assert "@AI_START_HERE.md" in (project / "CLAUDE.md").read_text()
     assert "@AI_START_HERE.md" in (project / "GEMINI.md").read_text()
     assert compile_project_definition(project)["agent_readiness"]["status"] == "ready"
+
+
+@pytest.mark.parametrize("name", ["WorkBuddy", "WORKBUDDY", "work-buddy", "Work Buddy", "WorkBuddy Desktop"])
+def test_workbuddy_uses_shared_entry_without_a_second_rules_file(project: Path, name: str) -> None:
+    payload = export_agent_context(project, agent_name=name, max_chars=12000)
+    assert payload["adapter"] == {"agent": "workbuddy", "entry_file": "AGENTS.md", "resolution": "explicit_identity"}
+    assert not (project / "CODEBUDDY.md").exists()
+    assert inspect_agent_readiness(project)["runtime_verified"] is False
+    entry = yaml.safe_load((project / ".maw/agent-entry.yaml").read_text())
+    for key in ("seed_lock", "template_source"):
+        assert (project / entry["facts"][key]).is_file()
+
+
+def test_workbuddy_migration_preserves_shared_custom_instructions(project: Path) -> None:
+    path = project / "AGENTS.md"
+    path.write_text(path.read_text() + "\n团队自定义规则必须保留。\n")
+    first = portable_agent_files(project)
+    for ref, text in first.items():
+        (project / ref).write_text(text)
+    assert "团队自定义规则必须保留。" in path.read_text()
+    assert portable_agent_files(project) == first
 
 
 @pytest.mark.parametrize("ref", ["AGENTS.md", "CLAUDE.md", "GEMINI.md", "CHATGPT.md", "AI_START_HERE.md", ".maw/agent-entry.yaml", ".maw/agent-rules.yaml"])

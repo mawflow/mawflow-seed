@@ -28,7 +28,9 @@
       "modules": ".maw/modules.yaml",
       "runtime": ".maw/app-runtime.yaml",
       "standards": ".maw/standards.yaml",
-      "project_governance": ".maw/project-governance.yaml"
+      "project_governance": ".maw/project-governance.yaml",
+      "seed_lock": ".maw/seed.lock",
+      "template_source": ".maw/template-source.yaml"
     },
     "protected_paths": {
       "never_commit": [
@@ -222,6 +224,11 @@
         "loader": "instructions",
         "status": "supported"
       },
+      "workbuddy": {
+        "file": "AGENTS.md",
+        "loader": "instructions",
+        "status": "supported"
+      },
       "generic_ai": {
         "file": "AI_START_HERE.md",
         "loader": "manual",
@@ -261,6 +268,11 @@
       "status": "supported"
     },
     "cursor": {
+      "file": "AGENTS.md",
+      "loader": "instructions",
+      "status": "supported"
+    },
+    "workbuddy": {
       "file": "AGENTS.md",
       "loader": "instructions",
       "status": "supported"
@@ -361,6 +373,11 @@
       "id": "browser_connection_recovery",
       "severity": "required",
       "summary": "浏览器操作先按 docs/ai-coding/browser-connection.md 读取当前工具文档；用户指定优先，否则优先健康官方入口。按加载、发现、原生连接、网络与页面分层定位，JS重置不替代MCP重连；保留官方命令、权限、可信登记与连接上下文，真实开页/点击/刷新/截图后才称恢复，本机配置不传播。"
+    },
+    {
+      "id": "scope_client_memory_writes",
+      "severity": "required",
+      "summary": "Agent通过工具发起的工作区/用户级记忆、临时文件和来源记录同样受只读及owned_paths约束；不因属于工具自身流程或被Git忽略而豁免。发生冲突时报告并停止依赖写入，不删除旧记录或扩大权限。"
     }
   ],
   "task_kinds": [

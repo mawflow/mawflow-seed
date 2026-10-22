@@ -1,0 +1,28 @@
+schema_version: 1
+upgrade_key: 20261022-workbuddy-dialogue
+title: WorkBuddy共享入口与文件对话边界
+risk_level: T2
+status: active
+summary:
+  - WorkBuddy明确身份复用AGENTS入口，版本来源按需导航。
+  - 只读及允许路径约束覆盖Agent记忆、临时文件和来源写入。
+  - 文件接续区分事件输入、稳定证据和可变检查点，环境由控制侧准备。
+source_template_files:
+  - .maw/agent-entry.yaml
+  - .maw/agent-rules.yaml
+  - AI_START_HERE.md
+  - CHATGPT_TO_AI.md
+  - docs/template-migrations/20261022-workbuddy-dialogue.md
+target_project_policy:
+  upgrade_mode: audit_first_then_incremental_merge
+  preserve_target_facts: true
+  protect: [README.md, code/, app_key, release configuration, repository mappings, real secrets, .local/, module dossiers, existing intake records, custom agent prose]
+  forbidden:
+    - 整页覆盖项目入口或把客户端习惯视为额外写入授权
+    - 删除旧来源规避冲突或凭哈希宣称Git和功能未变
+validation:
+  - python3 -B -m pytest -q tests/test_agent_portability.py
+  - python3 -B ops/scripts/check-agent-portability.py --check-distribution
+  - git diff --check
+propagation:
+  migration_note: docs/template-migrations/20261022-workbuddy-dialogue.md

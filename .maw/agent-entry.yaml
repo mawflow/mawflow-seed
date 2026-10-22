@@ -39,6 +39,8 @@ facts:
   interaction: .maw/interaction.yaml
   standards: .maw/standards.yaml
   project_governance: .maw/project-governance.yaml
+  seed_lock: .maw/seed.lock
+  template_source: .maw/template-source.yaml
 protected_paths:
   never_commit:
   - .local/**
@@ -223,6 +225,10 @@ tool_adapters:
   chatgpt_web:
     file: CHATGPT.md
     loader: repository_links
+    status: supported
+  workbuddy:
+    file: AGENTS.md
+    loader: instructions
     status: supported
 external_agent_skills:
   mawflow:

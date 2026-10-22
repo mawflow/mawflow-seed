@@ -22,6 +22,7 @@ Seed 2.8 保持 Contract 2。项目入口统一为 schema 3 / agent_protocol_ver
 | Claude Code | CLAUDE.md，导入 AI_START_HERE.md |
 | Gemini CLI | GEMINI.md，导入 AI_START_HERE.md |
 | Cursor | AGENTS.md |
+| WorkBuddy 桌面对话 | AGENTS.md，继续读取 AI_START_HERE.md |
 | ChatGPT Web / GitHub 源码阅读 | CHATGPT.md，用户显式给链接 |
 | 未识别 Agent / 手动启动 | AI_START_HERE.md |
 
@@ -58,3 +59,15 @@ Project Doctor 的结构状态与 `agent_readiness` 独立；静态检查不会�
 README 与通用入口提供 CHATGPT.md 的相对链接，适用于公开或用户有权限的私有 GitHub 仓库。网页适配使用 repository_links，不假定文件名自动发现，也不依赖 @ 导入、隐藏目录扫描、本机终端或插件。按仓库/ref/commit 固定源码，逐个读取链接正文；权限缺失、版本不可选、搜索片段和内容截断都属于证据缺口。只读能力仍可完成审阅、方案和交接；有实际写入或执行工具时才按授权执行并给结果。
 
 [OpenAI 的代码审查说明](https://learn.chatgpt.com/docs/code-review)建议明确指定仓库的 PR、分支、提交或文件；本项目进一步要求跨文件使用同一提交作为证据。这是 Seed 的协作约定，不是对 ChatGPT Web 自动加载入口的产品保证。
+
+## WorkBuddy 桌面对话
+
+当前研发验收优先级为 Codex 第一、WorkBuddy 第二；先完成 Seed 文件对话，再评估 CLI 派发。选择项目与分支后，从共享入口定界，修改前核对 owned paths、真实检查入口及授权。无需额外 CODEBUDDY.md，不复制第二套项目规则。若客户端未自动加载入口，显式要求读取 AI_START_HERE.md；文件存在与静态 ready 不证明自动加载。
+
+`--agent WorkBuddy`、`work-buddy`、`Work Buddy`、`WorkBuddy Desktop` 明确解析为 workbuddy，复用 AGENTS.md。未知身份仍走 generic_fallback；不检测本机二进制猜身份，也不改变权限或全局模型。每次真实会话独立记录客户端版本、档位、实际模型标签和执行结果，静态 readiness 的 runtime_verified 仍为 false。
+
+核对派生项目版本时按需读取 `.maw/seed.lock` 与 `.maw/template-source.yaml`，分别报告 Contract、已应用 Seed/Kit 与当前解释器/工具版本。未读、缺失、截断分别记录；不因没读到具体版本断言文件不存在。事实导航不授权读取私有 Seed 源或自动升级目标项目。全仓递归 Glob 也是全仓搜索。
+
+跨会话接续使用 CHATGPT_TO_AI.md 的通用格式，把 task/run、基线、目标、允许/禁止路径、已完成动作、实际验证及未完成项保存到任务已有文件并提供可发现的手册链接。新任务先核对文件和 Git 是否变化，再推进未完成项；不依赖客户端私有历史、隐藏推理或整段聊天。来源事件追加，旧事件不覆盖；工具错误需保留原失败与恢复后结果。
+
+2026-10-22 的 Seed 2.17.0 blank 项目真实只读验收证明共享入口可用；一次递归 Glob 和一次版本依据漏读分别保留为边界偏差与导航缺口。小修改和跨会话接续以本轮后续验收回执为准，不能从静态测试推断完整兼容。公开稳定 Seed/Kit 发行、已安装 Host 升级、CLI 自动派发和真人验收分别记录。

@@ -5,5 +5,5 @@ template_source:
   version: latest_verified_stable
   kind: package
   package: mawflow-seed-kit
-  applied_version: 2.17.0
+  applied_version: 2.17.1
   contract_version: 2

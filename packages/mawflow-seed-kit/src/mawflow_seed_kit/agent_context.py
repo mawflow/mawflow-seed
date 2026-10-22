@@ -29,6 +29,7 @@ def resolve_agent_adapter(agent_name: str = "") -> dict[str, str]:
     normalized = agent_name.strip().lower().replace("_", "-")
     aliases = {"claude code": "claude", "claude-code": "claude", "gemini cli": "gemini", "gemini-cli": "gemini", "cursor agent": "cursor", "cursor-agent": "cursor", "generic": "generic_ai", "generic-ai": "generic_ai"}
     aliases.update({"chatgpt": "chatgpt_web", "chatgpt web": "chatgpt_web", "chatgpt-web": "chatgpt_web", "github-web": "chatgpt_web"})
+    aliases.update({"work buddy": "workbuddy", "work-buddy": "workbuddy", "workbuddy desktop": "workbuddy"})
     key = aliases.get(normalized, normalized)
     if key not in agent_contract()["adapters"]:
         key = "generic_ai"

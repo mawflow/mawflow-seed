@@ -1,10 +1,10 @@
 {
   "schema": "mawflow.seed_public_payload.v2",
-  "seed_version": "2.17.0",
+  "seed_version": "2.17.1",
   "contract_version": 2,
-  "contract_fingerprint": "sha256:edb4acc58d664da00e082d450b210fa74e1eced49d37b4a695c706e47ce9041b",
+  "contract_fingerprint": "sha256:2ed18a8bb7ae5b72c1732a4d775f14ec87a0de795f1f08120f1f5d8614fffe3c",
   "bom": {
-    "kit": "mawflow-seed-kit==2.17.0",
+    "kit": "mawflow-seed-kit==2.17.1",
     "contract": "seed-contract-v2"
   },
   "required_paths": [
@@ -261,7 +261,9 @@
     "tests/test_natural_language_learning.py",
     "docs/ai-instructions/instructions/keyword-learning-loop.md",
     "docs/ai-instructions/instructions/project-memory-loop.md",
-    "ops/scripts/maw_governance/release_execution.py"
+    "ops/scripts/maw_governance/release_execution.py",
+    "docs/template-migrations/20261022-workbuddy-dialogue.md",
+    ".maw-template/upgrades/20261022-workbuddy-dialogue.yaml"
   ],
   "forbidden_paths": [
     ".maw/secrets.yaml",
