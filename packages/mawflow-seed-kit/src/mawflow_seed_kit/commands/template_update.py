@@ -20,7 +20,7 @@ import yaml
 
 from mawflow_seed_kit.catalog import SEED_VERSION, contract_fingerprint
 from .project_init import scan_template_safety
-from .template_sources import TemplateSourceConfig, materialize_template_source
+from .template_sources import TemplateSourceConfig, materialize_template_source, template_tree_sha256
 
 ENTRIES = {"AI_START_HERE.md", "AGENTS.md", "CLAUDE.md", "GEMINI.md", "CHATGPT.md", "CHATGPT_TO_AI.md", "MAWFLOW_CLI.md", "PROJECT_COMMANDS.md"}
 MANAGED = {".maw/agent-entry.yaml", ".maw/agent-rules.yaml", ".maw/agent-context.md", ".maw/project-doctor.yaml", ".maw/testing.yaml"}
@@ -120,8 +120,6 @@ def plan_update(root: Path, *, base_template: Path | None = None, target_templat
     origin = source.get("template_source") or {}
     if origin.get("kind", "package") != "package":
         raise ValueError("template_upgrade_package_source_required: use project drift for a Git source")
-    if previous == SEED_VERSION and target_template is None:
-        return {"status": "up_to_date", "target_version": SEED_VERSION, "writes": [], "conflicts": []}
     if not re.fullmatch(r"\d+\.\d+\.\d+(?:rc\d+)?", previous):
         raise ValueError("template_upgrade_baseline_version_required")
     def release_order(version: str):
@@ -133,10 +131,15 @@ def plan_update(root: Path, *, base_template: Path | None = None, target_templat
     replacements = {"__PROJECT_KEY__": str(project.get("key") or project.get("project_key") or ""), "__PROJECT_NAME__": str(project.get("name") or "")}
     materialized = None
     try:
-        if base_template is None:
-            materialized = materialize_template_source(TemplateSourceConfig(source="package", template_version=previous))
-            base_template = materialized.template_dir
         target = target_template or Path(str(files("mawflow_seed_kit").joinpath("template")))
+        if base_template is None:
+            if previous == SEED_VERSION:
+                # Repair metadata from the installed release without fetching an
+                # identical baseline or touching locally customized protocol files.
+                base_template = target
+            else:
+                materialized = materialize_template_source(TemplateSourceConfig(source="package", template_version=previous))
+                base_template = materialized.template_dir
         scan_template_safety(base_template); scan_template_safety(target)
         names = {p.relative_to(tree).as_posix() for tree in (base_template, target) for p in tree.rglob("*") if p.is_file()}
         names = {name for name in names if name in ENTRIES | MANAGED | LIFECYCLE_FILES or name.startswith("docs/ai-instructions/")}
@@ -157,15 +160,21 @@ def plan_update(root: Path, *, base_template: Path | None = None, target_templat
             if current != before:
                 conflicts.append(name); continue
             writes.append({"path": name, "before": before, "after": after})
-        updated_lock = {**lock, "seed_version": SEED_VERSION, "contract_fingerprint": contract_fingerprint(), "bom": {**lock.get("bom", {}), "kit": f"mawflow-seed-kit=={SEED_VERSION}"}, "source": {**lock.get("source", {}), "version": SEED_VERSION, "template_version": SEED_VERSION}}
-        updated_source = {**source, "template_source": {**origin, "applied_version": SEED_VERSION}}
+        # Bind both metadata files to the exact template in this plan. Keeping
+        # these writes in the transaction also binds the digest to confirmation
+        # and allows interrupted upgrades to restore the original pair.
+        release_metadata = {"version": SEED_VERSION, "template_version": SEED_VERSION,
+                            "template_tree_sha256": template_tree_sha256(target)}
+        updated_lock = {**lock, "seed_version": SEED_VERSION, "contract_fingerprint": contract_fingerprint(), "bom": {**lock.get("bom", {}), "kit": f"mawflow-seed-kit=={SEED_VERSION}"}, "source": {**lock.get("source", {}), **release_metadata}}
+        updated_source = {**source, "template_source": {**origin, "applied_version": SEED_VERSION,
+            "distribution": {**origin.get("distribution", {}), **release_metadata}}}
         for name, value in ((".maw/seed.lock", updated_lock), (".maw/template-source.yaml", updated_source)):
             before, after = _read(root, name), yaml.safe_dump(value, allow_unicode=True, sort_keys=False).encode()
             if before != after:
                 writes.append({"path": name, "before": before, "after": after})
         serial = [{"path": w["path"], "before_sha256": _digest(w["before"]), "after_sha256": _digest(w["after"])} for w in writes]
         confirmation = "SEED:" + hashlib.sha256(json.dumps(serial, sort_keys=True).encode()).hexdigest()[:20]
-        return {"status": "blocked" if conflicts else "planned", "from_version": previous, "target_version": SEED_VERSION,
+        return {"status": "blocked" if conflicts else "planned" if writes else "up_to_date", "from_version": previous, "target_version": SEED_VERSION,
             "writes": serial, "conflicts": conflicts, "confirmation_required": confirmation, "_writes": writes}
     finally:
         if materialized is not None:

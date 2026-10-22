@@ -32,3 +32,9 @@ python3 -m pytest -q tests
 ```
 
 测试依赖不加入 Kit 运行时依赖；项目资源预算仍按现有串行验证入口执行。
+
+### 模板升级元数据一致性（2.17.2）
+
+官方 `mawflow project upgrade --template` 在预览中同时列出Seed锁与来源文件的版本和实际模板树摘要变更，确认串绑定这些字节。`seed.lock.source`与`template_source.distribution`中的version、template_version、template_tree_sha256取本次已校验模板；索引、来源身份、自定义字段和项目事实保留。两个文件沿既有事务和恢复日志写入，中断后按原回滚入口恢复，不手工改锁消除差异。
+
+同版本也检查旧升级遗留的元数据；使用当前已安装模板即可离线修复，无需下载同版本基线。全部一致后返回up_to_date，不新建恢复事务。模板摘要反映分发模板原文，不能用派生项目替换占位符、定制后的整仓目录摘要代替。工具环境升级由控制侧负责；这不是WorkBuddy CLI接入。
